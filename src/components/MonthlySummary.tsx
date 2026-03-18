@@ -51,8 +51,7 @@ const MonthlySummary = ({ entries }: MonthlySummaryProps) => {
       const dateA = parse(a.monthYear, 'MM/yyyy', new Date());
       const dateB = parse(b.monthYear, 'MM/yyyy', new Date());
       return dateB.getTime() - dateA.getTime();
-    })
-    .slice(0, 6);
+    });
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {

@@ -59,8 +59,7 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
           const dateB = new Date(b.month);
           return dateA.getTime() - dateB.getTime();
         } catch { return 0; }
-      })
-      .slice(-12);
+      });
   }, [transactions]);
 
   const categoryData = React.useMemo(() => {
