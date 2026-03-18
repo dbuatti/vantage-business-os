@@ -14,7 +14,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { SummarySkeleton, FormSkeleton, TableSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, LogOut, Loader2, ListFilter } from 'lucide-react';
+import { PiggyBank, LogOut, Loader2, ListFilter, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -23,10 +23,25 @@ import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
 import { isWithinInterval, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface DateRange {
   from: Date | undefined;
   to: Date | undefined;
+}
+
+interface TransactionSummary {
+  totalTransactions: number;
+  totalIncome: number;
+  totalExpenses: number;
+  net: number;
+  recentTransactions: Array<{
+    id: string;
+    description: string;
+    amount: number;
+    transaction_date: string;
+    category_1: string;
+  }>;
 }
 
 const Index = () => {
@@ -36,6 +51,8 @@ const Index = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [transactionSummary, setTransactionSummary] = useState<TransactionSummary | null>(null);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,6 +60,7 @@ const Index = () => {
       navigate('/login');
     } else if (session) {
       fetchEntries();
+      fetchTransactionSummary();
     }
   }, [session, authLoading, navigate]);
 
@@ -70,6 +88,36 @@ const Index = () => {
       showError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTransactionSummary = async () => {
+    if (!session) return;
+    setLoadingTransactions(true);
+    try {
+      const { data, error } = await supabase
+        .from('finance_transactions')
+        .select('id, description, amount, transaction_date, category_1')
+        .order('transaction_date', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      const transactions = data || [];
+      const totalIncome = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+      const totalExpenses = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+
+      setTransactionSummary({
+        totalTransactions: transactions.length,
+        totalIncome,
+        totalExpenses,
+        net: totalIncome - totalExpenses,
+        recentTransactions: transactions.slice(0, 5)
+      });
+    } catch (error: any) {
+      // Silently fail for transaction summary
+    } finally {
+      setLoadingTransactions(false);
     }
   };
 
@@ -187,6 +235,15 @@ const Index = () => {
 
   const lastEntry = entries[0];
 
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(val);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -264,6 +321,96 @@ const Index = () => {
             </div>
 
             <MonthlySummary entries={calculatedEntries} />
+
+            {/* Transaction Summary Card */}
+            {transactionSummary && transactionSummary.totalTransactions > 0 && (
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/20 animate-slide-up opacity-0 stagger-3">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 rounded-xl bg-primary/10">
+                        <CreditCard className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">Transaction Overview</h3>
+                        <p className="text-xs text-muted-foreground">From your imported bank transactions</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" asChild className="rounded-xl">
+                      <Link to="/transactions">View All</Link>
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">Income</span>
+                      </div>
+                      <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                        {formatCurrency(transactionSummary.totalIncome)}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />
+                        <span className="text-xs text-rose-700 dark:text-rose-300 font-medium">Expenses</span>
+                      </div>
+                      <p className="text-lg font-bold text-rose-700 dark:text-rose-300">
+                        {formatCurrency(-transactionSummary.totalExpenses)}
+                      </p>
+                    </div>
+                    <div className={cn(
+                      "p-3 rounded-xl",
+                      transactionSummary.net >= 0 ? "bg-blue-50 dark:bg-blue-950" : "bg-amber-50 dark:bg-amber-950"
+                    )}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <TrendingUp className={cn(
+                          "w-3.5 h-3.5",
+                          transactionSummary.net >= 0 ? "text-blue-600" : "text-amber-600"
+                        )} />
+                        <span className={cn(
+                          "text-xs font-medium",
+                          transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
+                        )}>Net</span>
+                      </div>
+                      <p className={cn(
+                        "text-lg font-bold",
+                        transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
+                      )}>
+                        {formatCurrency(transactionSummary.net)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Recent Transactions */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Transactions</p>
+                    {transactionSummary.recentTransactions.map((t) => (
+                      <div key={t.id} className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full shrink-0",
+                            t.amount > 0 ? "bg-emerald-500" : "bg-rose-500"
+                          )} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">{t.description}</p>
+                            <p className="text-xs text-muted-foreground">{t.category_1}</p>
+                          </div>
+                        </div>
+                        <span className={cn(
+                          "text-sm font-bold tabular-nums shrink-0",
+                          t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                        )}>
+                          {formatCurrency(t.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="space-y-4 animate-slide-up opacity-0 stagger-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

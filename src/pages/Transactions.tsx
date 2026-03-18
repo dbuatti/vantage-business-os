@@ -48,7 +48,9 @@ import {
   Repeat,
   Target,
   Store,
-  Flame
+  Flame,
+  Layers,
+  Activity
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -62,6 +64,8 @@ import TransactionBottomBar from '@/components/TransactionBottomBar';
 import MerchantAnalysis from '@/components/MerchantAnalysis';
 import SpendingHeatmap from '@/components/SpendingHeatmap';
 import SavingsGoals from '@/components/SavingsGoals';
+import CategoryBreakdown from '@/components/CategoryBreakdown';
+import TransactionStats from '@/components/TransactionStats';
 
 interface Transaction {
   id?: string;
@@ -426,6 +430,8 @@ const Transactions = () => {
             <TabsList className="rounded-xl flex-wrap h-auto gap-1 p-1">
               <TabsTrigger value="transactions" className="rounded-lg gap-2"><FileText className="w-4 h-4" />Transactions</TabsTrigger>
               <TabsTrigger value="analytics" className="rounded-lg gap-2"><BarChart3 className="w-4 h-4" />Analytics</TabsTrigger>
+              <TabsTrigger value="categories" className="rounded-lg gap-2"><Layers className="w-4 h-4" />Categories</TabsTrigger>
+              <TabsTrigger value="stats" className="rounded-lg gap-2"><Activity className="w-4 h-4" />Stats</TabsTrigger>
               <TabsTrigger value="monthly" className="rounded-lg gap-2"><CalendarDays className="w-4 h-4" />Monthly</TabsTrigger>
               <TabsTrigger value="merchants" className="rounded-lg gap-2"><Store className="w-4 h-4" />Merchants</TabsTrigger>
               <TabsTrigger value="recurring" className="rounded-lg gap-2"><Repeat className="w-4 h-4" />Recurring</TabsTrigger>
@@ -716,6 +722,14 @@ const Transactions = () => {
             <TabsContent value="analytics" className="space-y-4">
               <TransactionCharts transactions={filteredTransactions} />
               <SpendingHeatmap transactions={filteredTransactions} />
+            </TabsContent>
+
+            <TabsContent value="categories" className="space-y-4">
+              <CategoryBreakdown transactions={filteredTransactions} />
+            </TabsContent>
+
+            <TabsContent value="stats" className="space-y-4">
+              <TransactionStats transactions={filteredTransactions} />
             </TabsContent>
 
             <TabsContent value="monthly" className="space-y-4">
