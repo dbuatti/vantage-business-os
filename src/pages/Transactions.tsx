@@ -140,12 +140,34 @@ const Transactions = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('finance_transactions')
-        .select('*')
-        .order('transaction_date', { ascending: false });
-      if (error) throw error;
-      setTransactions(data || []);
+      let allData: Transaction[] = [];
+      let from = 0;
+      const step = 1000;
+      let hasMore = true;
+
+      // Loop to fetch all transactions in chunks of 1000 to bypass default limits
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('finance_transactions')
+          .select('*')
+          .order('transaction_date', { ascending: false })
+          .range(from, from + step - 1);
+
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          if (data.length < step) {
+            hasMore = false;
+          } else {
+            from += step;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      setTransactions(allData);
     } catch (error: any) {
       showError(error.message);
     } finally {
