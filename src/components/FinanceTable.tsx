@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -14,9 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CalculatedEntry, AccountType } from '@/types/finance';
-import { format, differenceInHours } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Trash2, Pencil, Filter, ArrowUpRight, ArrowDownRight, Copy, Clipboard, Repeat } from 'lucide-react';
+import { Trash2, Pencil, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,36 +42,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { showSuccess } from '@/utils/toast';
 
 interface FinanceTableProps {
   entries: CalculatedEntry[];
   onDeleteEntry: (id: string) => void;
   onUpdateEntry: (id: string, updates: { amount: number; creditWas?: number }) => void;
-  onDuplicateEntry: (entry: CalculatedEntry) => void;
 }
 
-const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry, onDuplicateEntry }: FinanceTableProps) => {
+const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTableProps) => {
   const [filter, setFilter] = useState<AccountType | 'All'>('All');
   const [editingEntry, setEditingEntry] = useState<CalculatedEntry | null>(null);
   const [editAmount, setEditAmount] = useState('');
   const [editCreditWas, setEditCreditWas] = useState('');
-  const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
-
-  // Track recently added entries
-  useEffect(() => {
-    const newRecent = new Set<string>();
-    entries.forEach(entry => {
-      const entryDate = new Date(entry.date);
-      if (differenceInHours(new Date(), entryDate) < 24) {
-        newRecent.add(entry.id);
-      }
-    });
-    setRecentlyAdded(newRecent);
-  }, [entries]);
-
-  const savingsCount = entries.filter(e => e.account === 'Savings').length;
-  const creditCount = entries.filter(e => e.account === 'Credit').length;
 
   const filteredEntries = filter === 'All' 
     ? entries 
@@ -101,52 +83,32 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry, onDuplicateEntry 
     setEditingEntry(null);
   };
 
-  const copyToClipboard = (entry: CalculatedEntry) => {
-    const text = [
-      `Date: ${format(new Date(entry.date), 'MMM dd, yyyy')}`,
-      `Account: ${entry.account}`,
-      `Amount: ${formatCurrency(entry.amount)}`,
-      entry.creditWas !== undefined ? `Credit Was: ${formatCurrency(entry.creditWas)}` : null,
-      `Change: ${formatCurrency(entry.difference)}`
-    ].filter(Boolean).join('\n');
-    
-    navigator.clipboard.writeText(text);
-    showSuccess('Entry copied to clipboard');
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 px-1">
         <Filter className="w-4 h-4 text-primary" />
         <Select value={filter} onValueChange={(val) => setFilter(val as AccountType | 'All')}>
-          <SelectTrigger className="w-40 h-9 rounded-xl text-sm">
+          <SelectTrigger className="w-36 h-9 rounded-xl text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All">
-              <span className="flex items-center gap-2">
-                All Accounts
-                <Badge variant="secondary" className="text-xs px-1.5 py-0">{entries.length}</Badge>
-              </span>
-            </SelectItem>
+            <SelectItem value="All">All Accounts</SelectItem>
             <SelectItem value="Savings">
               <span className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500" />
                 Savings
-                <Badge variant="secondary" className="text-xs px-1.5 py-0">{savingsCount}</Badge>
               </span>
             </SelectItem>
             <SelectItem value="Credit">
               <span className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-amber-500" />
                 Credit
-                <Badge variant="secondary" className="text-xs px-1.5 py-0">{creditCount}</Badge>
               </span>
             </SelectItem>
           </SelectContent>
         </Select>
         <span className="text-sm text-muted-foreground">
-          Showing {filteredEntries.length} {filteredEntries.length === 1 ? 'entry' : 'entries'}
+          {filteredEntries.length} {filteredEntries.length === 1 ? 'entry' : 'entries'}
         </span>
       </div>
 
@@ -160,7 +122,7 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry, onDuplicateEntry 
                 <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Amount</TableHead>
                 <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Account</TableHead>
                 <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Change</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground w-32"></TableHead>
+                <TableHead className="font-semibold text-xs uppercase tracking-wider text-muted-foreground w-24"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -180,18 +142,10 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry, onDuplicateEntry 
                 filteredEntries.map((entry, i) => (
                   <TableRow 
                     key={entry.id} 
-                    className={cn(
-                      "hover:bg-muted/30 transition-all group",
-                      recentlyAdded.has(entry.id) && "bg-primary/5"
-                    )}
+                    className="hover:bg-muted/30 transition-colors group"
                   >
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {format(new Date(entry.date), 'MMM dd, yyyy')}
-                        {recentlyAdded.has(entry.id) && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary">New</Badge>
-                        )}
-                      </div>
+                      {format(new Date(entry.date), 'MMM dd, yyyy')}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {entry.creditWas !== undefined ? formatCurrency(entry.creditWas) : "—"}
@@ -227,37 +181,18 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry, onDuplicateEntry 
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary"
-                          onClick={() => onDuplicateEntry(entry)}
-                          title="Duplicate entry"
-                        >
-                          <Repeat className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary"
-                          onClick={() => copyToClipboard(entry)}
-                          title="Copy to clipboard"
-                        >
-                          <Clipboard className="h-3.5 w-3.5" />
-                        </Button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary"
                           onClick={() => openEditDialog(entry)}
-                          title="Edit entry"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950" title="Delete entry">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950">
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </AlertDialogTrigger>
@@ -298,13 +233,7 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry, onDuplicateEntry 
             </div>
           ) : (
             filteredEntries.map((entry) => (
-              <div 
-                key={entry.id} 
-                className={cn(
-                  "p-4 space-y-3 hover:bg-muted/30 transition-colors",
-                  recentlyAdded.has(entry.id) && "bg-primary/5"
-                )}
-              >
+              <div key={entry.id} className="p-4 space-y-3 hover:bg-muted/30 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <Badge 
@@ -318,32 +247,9 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry, onDuplicateEntry 
                     >
                       {entry.account}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(entry.date), 'MMM dd, yyyy')}
-                    </span>
-                    {recentlyAdded.has(entry.id) && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary">New</Badge>
-                    )}
+                    <span className="text-sm text-muted-foreground">{format(new Date(entry.date), 'MMM dd, yyyy')}</span>
                   </div>
-                  <div className="flex items-center gap-0.5">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-lg"
-                      onClick={() => onDuplicateEntry(entry)}
-                      title="Duplicate"
-                    >
-                      <Repeat className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-lg"
-                      onClick={() => copyToClipboard(entry)}
-                      title="Copy"
-                    >
-                      <Clipboard className="h-3.5 w-3.5" />
-                    </Button>
+                  <div className="flex items-center gap-1">
                     <Button 
                       variant="ghost" 
                       size="icon" 

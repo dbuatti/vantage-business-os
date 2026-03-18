@@ -8,18 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinanceEntry, AccountType } from '@/types/finance';
 import { format, startOfMonth, subDays } from 'date-fns';
-import { PlusCircle, Copy, Keyboard, Sparkles, RotateCcw } from 'lucide-react';
+import { PlusCircle, Copy, Keyboard, Sparkles } from 'lucide-react';
 import { showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 
 interface FinanceFormProps {
   onAddEntry: (entry: FinanceEntry) => void;
   lastEntry?: FinanceEntry;
-  duplicateEntry?: FinanceEntry | null;
-  onClearDuplicate?: () => void;
 }
 
-const FinanceForm = ({ onAddEntry, lastEntry, duplicateEntry, onClearDuplicate }: FinanceFormProps) => {
+const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [account, setAccount] = useState<AccountType>(() => {
     const saved = localStorage.getItem('lastAccount');
@@ -31,47 +29,10 @@ const FinanceForm = ({ onAddEntry, lastEntry, duplicateEntry, onClearDuplicate }
   const amountRef = useRef<HTMLInputElement>(null);
   const creditWasRef = useRef<HTMLInputElement>(null);
 
-  // Load draft from localStorage
-  useEffect(() => {
-    const draft = localStorage.getItem('financeFormDraft');
-    if (draft && !duplicateEntry) {
-      try {
-        const parsed = JSON.parse(draft);
-        if (parsed.date) setDate(parsed.date);
-        if (parsed.account) setAccount(parsed.account);
-        if (parsed.amount) setAmount(parsed.amount);
-        if (parsed.creditWas) setCreditWas(parsed.creditWas);
-      } catch (e) {
-        // Invalid draft, ignore
-      }
-    }
-  }, []);
-
-  // Handle duplicate entry
-  useEffect(() => {
-    if (duplicateEntry) {
-      setDate(format(new Date(), 'yyyy-MM-dd'));
-      setAccount(duplicateEntry.account);
-      setAmount(duplicateEntry.amount.toString());
-      if (duplicateEntry.creditWas !== undefined) {
-        setCreditWas(duplicateEntry.creditWas.toString());
-      }
-      onClearDuplicate?.();
-    }
-  }, [duplicateEntry]);
-
-  // Save draft to localStorage
-  useEffect(() => {
-    const draft = { date, account, amount, creditWas };
-    localStorage.setItem('financeFormDraft', JSON.stringify(draft));
-  }, [date, account, amount, creditWas]);
-
-  // Save account preference
   useEffect(() => {
     localStorage.setItem('lastAccount', account);
   }, [account]);
 
-  // Auto-focus
   useEffect(() => {
     if (account === 'Credit') {
       creditWasRef.current?.focus();
@@ -79,14 +40,6 @@ const FinanceForm = ({ onAddEntry, lastEntry, duplicateEntry, onClearDuplicate }
       amountRef.current?.focus();
     }
   }, [account]);
-
-  const clearDraft = () => {
-    localStorage.removeItem('financeFormDraft');
-    setDate(format(new Date(), 'yyyy-MM-dd'));
-    setAmount('');
-    setCreditWas('');
-    showSuccess('Form cleared');
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +60,6 @@ const FinanceForm = ({ onAddEntry, lastEntry, duplicateEntry, onClearDuplicate }
     setAmount('');
     setCreditWas('');
     setJustSubmitted(true);
-    localStorage.removeItem('financeFormDraft');
     setTimeout(() => setJustSubmitted(false), 1500);
     showSuccess(`${account} entry added for ${date}`);
     
@@ -145,8 +97,6 @@ const FinanceForm = ({ onAddEntry, lastEntry, duplicateEntry, onClearDuplicate }
     { label: 'Last week', days: 7 },
   ];
 
-  const hasDraft = amount || creditWas;
-
   return (
     <Card className="w-full bg-card/80 backdrop-blur-sm border shadow-xl animate-slide-up opacity-0 stagger-1">
       <CardHeader className="pb-3">
@@ -157,23 +107,9 @@ const FinanceForm = ({ onAddEntry, lastEntry, duplicateEntry, onClearDuplicate }
             </div>
             Log Weekly Entry
           </CardTitle>
-          <div className="flex items-center gap-2">
-            {hasDraft && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={clearDraft}
-                className="h-7 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <RotateCcw className="w-3 h-3 mr-1" />
-                Clear
-              </Button>
-            )}
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-              <Keyboard className="w-3 h-3" />
-              <span>⌘+Enter</span>
-            </div>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+            <Keyboard className="w-3 h-3" />
+            <span>⌘+Enter</span>
           </div>
         </div>
       </CardHeader>
