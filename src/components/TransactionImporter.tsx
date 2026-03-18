@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { 
   Upload, 
   FileText, 
@@ -11,10 +12,19 @@ import {
   AlertTriangle, 
   Loader2,
   X,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Papa from 'papaparse';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface ImportResult {
   total: number;
@@ -25,21 +35,22 @@ interface ImportResult {
 
 interface TransactionImporterProps {
   onImport: (data: any[]) => Promise<ImportResult>;
-  existingDates?: string[];
+  existingTransactions?: Array<{ transaction_date: string; description: string; amount: number }>;
 }
 
-const TransactionImporter = ({ onImport, existingDates = [] }: TransactionImporterProps) => {
+const TransactionImporter = ({ onImport, existingTransactions = [] }: TransactionImporterProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [fileName, setFileName] = useState<string>('');
+  const [preview, setPreview] = useState<any[] | null>(null);
+  const [parsedData, setParsedData] = useState<any[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const parseCSVDate = (dateStr: string): string => {
     if (!dateStr) return '';
     try {
-      // Handle DD/MM/YYYY format
       const parts = dateStr.split('/');
       if (parts.length === 3) {
         const day = parts[0].padStart(2, '0');
@@ -47,10 +58,7 @@ const TransactionImporter = ({ onImport, existingDates = [] }: TransactionImport
         const year = parts[2];
         return `${year}-${month}-${day}`;
       }
-      // Handle YYYY-MM-DD format
-      if (dateStr.includes('-')) {
-        return dateStr;
-      }
+      if (dateStr.includes('-')) return dateStr;
       return '';
     } catch {
       return '';
@@ -64,25 +72,32 @@ const TransactionImporter = ({ onImport, existingDates = [] }: TransactionImport
     return isNaN(num) ? null : num;
   };
 
+  const generateSignature = (t: { transaction_date: string; description: string; amount: number }) => {
+    return `${t.transaction_date}-${t.description.toLowerCase().trim()}-${t.amount.toFixed(2)}`;
+  };
+
   const processFile = async (file: File) => {
     setFileName(file.name);
-    setImporting(true);
     setProgress(10);
     setResult(null);
+    setPreview(null);
 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: async (results) => {
-        setProgress(30);
+        setProgress(50);
         
         try {
+          const existingSignatures = new Set(
+            existingTransactions.map(t => generateSignature(t))
+          );
+
           const parsedData = results.data.map((row: any) => {
             const credit = parseAmount(row['Credit']);
             const debit = parseAmount(row['Debit']);
             const dollarAmount = parseAmount(row['$']);
             
-            // Calculate amount: use $ column if available, otherwise credit - debit
             let amount = dollarAmount;
             if (amount === null) {
               amount = (credit || 0) - (debit || 0);
@@ -105,25 +120,29 @@ const TransactionImporter = ({ onImport, existingDates = [] }: TransactionImport
               week: parseInt(row['Week']) || 0,
               month_code: row['MONTH']?.trim() || '',
               month_name: row['MONTH (2)']?.trim() || '',
-              mmm_yyyy: row['mmm-yyyy']?.trim() || ''
+              mmm_yyyy: row['mmm-yyyy']?.trim() || '',
+              _isDuplicate: false
             };
           }).filter(t => t.transaction_date && t.description);
 
-          setProgress(60);
+          parsedData.forEach(t => {
+            const sig = generateSignature(t);
+            t._isDuplicate = existingSignatures.has(sig);
+          });
 
-          // Call the import handler
-          const importResult = await onImport(parsedData);
+          setProgress(80);
+          setParsedData(parsedData);
+          setPreview(parsedData.slice(0, 5));
           setProgress(100);
-          setResult(importResult);
+          setImporting(false);
         } catch (error: any) {
+          setImporting(false);
           setResult({
             total: 0,
             imported: 0,
             duplicates: 0,
             errors: 1
           });
-        } finally {
-          setImporting(false);
         }
       },
       error: () => {
@@ -138,11 +157,47 @@ const TransactionImporter = ({ onImport, existingDates = [] }: TransactionImport
     });
   };
 
+  const confirmImport = async () => {
+    if (!parsedData) return;
+    
+    setImporting(true);
+    setProgress(30);
+
+    const newData = parsedData.filter(t => !t._isDuplicate);
+    const duplicates = parsedData.filter(t => t._isDuplicate).length;
+
+    if (newData.length === 0) {
+      setResult({
+        total: parsedData.length,
+        imported: 0,
+        duplicates,
+        errors: 0
+      });
+      setImporting(false);
+      setPreview(null);
+      setParsedData(null);
+      return;
+    }
+
+    setProgress(60);
+    const importResult = await onImport(newData);
+    setProgress(100);
+    
+    setResult({
+      ...importResult,
+      duplicates: duplicates + importResult.duplicates
+    });
+    setImporting(false);
+    setPreview(null);
+    setParsedData(null);
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file && file.name.endsWith('.csv')) {
+      setImporting(true);
       processFile(file);
     }
   };
@@ -150,16 +205,26 @@ const TransactionImporter = ({ onImport, existingDates = [] }: TransactionImport
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImporting(true);
       processFile(file);
     }
   };
 
-  const clearResult = () => {
+  const clearAll = () => {
     setResult(null);
     setFileName('');
+    setPreview(null);
+    setParsedData(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(val);
   };
 
   return (
@@ -170,93 +235,152 @@ const TransactionImporter = ({ onImport, existingDates = [] }: TransactionImport
           Import Transactions
         </CardTitle>
         <CardDescription>
-          Upload a CSV file from your bank or financial app
+          Upload a CSV file — duplicates are automatically detected
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Drop Zone */}
-        <div
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-          className={cn(
-            "relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer",
-            isDragging ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50 hover:bg-muted/50",
-            importing && "pointer-events-none opacity-50"
-          )}
-          onClick={() => !importing && fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileSelect}
-            className="hidden"
-            disabled={importing}
-          />
-          
-          {importing ? (
-            <div className="space-y-4">
-              <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
-              <div className="space-y-2">
-                <p className="font-medium">Importing {fileName}...</p>
-                <Progress value={progress} className="h-2 w-48 mx-auto" />
+        {!preview && !result && (
+          <div
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={cn(
+              "relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer",
+              isDragging ? "border-primary bg-primary/5" : "border-muted hover:border-primary/50 hover:bg-muted/50",
+              importing && "pointer-events-none opacity-50"
+            )}
+            onClick={() => !importing && fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileSelect}
+              className="hidden"
+              disabled={importing}
+            />
+            
+            {importing ? (
+              <div className="space-y-4">
+                <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
+                <div className="space-y-2">
+                  <p className="font-medium">Processing {fileName}...</p>
+                  <Progress value={progress} className="h-2 w-48 mx-auto" />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-muted flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="font-medium">Drop your CSV file here</p>
+                  <p className="text-sm text-muted-foreground">or click to browse</p>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <FileText className="w-3 h-3" />
+                  <span>Supports: Date, Description, Credit, Debit, Category, Work columns</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {preview && parsedData && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-primary" />
+                <span className="font-medium">Preview: {fileName}</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-emerald-600 font-medium">
+                  {parsedData.filter(t => !t._isDuplicate).length} new
+                </span>
+                <span className="text-amber-600 font-medium">
+                  {parsedData.filter(t => t._isDuplicate).length} duplicates
+                </span>
               </div>
             </div>
-          ) : result ? (
-            <div className="space-y-4">
-              {result.errors > 0 ? (
-                <AlertTriangle className="w-10 h-10 mx-auto text-amber-500" />
-              ) : (
-                <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500" />
-              )}
-              <div className="space-y-1">
-                <p className="font-bold text-lg">Import Complete</p>
-                <p className="text-sm text-muted-foreground">{fileName}</p>
-              </div>
-              <div className="flex justify-center gap-4 text-sm">
-                <span className="text-emerald-600 font-medium">{result.imported} imported</span>
-                {result.duplicates > 0 && (
-                  <span className="text-amber-600 font-medium">{result.duplicates} duplicates</span>
-                )}
-                {result.errors > 0 && (
-                  <span className="text-rose-600 font-medium">{result.errors} errors</span>
-                )}
-              </div>
-              <Button variant="ghost" size="sm" onClick={clearResult} className="rounded-xl">
+
+            <div className="rounded-xl border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="text-xs">Date</TableHead>
+                    <TableHead className="text-xs">Description</TableHead>
+                    <TableHead className="text-xs">Category</TableHead>
+                    <TableHead className="text-xs text-right">Amount</TableHead>
+                    <TableHead className="text-xs w-20">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {preview.map((t, i) => (
+                    <TableRow key={i} className={cn(t._isDuplicate && "opacity-50 bg-amber-50/50")}>
+                      <TableCell className="text-sm">{t.transaction_date}</TableCell>
+                      <TableCell className="text-sm max-w-[200px] truncate">{t.description}</TableCell>
+                      <TableCell className="text-sm">{t.category_1}</TableCell>
+                      <TableCell className="text-sm text-right font-medium">{formatCurrency(t.amount)}</TableCell>
+                      <TableCell>
+                        {t._isDuplicate ? (
+                          <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                            Skip
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                            New
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {parsedData.length > 5 && (
+              <p className="text-xs text-muted-foreground text-center">
+                Showing 5 of {parsedData.length} rows
+              </p>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={clearAll} className="rounded-xl">
                 <X className="w-4 h-4 mr-1" />
-                Clear
+                Cancel
+              </Button>
+              <Button onClick={confirmImport} className="rounded-xl" disabled={importing}>
+                {importing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Import {parsedData.filter(t => !t._isDuplicate).length} Transactions
               </Button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-muted flex items-center justify-center">
-                <Upload className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="font-medium">Drop your CSV file here</p>
-                <p className="text-sm text-muted-foreground">or click to browse</p>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <FileText className="w-3 h-3" />
-                <span>Supports: Date, Description, Credit, Debit, Category, Work columns</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Format Help */}
-        <div className="bg-muted/50 rounded-xl p-4 text-sm">
-          <p className="font-medium mb-2">Expected CSV Format:</p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground text-xs">
-            <span>• Date (DD/MM/YYYY)</span>
-            <span>• Description</span>
-            <span>• Credit / Debit</span>
-            <span>• Category 1 / Category 2</span>
-            <span>• Account</span>
-            <span>• Work (Yes/No)</span>
           </div>
-        </div>
+        )}
+
+        {result && (
+          <div className="text-center space-y-4 py-4">
+            {result.errors > 0 ? (
+              <AlertTriangle className="w-10 h-10 mx-auto text-amber-500" />
+            ) : (
+              <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500" />
+            )}
+            <div className="space-y-1">
+              <p className="font-bold text-lg">Import Complete</p>
+            </div>
+            <div className="flex justify-center gap-6 text-sm">
+              <span className="text-emerald-600 font-medium">{result.imported} imported</span>
+              {result.duplicates > 0 && (
+                <span className="text-amber-600 font-medium">{result.duplicates} skipped</span>
+              )}
+              {result.errors > 0 && (
+                <span className="text-rose-600 font-medium">{result.errors} errors</span>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={clearAll} className="rounded-xl">
+              Import Another File
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
