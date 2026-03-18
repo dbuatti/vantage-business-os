@@ -8,12 +8,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Keyboard } from 'lucide-react';
+import { Keyboard, Command } from 'lucide-react';
 
 const shortcuts = [
   { keys: ['⌘', 'Enter'], description: 'Submit form' },
+  { keys: ['⌘', 'K'], description: 'Focus search' },
   { keys: ['?'], description: 'Show keyboard shortcuts' },
-  { keys: ['Esc'], description: 'Close dialogs' },
+  { keys: ['Esc'], description: 'Close dialogs / Clear search' },
 ];
 
 const KeyboardShortcuts = () => {
@@ -21,7 +22,6 @@ const KeyboardShortcuts = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Show shortcuts with ?
       if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const target = e.target as HTMLElement;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
@@ -39,12 +39,11 @@ const KeyboardShortcuts = () => {
     <>
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={() => setOpen(true)}
-        className="h-8 text-muted-foreground hover:text-foreground"
+        className="rounded-xl text-muted-foreground hover:text-foreground"
       >
-        <Keyboard className="w-4 h-4 mr-1.5" />
-        <span className="text-xs">Shortcuts</span>
+        <Keyboard className="w-4 h-4" />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

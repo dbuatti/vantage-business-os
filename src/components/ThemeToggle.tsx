@@ -27,15 +27,15 @@ const ThemeToggle = () => {
 
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="icon"
       onClick={() => setIsDark(!isDark)}
-      className="border-indigo-100 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-900"
+      className="rounded-xl text-muted-foreground hover:text-foreground"
     >
       {isDark ? (
-        <Sun className="h-4 w-4 text-amber-500" />
+        <Sun className="h-4 w-4" />
       ) : (
-        <Moon className="h-4 w-4 text-indigo-600" />
+        <Moon className="h-4 h-4" />
       )}
     </Button>
   );

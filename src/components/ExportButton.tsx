@@ -9,9 +9,10 @@ import { showSuccess } from '@/utils/toast';
 
 interface ExportButtonProps {
   entries: CalculatedEntry[];
+  label?: string;
 }
 
-const ExportButton = ({ entries }: ExportButtonProps) => {
+const ExportButton = ({ entries, label = "Export CSV" }: ExportButtonProps) => {
   const exportToCSV = () => {
     if (entries.length === 0) return;
 
@@ -41,18 +42,22 @@ const ExportButton = ({ entries }: ExportButtonProps) => {
     link.click();
     document.body.removeChild(link);
     
-    showSuccess('CSV exported successfully!');
+    showSuccess(`Exported ${entries.length} entries to CSV`);
   };
 
   return (
     <Button 
       variant="outline" 
+      size="sm"
       onClick={exportToCSV}
       disabled={entries.length === 0}
-      className="flex items-center gap-2 border-indigo-100 hover:bg-indigo-50 text-indigo-600"
+      className="rounded-xl gap-2"
     >
       <Download className="w-4 h-4" />
-      Export CSV
+      <span className="hidden sm:inline">{label}</span>
+      {entries.length > 0 && (
+        <span className="text-xs text-muted-foreground">({entries.length})</span>
+      )}
     </Button>
   );
 };

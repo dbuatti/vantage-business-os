@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CalculatedEntry } from '@/types/finance';
-import { Calendar, Hash, TrendingUp, Percent } from 'lucide-react';
+import { Calendar, Hash, TrendingUp, Percent, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface QuickStatsProps {
@@ -25,9 +25,12 @@ const QuickStats = ({ entries }: QuickStatsProps) => {
     ? Math.round((totalPositive / (totalPositive + totalNegative)) * 100) 
     : 0;
 
+  const totalChange = entries.reduce((sum, e) => sum + e.difference, 0);
+
   const stats = [
     { icon: Hash, label: `${entries.length} entries`, show: true },
     { icon: Calendar, label: `${format(new Date(oldestDate), 'MMM yy')} — ${format(new Date(newestDate), 'MMM yy')}`, show: true },
+    { icon: totalChange >= 0 ? ArrowUpRight : ArrowDownRight, label: `${totalChange >= 0 ? '+' : ''}$${Math.abs(totalChange).toLocaleString()} total`, show: entries.length > 1 },
     { icon: Percent, label: `${positiveRate}% positive`, show: entries.length > 1 },
   ].filter(s => s.show);
 
