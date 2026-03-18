@@ -46,8 +46,8 @@ const Login = () => {
                     brandAccent: '#4338ca',
                   },
                   radii: {
-                    buttonRadius: '12px',
-                    inputRadius: '12px',
+                    borderRadiusButton: '12px',
+                    inputBorderRadius: '12px',
                   }
                 }
               }
