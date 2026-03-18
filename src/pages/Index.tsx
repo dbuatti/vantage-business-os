@@ -78,6 +78,24 @@ const Index = () => {
     }
   };
 
+  const updateEntry = async (id: string, updates: { amount: number; creditWas?: number }) => {
+    try {
+      const { error } = await supabase
+        .from('finance_entries')
+        .update({
+          amount: updates.amount,
+          credit_was: updates.creditWas
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchEntries();
+      showSuccess('Entry updated successfully!');
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
+
   const deleteEntry = async (id: string) => {
     try {
       const { error } = await supabase
@@ -116,6 +134,8 @@ const Index = () => {
       };
     });
 
+  const lastEntry = entries[0];
+
   if (authLoading || (session && loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
@@ -153,13 +173,17 @@ const Index = () => {
         <FinanceSummary entries={calculatedEntries} />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <FinanceForm onAddEntry={addEntry} />
+          <FinanceForm onAddEntry={addEntry} lastEntry={lastEntry} />
           <FinanceChart entries={calculatedEntries} />
         </div>
 
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-indigo-900 px-1">History</h2>
-          <FinanceTable entries={calculatedEntries} onDeleteEntry={deleteEntry} />
+          <FinanceTable 
+            entries={calculatedEntries} 
+            onDeleteEntry={deleteEntry}
+            onUpdateEntry={updateEntry}
+          />
         </div>
 
         <footer className="pt-12">
