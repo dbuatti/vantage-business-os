@@ -40,23 +40,23 @@ import {
   ChevronRight,
   ArrowUpDown,
   BarChart3,
-  Calendar,
-  Tag,
-  CreditCard,
   X,
   Filter,
   ChevronsUpDown,
   CheckSquare,
-  Square,
-  MoreHorizontal,
-  Eye,
-  EyeOff
+  CalendarDays,
+  Repeat,
+  Target
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import { format, subDays, startOfMonth, endOfMonth, subMonths, isWithinInterval, parseISO } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TransactionImporter from '@/components/TransactionImporter';
 import TransactionCharts from '@/components/TransactionCharts';
+import MonthlyComparison from '@/components/MonthlyComparison';
+import BudgetTracker from '@/components/BudgetTracker';
+import RecurringTransactions from '@/components/RecurringTransactions';
+import TransactionBottomBar from '@/components/TransactionBottomBar';
 
 interface Transaction {
   id?: string;
@@ -94,7 +94,6 @@ const Transactions = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
@@ -103,13 +102,11 @@ const Transactions = () => {
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
 
-  // Edit dialog
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editForm, setEditForm] = useState({
     description: '', amount: '', category_1: '', category_2: '', is_work: false, notes: ''
   });
 
-  // Bulk delete dialog
   const [showBulkDelete, setShowBulkDelete] = useState(false);
 
   useEffect(() => {
@@ -342,7 +339,7 @@ const Transactions = () => {
   if (authLoading) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
@@ -421,9 +418,12 @@ const Transactions = () => {
         {/* Main Content */}
         {transactions.length > 0 && (
           <Tabs defaultValue="transactions" className="space-y-4">
-            <TabsList className="rounded-xl">
+            <TabsList className="rounded-xl flex-wrap h-auto gap-1 p-1">
               <TabsTrigger value="transactions" className="rounded-lg gap-2"><FileText className="w-4 h-4" />Transactions</TabsTrigger>
               <TabsTrigger value="analytics" className="rounded-lg gap-2"><BarChart3 className="w-4 h-4" />Analytics</TabsTrigger>
+              <TabsTrigger value="monthly" className="rounded-lg gap-2"><CalendarDays className="w-4 h-4" />Monthly</TabsTrigger>
+              <TabsTrigger value="recurring" className="rounded-lg gap-2"><Repeat className="w-4 h-4" />Recurring</TabsTrigger>
+              <TabsTrigger value="budgets" className="rounded-lg gap-2"><Target className="w-4 h-4" />Budgets</TabsTrigger>
             </TabsList>
 
             <TabsContent value="transactions" className="space-y-4">
@@ -473,7 +473,6 @@ const Transactions = () => {
                     </div>
                   </div>
 
-                  {/* Expanded Filters */}
                   {showFilters && (
                     <div className="flex flex-wrap items-end gap-4 pt-2 border-t animate-fade-in">
                       <div className="space-y-1.5">
@@ -628,7 +627,6 @@ const Transactions = () => {
                                 </div>
                               </TableCell>
                             </TableRow>
-                            {/* Expanded Details Row */}
                             {expandedId === t.id && (
                               <TableRow className="bg-muted/20">
                                 <TableCell colSpan={7} className="p-4">
@@ -665,12 +663,6 @@ const Transactions = () => {
                                       <p className="text-xs text-muted-foreground mb-1">Week / Month</p>
                                       <p className="font-medium">Week {t.week} · {t.mmm_yyyy || t.month_name}</p>
                                     </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Type</p>
-                                      <Badge className={cn("rounded-lg", t.is_work ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700")}>
-                                        {t.is_work ? 'Work' : 'Personal'}
-                                      </Badge>
-                                    </div>
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -682,7 +674,6 @@ const Transactions = () => {
                   </Table>
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
                     <p className="text-sm text-muted-foreground">
@@ -717,6 +708,18 @@ const Transactions = () => {
 
             <TabsContent value="analytics" className="space-y-4">
               <TransactionCharts transactions={filteredTransactions} />
+            </TabsContent>
+
+            <TabsContent value="monthly" className="space-y-4">
+              <MonthlyComparison transactions={filteredTransactions} />
+            </TabsContent>
+
+            <TabsContent value="recurring" className="space-y-4">
+              <RecurringTransactions transactions={filteredTransactions} />
+            </TabsContent>
+
+            <TabsContent value="budgets" className="space-y-4">
+              <BudgetTracker transactions={filteredTransactions} />
             </TabsContent>
           </Tabs>
         )}
@@ -781,6 +784,19 @@ const Transactions = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Bottom Summary Bar */}
+      {transactions.length > 0 && (
+        <TransactionBottomBar
+          totalCount={transactions.length}
+          filteredCount={filteredTransactions.length}
+          totalIncome={summaryStats.income}
+          totalExpenses={summaryStats.expenses}
+          net={summaryStats.net}
+          selectedCount={selectedStats.count}
+          selectedTotal={selectedStats.total}
+        />
+      )}
     </div>
   );
 };
