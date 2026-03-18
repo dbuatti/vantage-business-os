@@ -76,6 +76,54 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
     return `${t.transaction_date}-${t.description.toLowerCase().trim()}-${t.amount.toFixed(2)}`;
   };
 
+  // Derive mmm-yyyy from a date string like 2022-07-01
+  const deriveMonthYear = (dateStr: string): string => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[date.getMonth()]} ${date.getFullYear()}`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Derive month_code (YYYYMM) from date
+  const deriveMonthCode = (dateStr: string): string => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      return `${date.getFullYear()}${month}`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Derive month_name from date
+  const deriveMonthName = (dateStr: string): string => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'long' });
+    } catch {
+      return '';
+    }
+  };
+
+  // Derive week number from date
+  const deriveWeek = (dateStr: string): number => {
+    if (!dateStr) return 0;
+    try {
+      const date = new Date(dateStr);
+      const startOfYear = new Date(date.getFullYear(), 0, 1);
+      const days = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+      return Math.ceil((days + startOfYear.getDay() + 1) / 7);
+    } catch {
+      return 0;
+    }
+  };
+
   const processFile = async (file: File) => {
     setFileName(file.name);
     setProgress(10);
@@ -94,33 +142,43 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
           );
 
           const parsedData = results.data.map((row: any) => {
-            const credit = parseAmount(row['Credit']);
-            const debit = parseAmount(row['Debit']);
-            const dollarAmount = parseAmount(row['$']);
+            // Handle different column name variations across years
+            const credit = parseAmount(row['Credit'] || row['credit']);
+            const debit = parseAmount(row['Debit'] || row['debit']);
+            const dollarAmount = parseAmount(row['$'] || row['Amount']);
             
             let amount = dollarAmount;
             if (amount === null) {
               amount = (credit || 0) - (debit || 0);
             }
 
-            const transactionDate = parseCSVDate(row['Date']);
+            const transactionDate = parseCSVDate(row['Date'] || row['date']);
             
+            // Handle Work column - default to false if missing
+            const workValue = (row['Work'] || row['work'] || '').toLowerCase().trim();
+            const isWork = workValue === 'yes' || workValue === 'true' || workValue === '1';
+            
+            // Derive month info from date if MONTH column is missing
+            const monthCode = row['MONTH'] || row['month'] || deriveMonthCode(transactionDate);
+            const mmmYyyy = row['mmm-yyyy'] || row['mmm_yyyy'] || deriveMonthYear(transactionDate);
+            const monthName = row['MONTH (2)'] || deriveMonthName(transactionDate);
+
             return {
               transaction_date: transactionDate,
-              description: row['Description']?.trim() || '',
+              description: (row['Description'] || row['description'] || '').trim(),
               credit: credit,
               debit: debit,
               amount: amount,
-              account_identifier: row['Account']?.trim() || '',
-              account_label: row['Account_1']?.trim() || row['Account']?.trim() || '',
-              category_1: row['Category 1']?.trim() || '',
-              category_2: row['Category 2']?.trim() || '',
-              is_work: row['Work']?.toLowerCase()?.trim() === 'yes',
-              notes: row['Notes']?.trim() || '',
-              week: parseInt(row['Week']) || 0,
-              month_code: row['MONTH']?.trim() || '',
-              month_name: row['MONTH (2)']?.trim() || '',
-              mmm_yyyy: row['mmm-yyyy']?.trim() || '',
+              account_identifier: (row['Account'] || row['account'] || '').trim(),
+              account_label: (row['Account_1'] || row['Account 1'] || row['Account'] || row['account'] || '').trim(),
+              category_1: (row['Category 1'] || row['Category 1'] || row['category_1'] || '').trim(),
+              category_2: (row['Category 2'] || row['Category 2'] || row['category_2'] || '').trim(),
+              is_work: isWork,
+              notes: (row['Notes'] || row['notes'] || '').trim(),
+              week: parseInt(row['Week'] || row['week']) || deriveWeek(transactionDate),
+              month_code: monthCode,
+              month_name: monthName,
+              mmm_yyyy: mmmYyyy,
               _isDuplicate: false
             };
           }).filter(t => t.transaction_date && t.description);
@@ -235,7 +293,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
           Import Transactions
         </CardTitle>
         <CardDescription>
-          Upload a CSV file — duplicates are automatically detected
+          Upload a CSV file — supports 2022, 2023, and 2024 formats. Duplicates are automatically detected.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
