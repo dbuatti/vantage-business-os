@@ -109,9 +109,10 @@ const MonthlyComparison = ({ transactions }: MonthlyComparisonProps) => {
     }).format(val);
   };
 
-  const getChangePercent = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return Math.round(((current - previous) / Math.abs(previous)) * 100);
+  const formatChange = (val: number) => {
+    const abs = Math.abs(val);
+    const sign = val >= 0 ? '+' : '-';
+    return `${sign}${formatCurrency(abs)}`;
   };
 
   if (monthlyData.length < 2) {
@@ -137,7 +138,7 @@ const MonthlyComparison = ({ transactions }: MonthlyComparisonProps) => {
             <CalendarDays className="w-5 h-5 text-primary" />
             Monthly Comparison
           </CardTitle>
-          <CardDescription>Side-by-side comparison of your monthly finances</CardDescription>
+          <CardDescription>Side-by-side comparison of your monthly finances ({monthlyData.length} months)</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -300,5 +301,10 @@ const MonthlyComparison = ({ transactions }: MonthlyComparisonProps) => {
     </div>
   );
 };
+
+function getChangePercent(current: number, previous: number) {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / Math.abs(previous)) * 100);
+}
 
 export default MonthlyComparison;
