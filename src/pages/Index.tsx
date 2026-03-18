@@ -67,14 +67,33 @@ const Index = () => {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('finance_entries')
-        .select('*')
-        .order('date', { ascending: false });
+      let allData: any[] = [];
+      let from = 0;
+      const step = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('finance_entries')
+          .select('*')
+          .order('date', { ascending: false })
+          .range(from, from + step - 1);
+
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          if (data.length < step) {
+            hasMore = false;
+          } else {
+            from += step;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
       
-      const mappedData = (data || []).map(item => ({
+      const mappedData = allData.map(item => ({
         id: item.id,
         date: item.date,
         creditWas: item.credit_was,
@@ -95,24 +114,42 @@ const Index = () => {
     if (!session) return;
     setLoadingTransactions(true);
     try {
-      const { data, error } = await supabase
-        .from('finance_transactions')
-        .select('id, description, amount, transaction_date, category_1')
-        .order('transaction_date', { ascending: false })
-        .limit(50);
+      let allTransactions: any[] = [];
+      let from = 0;
+      const step = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
+      // Fetch all transactions to get accurate totals for the summary card
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('finance_transactions')
+          .select('id, description, amount, transaction_date, category_1')
+          .order('transaction_date', { ascending: false })
+          .range(from, from + step - 1);
 
-      const transactions = data || [];
-      const totalIncome = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-      const totalExpenses = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allTransactions = [...allTransactions, ...data];
+          if (data.length < step) {
+            hasMore = false;
+          } else {
+            from += step;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const totalIncome = allTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+      const totalExpenses = allTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
 
       setTransactionSummary({
-        totalTransactions: transactions.length,
+        totalTransactions: allTransactions.length,
         totalIncome,
         totalExpenses,
         net: totalIncome - totalExpenses,
-        recentTransactions: transactions.slice(0, 5)
+        recentTransactions: allTransactions.slice(0, 5)
       });
     } catch (error: any) {
       // Silently fail for transaction summary

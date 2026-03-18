@@ -24,8 +24,6 @@ import {
 } from "@/components/ui/select";
 import { 
   ArrowLeft, 
-  FileText, 
-  Download, 
   Printer, 
   CheckCircle2, 
   AlertCircle, 
@@ -34,9 +32,10 @@ import {
   TrendingDown,
   Calculator,
   Search,
-  Info
+  Info,
+  Download
 } from 'lucide-react';
-import { format, startOfYear, endOfYear, isWithinInterval, parseISO, subYears } from 'date-fns';
+import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -71,12 +70,33 @@ const AccountantReport = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('finance_transactions')
-        .select('*')
-        .order('transaction_date', { ascending: false });
-      if (error) throw error;
-      setTransactions(data || []);
+      let allData: Transaction[] = [];
+      let from = 0;
+      const step = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('finance_transactions')
+          .select('*')
+          .order('transaction_date', { ascending: false })
+          .range(from, from + step - 1);
+
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          if (data.length < step) {
+            hasMore = false;
+          } else {
+            from += step;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      setTransactions(allData);
     } catch (error: any) {
       showError(error.message);
     } finally {
