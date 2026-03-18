@@ -14,14 +14,14 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { SummarySkeleton, FormSkeleton, TableSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, LogOut, Loader2 } from 'lucide-react';
+import { PiggyBank, LogOut, Loader2, ListFilter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { isWithinInterval, parseISO } from 'date-fns';
 
 interface DateRange {
@@ -219,6 +219,12 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button variant="outline" size="sm" asChild className="rounded-xl gap-2">
+              <Link to="/transactions">
+                <ListFilter className="w-4 h-4" />
+                <span className="hidden sm:inline">Detailed History</span>
+              </Link>
+            </Button>
             <ExportButton entries={sortedEntries} />
             <Button 
               variant="outline" 
