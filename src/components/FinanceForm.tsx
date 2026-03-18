@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinanceEntry, AccountType } from '@/types/finance';
 import { format, startOfMonth, subDays } from 'date-fns';
-import { PlusCircle, Copy } from 'lucide-react';
+import { PlusCircle, Copy, Keyboard } from 'lucide-react';
 import { showSuccess } from '@/utils/toast';
 
 interface FinanceFormProps {
@@ -18,9 +18,28 @@ interface FinanceFormProps {
 
 const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [account, setAccount] = useState<AccountType>('Savings');
+  const [account, setAccount] = useState<AccountType>(() => {
+    const saved = localStorage.getItem('lastAccount');
+    return (saved as AccountType) || 'Savings';
+  });
   const [amount, setAmount] = useState('');
   const [creditWas, setCreditWas] = useState('');
+  const amountRef = useRef<HTMLInputElement>(null);
+  const creditWasRef = useRef<HTMLInputElement>(null);
+
+  // Save account preference
+  useEffect(() => {
+    localStorage.setItem('lastAccount', account);
+  }, [account]);
+
+  // Auto-focus on amount field when account changes
+  useEffect(() => {
+    if (account === 'Credit') {
+      creditWasRef.current?.focus();
+    } else {
+      amountRef.current?.focus();
+    }
+  }, [account]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +60,15 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
     setAmount('');
     setCreditWas('');
     showSuccess(`${account} entry added for ${date}`);
+    
+    // Re-focus for quick entry
+    setTimeout(() => {
+      if (account === 'Credit') {
+        creditWasRef.current?.focus();
+      } else {
+        amountRef.current?.focus();
+      }
+    }, 100);
   };
 
   const handleCopyLast = () => {
@@ -53,6 +81,14 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
     showSuccess('Copied values from last entry');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      const form = e.currentTarget.closest('form');
+      if (form) form.requestSubmit();
+    }
+  };
+
   const quickDates = [
     { label: 'Today', days: 0 },
     { label: 'Yesterday', days: 1 },
@@ -62,14 +98,18 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
 
   return (
     <Card className="w-full bg-white/50 backdrop-blur-sm border-indigo-100 shadow-xl">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
           <PlusCircle className="w-5 h-5" />
           Log Weekly Entry
         </CardTitle>
+        <div className="flex items-center gap-1 text-xs text-gray-400">
+          <Keyboard className="w-3 h-3" />
+          <span>⌘+Enter to submit</span>
+        </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="date">Date</Label>
@@ -113,6 +153,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
               <div className="space-y-2">
                 <Label htmlFor="creditWas">Credit Was ($)</Label>
                 <Input 
+                  ref={creditWasRef}
                   id="creditWas" 
                   type="number" 
                   step="0.01"
@@ -127,6 +168,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
             <div className="space-y-2">
               <Label htmlFor="amount">Amount ($)</Label>
               <Input 
+                ref={amountRef}
                 id="amount" 
                 type="number" 
                 step="0.01"

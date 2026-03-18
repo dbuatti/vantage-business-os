@@ -6,11 +6,15 @@ import FinanceTable from '@/components/FinanceTable';
 import FinanceSummary from '@/components/FinanceSummary';
 import FinanceChart from '@/components/FinanceChart';
 import ExportButton from '@/components/ExportButton';
+import QuickStats from '@/components/QuickStats';
+import { SummarySkeleton, FormSkeleton, TableSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { PiggyBank, LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate } from 'react-router-dom';
@@ -136,7 +140,7 @@ const Index = () => {
 
   const lastEntry = entries[0];
 
-  if (authLoading || (session && loading)) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
@@ -170,21 +174,44 @@ const Index = () => {
           </div>
         </header>
 
-        <FinanceSummary entries={calculatedEntries} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <FinanceForm onAddEntry={addEntry} lastEntry={lastEntry} />
-          <FinanceChart entries={calculatedEntries} />
-        </div>
+        {loading ? (
+          <>
+            <SummarySkeleton />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <FormSkeleton />
+              <Card className="bg-white/50 backdrop-blur-sm border-indigo-100 shadow-xl">
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-64 w-full" />
+                </CardContent>
+              </Card>
+            </div>
+            <TableSkeleton />
+          </>
+        ) : (
+          <>
+            <FinanceSummary entries={calculatedEntries} />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <FinanceForm onAddEntry={addEntry} lastEntry={lastEntry} />
+              <FinanceChart entries={calculatedEntries} />
+            </div>
 
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-indigo-900 px-1">History</h2>
-          <FinanceTable 
-            entries={calculatedEntries} 
-            onDeleteEntry={deleteEntry}
-            onUpdateEntry={updateEntry}
-          />
-        </div>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+                <h2 className="text-xl font-bold text-indigo-900">History</h2>
+                <QuickStats entries={calculatedEntries} />
+              </div>
+              <FinanceTable 
+                entries={calculatedEntries} 
+                onDeleteEntry={deleteEntry}
+                onUpdateEntry={updateEntry}
+              />
+            </div>
+          </>
+        )}
 
         <footer className="pt-12">
           <MadeWithDyad />
