@@ -307,6 +307,11 @@ const Transactions = () => {
     });
   }, [transactions, searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount, sortField, sortOrder]);
 
+  // Analytics transactions exclude 'Account' category (internal transfers)
+  const analyticsTransactions = useMemo(() => {
+    return filteredTransactions.filter(t => t.category_1 !== 'Account');
+  }, [filteredTransactions]);
+
   const paginatedTransactions = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredTransactions.slice(start, start + ITEMS_PER_PAGE);
@@ -320,12 +325,12 @@ const Transactions = () => {
   }, [transactions]);
 
   const summaryStats = useMemo(() => {
-    const income = filteredTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-    const expenses = filteredTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const workIncome = filteredTransactions.filter(t => t.is_work && t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-    const workExpenses = filteredTransactions.filter(t => t.is_work && t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    return { income, expenses, net: income - expenses, workIncome, workExpenses, workNet: workIncome - workExpenses, totalCount: filteredTransactions.length };
-  }, [filteredTransactions]);
+    const income = analyticsTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+    const expenses = analyticsTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const workIncome = analyticsTransactions.filter(t => t.is_work && t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+    const workExpenses = analyticsTransactions.filter(t => t.is_work && t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    return { income, expenses, net: income - expenses, workIncome, workExpenses, workNet: workIncome - workExpenses, totalCount: analyticsTransactions.length };
+  }, [analyticsTransactions]);
 
   const selectedStats = useMemo(() => {
     const selected = filteredTransactions.filter(t => selectedIds.has(t.id!));
@@ -400,8 +405,8 @@ const Transactions = () => {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        {transactions.length > 0 && (
+        {/* Summary Cards - uses analyticsTransactions (excludes Account) */}
+        {analyticsTransactions.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
             <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
@@ -440,7 +445,7 @@ const Transactions = () => {
                   <div><p className="text-sm font-medium text-white/80">Transactions</p><p className="text-2xl font-bold">{summaryStats.totalCount}</p></div>
                   <div className="p-2 bg-white/20 rounded-xl"><FileText className="w-5 h-5" /></div>
                 </div>
-                <p className="text-xs text-white/70 mt-2">{transactions.filter(t => t.is_work).length} work-related</p>
+                <p className="text-xs text-white/70 mt-2">{analyticsTransactions.filter(t => t.is_work).length} work-related</p>
               </CardContent>
             </Card>
           </div>
@@ -746,9 +751,10 @@ const Transactions = () => {
               </Card>
             </TabsContent>
 
+            {/* All analytics tabs use analyticsTransactions (excludes Account category) */}
             <TabsContent value="analytics" className="space-y-4">
-              <TransactionCharts transactions={filteredTransactions} />
-              <SpendingHeatmap transactions={filteredTransactions} />
+              <TransactionCharts transactions={analyticsTransactions} />
+              <SpendingHeatmap transactions={analyticsTransactions} />
             </TabsContent>
 
             <TabsContent value="groups" className="space-y-4">
@@ -760,37 +766,37 @@ const Transactions = () => {
 
             <TabsContent value="reports" className="space-y-4">
               <MonthlyGroupReport 
-                transactions={filteredTransactions} 
+                transactions={analyticsTransactions} 
                 categoryGroups={categoryGroups}
               />
             </TabsContent>
 
             <TabsContent value="categories" className="space-y-4">
-              <CategoryBreakdown transactions={filteredTransactions} />
+              <CategoryBreakdown transactions={analyticsTransactions} />
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-4">
-              <TransactionStats transactions={filteredTransactions} />
+              <TransactionStats transactions={analyticsTransactions} />
             </TabsContent>
 
             <TabsContent value="monthly" className="space-y-4">
-              <MonthlyComparison transactions={filteredTransactions} />
+              <MonthlyComparison transactions={analyticsTransactions} />
             </TabsContent>
 
             <TabsContent value="merchants" className="space-y-4">
-              <MerchantAnalysis transactions={filteredTransactions} />
+              <MerchantAnalysis transactions={analyticsTransactions} />
             </TabsContent>
 
             <TabsContent value="recurring" className="space-y-4">
-              <RecurringTransactions transactions={filteredTransactions} />
+              <RecurringTransactions transactions={analyticsTransactions} />
             </TabsContent>
 
             <TabsContent value="budgets" className="space-y-4">
-              <BudgetTracker transactions={filteredTransactions} />
+              <BudgetTracker transactions={analyticsTransactions} />
             </TabsContent>
 
             <TabsContent value="goals" className="space-y-4">
-              <SavingsGoals transactions={filteredTransactions} />
+              <SavingsGoals transactions={analyticsTransactions} />
             </TabsContent>
           </Tabs>
         )}
