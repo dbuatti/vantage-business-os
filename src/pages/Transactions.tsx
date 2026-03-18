@@ -170,12 +170,18 @@ const Transactions = () => {
   const handleImport = async (parsedData: any[]) => {
     if (!session) return { total: 0, imported: 0, duplicates: 0, errors: 1 };
     try {
-      const dataWithUserId = parsedData.map(row => ({ ...row, user_id: session.user.id }));
-      const { error } = await supabase.from('finance_transactions').insert(dataWithUserId);
+      // Strip internal _isDuplicate property before sending to Supabase
+      const dataToInsert = parsedData.map(({ _isDuplicate, ...rest }) => ({
+        ...rest,
+        user_id: session.user.id
+      }));
+
+      const { error } = await supabase.from('finance_transactions').insert(dataToInsert);
       if (error) throw error;
       await fetchTransactions();
       return { total: parsedData.length, imported: parsedData.length, duplicates: 0, errors: 0 };
     } catch (error: any) {
+      console.error("Import error:", error);
       return { total: parsedData.length, imported: 0, duplicates: 0, errors: 1 };
     }
   };
