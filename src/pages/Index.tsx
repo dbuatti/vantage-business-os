@@ -11,6 +11,7 @@ import DateRangeFilter from '@/components/DateRangeFilter';
 import MonthlySummary from '@/components/MonthlySummary';
 import SortControl, { SortField, SortOrder } from '@/components/SortControl';
 import ThemeToggle from '@/components/ThemeToggle';
+import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import { SummarySkeleton, FormSkeleton, TableSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
@@ -36,6 +37,7 @@ const Index = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [duplicateEntry, setDuplicateEntry] = useState<CalculatedEntry | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -128,6 +130,13 @@ const Index = () => {
     }
   };
 
+  const handleDuplicateEntry = (entry: CalculatedEntry) => {
+    setDuplicateEntry(entry);
+    showSuccess('Entry values copied to form');
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/login');
@@ -218,6 +227,7 @@ const Index = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <KeyboardShortcuts />
             <ThemeToggle />
             <ExportButton entries={sortedEntries} />
             <Button 
@@ -253,7 +263,12 @@ const Index = () => {
             <FinanceSummary entries={calculatedEntries} />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <FinanceForm onAddEntry={addEntry} lastEntry={lastEntry} />
+              <FinanceForm 
+                onAddEntry={addEntry} 
+                lastEntry={lastEntry}
+                duplicateEntry={duplicateEntry}
+                onClearDuplicate={() => setDuplicateEntry(null)}
+              />
               <FinanceChart entries={calculatedEntries} />
             </div>
 
@@ -279,6 +294,7 @@ const Index = () => {
                 entries={sortedEntries} 
                 onDeleteEntry={deleteEntry}
                 onUpdateEntry={updateEntry}
+                onDuplicateEntry={handleDuplicateEntry}
               />
             </div>
           </>
