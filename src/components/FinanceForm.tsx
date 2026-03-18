@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinanceEntry, AccountType } from '@/types/finance';
 import { format, startOfMonth, subDays } from 'date-fns';
-import { PlusCircle, Copy, Keyboard } from 'lucide-react';
+import { PlusCircle, Copy, Keyboard, Sparkles } from 'lucide-react';
 import { showSuccess } from '@/utils/toast';
+import { cn } from '@/lib/utils';
 
 interface FinanceFormProps {
   onAddEntry: (entry: FinanceEntry) => void;
@@ -24,15 +25,14 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
   });
   const [amount, setAmount] = useState('');
   const [creditWas, setCreditWas] = useState('');
+  const [justSubmitted, setJustSubmitted] = useState(false);
   const amountRef = useRef<HTMLInputElement>(null);
   const creditWasRef = useRef<HTMLInputElement>(null);
 
-  // Save account preference
   useEffect(() => {
     localStorage.setItem('lastAccount', account);
   }, [account]);
 
-  // Auto-focus on amount field when account changes
   useEffect(() => {
     if (account === 'Credit') {
       creditWasRef.current?.focus();
@@ -59,9 +59,10 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
     onAddEntry(newEntry);
     setAmount('');
     setCreditWas('');
+    setJustSubmitted(true);
+    setTimeout(() => setJustSubmitted(false), 1500);
     showSuccess(`${account} entry added for ${date}`);
     
-    // Re-focus for quick entry
     setTimeout(() => {
       if (account === 'Credit') {
         creditWasRef.current?.focus();
@@ -97,61 +98,74 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
   ];
 
   return (
-    <Card className="w-full bg-white/50 backdrop-blur-sm border-indigo-100 shadow-xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
-          <PlusCircle className="w-5 h-5" />
-          Log Weekly Entry
-        </CardTitle>
-        <div className="flex items-center gap-1 text-xs text-gray-400">
-          <Keyboard className="w-3 h-3" />
-          <span>⌘+Enter to submit</span>
+    <Card className="w-full bg-card/80 backdrop-blur-sm border shadow-xl animate-slide-up opacity-0 stagger-1">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <PlusCircle className="w-5 h-5 text-primary" />
+            </div>
+            Log Weekly Entry
+          </CardTitle>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+            <Keyboard className="w-3 h-3" />
+            <span>⌘+Enter</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</Label>
               <Input 
                 id="date" 
                 type="date" 
                 value={date} 
                 onChange={(e) => setDate(e.target.value)}
                 required
+                className="h-11 rounded-xl"
               />
               <div className="flex flex-wrap gap-1">
                 {quickDates.map(({ label, days }) => (
-                  <Button
+                  <button
                     key={days}
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs px-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                    className="h-6 text-xs px-2.5 rounded-full text-primary hover:bg-primary/10 transition-colors font-medium"
                     onClick={() => setDate(format(subDays(new Date(), days), 'yyyy-MM-dd'))}
                   >
                     {label}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="account">Account</Label>
+              <Label htmlFor="account" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account</Label>
               <Select value={account} onValueChange={(val) => setAccount(val as AccountType)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Savings">Savings</SelectItem>
-                  <SelectItem value="Credit">Credit</SelectItem>
+                  <SelectItem value="Savings">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      Savings
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Credit">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      Credit
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {account === 'Credit' && (
-              <div className="space-y-2">
-                <Label htmlFor="creditWas">Credit Was ($)</Label>
+              <div className="space-y-2 animate-fade-in">
+                <Label htmlFor="creditWas" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Credit Was ($)</Label>
                 <Input 
                   ref={creditWasRef}
                   id="creditWas" 
@@ -161,36 +175,55 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
                   value={creditWas} 
                   onChange={(e) => setCreditWas(e.target.value)}
                   required
+                  className="h-11 rounded-xl"
                 />
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount ($)</Label>
+              <Label htmlFor="amount" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Amount ($)</Label>
               <Input 
                 ref={amountRef}
                 id="amount" 
                 type="number" 
                 step="0.01"
-                placeholder="12970.67"
+                placeholder="12,970.67"
                 value={amount} 
                 onChange={(e) => setAmount(e.target.value)}
                 required
+                className="h-11 rounded-xl text-lg font-semibold"
               />
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white flex-1">
-              <PlusCircle className="w-4 h-4 mr-2" />
-              Add Entry
+          <div className="flex flex-col sm:flex-row gap-2 pt-1">
+            <Button 
+              type="submit" 
+              className={cn(
+                "h-11 rounded-xl font-semibold transition-all duration-300 flex-1",
+                justSubmitted 
+                  ? "bg-emerald-500 hover:bg-emerald-600" 
+                  : "bg-primary hover:bg-primary/90"
+              )}
+            >
+              {justSubmitted ? (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Added!
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Add Entry
+                </>
+              )}
             </Button>
             {lastEntry && (
               <Button 
                 type="button" 
                 variant="outline" 
                 onClick={handleCopyLast}
-                className="border-indigo-100 hover:bg-indigo-50 text-indigo-600"
+                className="h-11 rounded-xl font-medium"
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Last

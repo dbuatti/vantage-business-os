@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CalculatedEntry } from '@/types/finance';
-import { Calendar, Hash, TrendingUp } from 'lucide-react';
+import { Calendar, Hash, TrendingUp, Percent } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface QuickStatsProps {
@@ -25,24 +25,23 @@ const QuickStats = ({ entries }: QuickStatsProps) => {
     ? Math.round((totalPositive / (totalPositive + totalNegative)) * 100) 
     : 0;
 
+  const stats = [
+    { icon: Hash, label: `${entries.length} entries`, show: true },
+    { icon: Calendar, label: `${format(new Date(oldestDate), 'MMM yy')} — ${format(new Date(newestDate), 'MMM yy')}`, show: true },
+    { icon: Percent, label: `${positiveRate}% positive`, show: entries.length > 1 },
+  ].filter(s => s.show);
+
   return (
-    <div className="flex flex-wrap items-center gap-4 px-1 text-sm text-gray-500">
-      <div className="flex items-center gap-1.5">
-        <Hash className="w-3.5 h-3.5 text-indigo-400" />
-        <span>{entries.length} entries</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-        <span>
-          {format(new Date(oldestDate), 'MMM yyyy')} — {format(new Date(newestDate), 'MMM yyyy')}
-        </span>
-      </div>
-      {entries.length > 1 && (
-        <div className="flex items-center gap-1.5">
-          <TrendingUp className="w-3.5 h-3.5 text-indigo-400" />
-          <span>{positiveRate}% positive changes</span>
+    <div className="flex flex-wrap items-center gap-2">
+      {stats.map(({ icon: Icon, label }, i) => (
+        <div 
+          key={i} 
+          className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1.5 rounded-full"
+        >
+          <Icon className="w-3 h-3 text-primary" />
+          <span className="font-medium">{label}</span>
         </div>
-      )}
+      ))}
     </div>
   );
 };

@@ -21,7 +21,6 @@ interface FinanceChartProps {
 }
 
 const FinanceChart = ({ entries }: FinanceChartProps) => {
-  // Prepare data for chart - group by date and get latest entry per account per date
   const chartData = entries
     .slice()
     .reverse()
@@ -41,7 +40,7 @@ const FinanceChart = ({ entries }: FinanceChartProps) => {
       }
       return acc;
     }, [] as { date: string; savings: number | null; credit: number | null }[])
-    .slice(-12); // Last 12 data points
+    .slice(-12);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -54,17 +53,24 @@ const FinanceChart = ({ entries }: FinanceChartProps) => {
 
   if (chartData.length < 2) {
     return (
-      <Card className="bg-white/50 backdrop-blur-sm border-indigo-100 shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
-            <LineChart className="w-5 h-5" />
+      <Card className="bg-card/80 backdrop-blur-sm border shadow-xl animate-slide-up opacity-0 stagger-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <LineChart className="w-5 h-5 text-primary" />
+            </div>
             Progress Chart
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-48 text-gray-400">
-          <div className="text-center">
-            <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-30" />
-            <p>Add more entries to see your progress chart</p>
+        <CardContent className="flex items-center justify-center h-56">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-muted flex items-center justify-center">
+              <TrendingUp className="w-8 h-8 text-muted-foreground/40" />
+            </div>
+            <div>
+              <p className="font-medium text-muted-foreground">Not enough data yet</p>
+              <p className="text-sm text-muted-foreground/60">Add more entries to see your progress</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -72,10 +78,12 @@ const FinanceChart = ({ entries }: FinanceChartProps) => {
   }
 
   return (
-    <Card className="bg-white/50 backdrop-blur-sm border-indigo-100 shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-xl font-bold text-indigo-900 flex items-center gap-2">
-          <LineChart className="w-5 h-5" />
+    <Card className="bg-card/80 backdrop-blur-sm border shadow-xl animate-slide-up opacity-0 stagger-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-bold flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-primary/10">
+            <LineChart className="w-5 h-5 text-primary" />
+          </div>
           Progress Chart
         </CardTitle>
       </CardHeader>
@@ -85,44 +93,46 @@ const FinanceChart = ({ entries }: FinanceChartProps) => {
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="colorCredit" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 12, fill: '#6b7280' }}
-                axisLine={{ stroke: '#e5e7eb' }}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                axisLine={{ stroke: 'hsl(var(--border))' }}
+                tickLine={false}
               />
               <YAxis 
-                tick={{ fontSize: 12, fill: '#6b7280' }}
-                axisLine={{ stroke: '#e5e7eb' }}
+                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                axisLine={false}
+                tickLine={false}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
               />
               <Tooltip 
                 formatter={(value: number) => formatCurrency(value)}
                 contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '12px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                  fontSize: '13px'
                 }}
               />
               <Legend 
-                wrapperStyle={{ paddingTop: '20px' }}
-                formatter={(value) => <span className="text-sm font-medium">{value}</span>}
+                wrapperStyle={{ paddingTop: '16px', fontSize: '12px' }}
               />
               <Area 
                 type="monotone" 
                 dataKey="savings" 
                 name="Savings"
-                stroke="#3b82f6" 
-                strokeWidth={2}
+                stroke="#6366f1" 
+                strokeWidth={2.5}
                 fillOpacity={1} 
                 fill="url(#colorSavings)" 
               />
@@ -131,7 +141,7 @@ const FinanceChart = ({ entries }: FinanceChartProps) => {
                 dataKey="credit" 
                 name="Credit"
                 stroke="#f59e0b" 
-                strokeWidth={2}
+                strokeWidth={2.5}
                 fillOpacity={1} 
                 fill="url(#colorCredit)" 
               />
