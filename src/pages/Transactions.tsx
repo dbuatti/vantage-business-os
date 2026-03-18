@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,7 +51,8 @@ import {
   Flame,
   Layers,
   Activity,
-  Tags
+  Tags,
+  Calculator
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -140,34 +141,12 @@ const Transactions = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      let allData: Transaction[] = [];
-      let from = 0;
-      const step = 1000;
-      let hasMore = true;
-
-      // Loop to fetch all transactions in chunks of 1000 to bypass default limits
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from('finance_transactions')
-          .select('*')
-          .order('transaction_date', { ascending: false })
-          .range(from, from + step - 1);
-
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          allData = [...allData, ...data];
-          if (data.length < step) {
-            hasMore = false;
-          } else {
-            from += step;
-          }
-        } else {
-          hasMore = false;
-        }
-      }
-      
-      setTransactions(allData);
+      const { data, error } = await supabase
+        .from('finance_transactions')
+        .select('*')
+        .order('transaction_date', { ascending: false });
+      if (error) throw error;
+      setTransactions(data || []);
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -422,6 +401,12 @@ const Transactions = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild className="rounded-xl gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10">
+              <Link to="/accountant-report">
+                <Calculator className="w-4 h-4" />
+                <span className="hidden sm:inline">Accountant Ready</span>
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" onClick={exportToCSV} className="rounded-xl gap-2" disabled={filteredTransactions.length === 0}>
               <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
             </Button>
@@ -436,7 +421,7 @@ const Transactions = () => {
         {/* Summary Cards - uses analyticsTransactions (excludes Account) */}
         {analyticsTransactions.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-lg bg-emerald-600 text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
@@ -446,7 +431,7 @@ const Transactions = () => {
                 {summaryStats.workIncome > 0 && <p className="text-xs text-white/70 mt-2">{formatCurrency(summaryStats.workIncome)} from work</p>}
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-rose-500 to-rose-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-lg bg-rose-600 text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
