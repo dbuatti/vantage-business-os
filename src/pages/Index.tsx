@@ -4,39 +4,28 @@ import React, { useState, useEffect } from 'react';
 import FinanceForm from '@/components/FinanceForm';
 import FinanceTable from '@/components/FinanceTable';
 import FinanceSummary from '@/components/FinanceSummary';
-import Auth from '@/components/Auth';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { PiggyBank, LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { showError } from '@/utils/toast';
+import { useAuth } from '@/components/AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
+  const { session, loading: authLoading } = useAuth();
   const [entries, setEntries] = useState<FinanceEntry[]>([]);
-  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) fetchEntries();
-      else setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) fetchEntries();
-      else {
-        setEntries([]);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (!authLoading && !session) {
+      navigate('/login');
+    } else if (session) {
+      fetchEntries();
+    }
+  }, [session, authLoading, navigate]);
 
   const fetchEntries = async () => {
     setLoading(true);
@@ -48,7 +37,6 @@ const Index = () => {
 
       if (error) throw error;
       
-      // Map snake_case from DB to camelCase for the app
       const mappedData = (data || []).map(item => ({
         id: item.id,
         date: item.date,
@@ -67,6 +55,7 @@ const Index = () => {
   };
 
   const addEntry = async (entry: FinanceEntry) => {
+    if (!session) return;
     try {
       const { error } = await supabase
         .from('finance_entries')
@@ -80,7 +69,7 @@ const Index = () => {
         }]);
 
       if (error) throw error;
-      fetchEntries(); // Refresh list
+      fetchEntries();
     } catch (error: any) {
       showError(error.message);
     }
@@ -88,9 +77,9 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    navigate('/login');
   };
 
-  // Calculate differences based on previous entries of the same account type
   const calculatedEntries: CalculatedEntry[] = entries
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .map((entry, index, allEntries) => {
@@ -109,7 +98,7 @@ const Index = () => {
       };
     });
 
-  if (loading) {
+  if (authLoading || (session && loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
@@ -117,29 +106,7 @@ const Index = () => {
     );
   }
 
-  if (!session) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <header className="text-center space-y-4">
-            <h1 className="text-4xl font-black text-indigo-950 flex items-center justify-center gap-3">
-              <div className="p-2 bg-indigo-600 rounded-xl text-white">
-                <PiggyBank className="w-10 h-10" />
-              </div>
-              Weekly Finance Log
-            </h1>
-            <p className="text-indigo-600/70 font-medium text-lg">
-              Securely track your savings and credit progress
-            </p>
-          </header>
-          <Auth />
-          <footer className="pt-12">
-            <MadeWithDyad />
-          </footer>
-        </div>
-      </div>
-    );
-  }
+  if (!session) return null;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 lg:p-12">
@@ -147,7 +114,7 @@ const Index = () => {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-indigo-950 flex items-center gap-3">
-              <div className="p-2 bg-indigo-600 rounded-xl text-white">
+              <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-200">
                 <PiggyBank className="w-8 h-8" />
               </div>
               Weekly Finance Log
@@ -156,7 +123,7 @@ const Index = () => {
               Logged in as {session.user.email}
             </p>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2 border-indigo-100 hover:bg-indigo-50 text-indigo-600">
             <LogOut className="w-4 h-4" />
             Sign Out
           </Button>
