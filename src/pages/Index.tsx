@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import FinanceForm from '@/components/FinanceForm';
 import FinanceTable from '@/components/FinanceTable';
 import FinanceSummary from '@/components/FinanceSummary';
+import FinanceChart from '@/components/FinanceChart';
+import ExportButton from '@/components/ExportButton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { PiggyBank, LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 
@@ -70,6 +72,22 @@ const Index = () => {
 
       if (error) throw error;
       fetchEntries();
+      showSuccess('Entry added successfully!');
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
+
+  const deleteEntry = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('finance_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setEntries(prev => prev.filter(e => e.id !== id));
+      showSuccess('Entry deleted successfully!');
     } catch (error: any) {
       showError(error.message);
     }
@@ -123,19 +141,25 @@ const Index = () => {
               Logged in as {session.user.email}
             </p>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2 border-indigo-100 hover:bg-indigo-50 text-indigo-600">
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-2">
+            <ExportButton entries={calculatedEntries} />
+            <Button variant="outline" onClick={handleSignOut} className="flex items-center gap-2 border-indigo-100 hover:bg-indigo-50 text-indigo-600">
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
         </header>
 
         <FinanceSummary entries={calculatedEntries} />
         
-        <FinanceForm onAddEntry={addEntry} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <FinanceForm onAddEntry={addEntry} />
+          <FinanceChart entries={calculatedEntries} />
+        </div>
 
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-indigo-900 px-1">History</h2>
-          <FinanceTable entries={calculatedEntries} />
+          <FinanceTable entries={calculatedEntries} onDeleteEntry={deleteEntry} />
         </div>
 
         <footer className="pt-12">
