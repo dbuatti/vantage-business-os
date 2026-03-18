@@ -46,7 +46,9 @@ import {
   CheckSquare,
   CalendarDays,
   Repeat,
-  Target
+  Target,
+  Store,
+  Flame
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -57,6 +59,9 @@ import MonthlyComparison from '@/components/MonthlyComparison';
 import BudgetTracker from '@/components/BudgetTracker';
 import RecurringTransactions from '@/components/RecurringTransactions';
 import TransactionBottomBar from '@/components/TransactionBottomBar';
+import MerchantAnalysis from '@/components/MerchantAnalysis';
+import SpendingHeatmap from '@/components/SpendingHeatmap';
+import SavingsGoals from '@/components/SavingsGoals';
 
 interface Transaction {
   id?: string;
@@ -422,8 +427,10 @@ const Transactions = () => {
               <TabsTrigger value="transactions" className="rounded-lg gap-2"><FileText className="w-4 h-4" />Transactions</TabsTrigger>
               <TabsTrigger value="analytics" className="rounded-lg gap-2"><BarChart3 className="w-4 h-4" />Analytics</TabsTrigger>
               <TabsTrigger value="monthly" className="rounded-lg gap-2"><CalendarDays className="w-4 h-4" />Monthly</TabsTrigger>
+              <TabsTrigger value="merchants" className="rounded-lg gap-2"><Store className="w-4 h-4" />Merchants</TabsTrigger>
               <TabsTrigger value="recurring" className="rounded-lg gap-2"><Repeat className="w-4 h-4" />Recurring</TabsTrigger>
               <TabsTrigger value="budgets" className="rounded-lg gap-2"><Target className="w-4 h-4" />Budgets</TabsTrigger>
+              <TabsTrigger value="goals" className="rounded-lg gap-2"><Flame className="w-4 h-4" />Goals</TabsTrigger>
             </TabsList>
 
             <TabsContent value="transactions" className="space-y-4">
@@ -708,10 +715,15 @@ const Transactions = () => {
 
             <TabsContent value="analytics" className="space-y-4">
               <TransactionCharts transactions={filteredTransactions} />
+              <SpendingHeatmap transactions={filteredTransactions} />
             </TabsContent>
 
             <TabsContent value="monthly" className="space-y-4">
               <MonthlyComparison transactions={filteredTransactions} />
+            </TabsContent>
+
+            <TabsContent value="merchants" className="space-y-4">
+              <MerchantAnalysis transactions={filteredTransactions} />
             </TabsContent>
 
             <TabsContent value="recurring" className="space-y-4">
@@ -720,6 +732,10 @@ const Transactions = () => {
 
             <TabsContent value="budgets" className="space-y-4">
               <BudgetTracker transactions={filteredTransactions} />
+            </TabsContent>
+
+            <TabsContent value="goals" className="space-y-4">
+              <SavingsGoals transactions={filteredTransactions} />
             </TabsContent>
           </Tabs>
         )}
