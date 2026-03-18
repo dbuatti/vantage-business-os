@@ -27,8 +27,6 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   TrendingUp,
-  TrendingDown,
-  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +50,14 @@ interface MonthlyGroupReportProps {
   categoryGroups: CategoryGroup[];
 }
 
-const GROUPS = [
+const INCOME_GROUPS = [
+  { name: '💰 Regular Income', color: 'bg-emerald-500', lightColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { name: '🎵 Music Performance', color: 'bg-blue-500', lightColor: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { name: '🎹 Music Services', color: 'bg-violet-500', lightColor: 'bg-violet-50 text-violet-700 border-violet-200' },
+  { name: '📋 Other Income', color: 'bg-amber-500', lightColor: 'bg-amber-50 text-amber-700 border-amber-200' },
+];
+
+const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', color: 'bg-blue-500', lightColor: 'bg-blue-50 text-blue-700 border-blue-200', icon: '🏠' },
   { name: 'Flexible Essentials', color: 'bg-amber-500', lightColor: 'bg-amber-50 text-amber-700 border-amber-200', icon: '🛒' },
   { name: 'Sustenance', color: 'bg-emerald-500', lightColor: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: '🍽️' },
@@ -64,7 +69,6 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
-  // Build category -> group lookup
   const categoryToGroup = useMemo(() => {
     const map: Record<string, string> = {};
     categoryGroups.forEach(cg => {
@@ -73,7 +77,6 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
     return map;
   }, [categoryGroups]);
 
-  // Get all available months
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
     transactions.forEach(t => {
@@ -90,19 +93,16 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
     });
   }, [transactions]);
 
-  // Set default month
   React.useEffect(() => {
     if (availableMonths.length > 0 && !selectedMonth) {
       setSelectedMonth(availableMonths[0]);
     }
   }, [availableMonths, selectedMonth]);
 
-  // Filter transactions for selected month
   const monthTransactions = useMemo(() => {
     return transactions.filter(t => t.mmm_yyyy === selectedMonth);
   }, [transactions, selectedMonth]);
 
-  // Group transactions
   const groupedData = useMemo(() => {
     const result: Record<string, {
       groupName: string;
@@ -113,27 +113,11 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
       categories: Record<string, { income: number; expenses: number; transactions: Transaction[] }>;
     }> = {};
 
-    // Initialize all groups
-    GROUPS.forEach(g => {
-      result[g.name] = {
-        groupName: g.name,
-        income: 0,
-        expenses: 0,
-        net: 0,
-        transactions: [],
-        categories: {}
-      };
+    const allGroups = [...INCOME_GROUPS, ...EXPENSE_GROUPS];
+    allGroups.forEach(g => {
+      result[g.name] = { groupName: g.name, income: 0, expenses: 0, net: 0, transactions: [], categories: {} };
     });
-
-    // Add "Unmapped" group
-    result['Unmapped'] = {
-      groupName: 'Unmapped',
-      income: 0,
-      expenses: 0,
-      net: 0,
-      transactions: [],
-      categories: {}
-    };
+    result['Unmapped'] = { groupName: 'Unmapped', income: 0, expenses: 0, net: 0, transactions: [], categories: {} };
 
     monthTransactions.forEach(t => {
       const groupName = categoryToGroup[t.category_1] || 'Unmapped';
@@ -141,7 +125,6 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
       if (!group) return;
 
       group.transactions.push(t);
-
       if (!group.categories[t.category_1]) {
         group.categories[t.category_1] = { income: 0, expenses: 0, transactions: [] };
       }
@@ -179,10 +162,6 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
     }).format(val);
   };
 
-  const getGroupStyle = (name: string) => {
-    return GROUPS.find(g => g.name === name) || { name: 'Unmapped', color: 'bg-gray-500', lightColor: 'bg-gray-50 text-gray-700 border-gray-200', icon: '❓' };
-  };
-
   if (availableMonths.length === 0) {
     return (
       <Card className="border-0 shadow-xl">
@@ -197,9 +176,99 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
     );
   }
 
+  const renderGroupSection = (groups: typeof INCOME_GROUPS, title: string, isIncome: boolean) => {
+    const activeGroups = groups.filter(g => groupedData[g.name]?.transactions.length > 0);
+    if (activeGroups.length === 0) return null;
+
+    return (
+      <div className="space-y-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+          {isIncome ? <ArrowUpRight className="w-3 h-3 text-emerald-500" /> : <ArrowDownRight className="w-3 h-3 text-rose-500" />}
+          {title}
+        </p>
+        {activeGroups.map(group => {
+          const data = groupedData[group.name];
+          const isExpanded = expandedGroup === group.name;
+          const percentage = isIncome
+            ? (totalIncome > 0 ? (data.income / totalIncome) * 100 : 0)
+            : (totalExpenses > 0 ? (data.expenses / totalExpenses) * 100 : 0);
+          const categoryEntries = Object.entries(data.categories).sort((a, b) => (b[1].expenses + b[1].income) - (a[1].expenses + a[1].income));
+
+          return (
+            <div key={group.name} className="rounded-xl border overflow-hidden">
+              <button
+                onClick={() => setExpandedGroup(isExpanded ? null : group.name)}
+                className="w-full p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
+              >
+                <div className={cn("w-3 h-3 rounded-full shrink-0", group.color)} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm">{group.name}</span>
+                    <Badge variant="outline" className="text-[10px] rounded-lg">
+                      {data.transactions.length} txns
+                    </Badge>
+                  </div>
+                  <Progress value={percentage} className="h-1.5" />
+                </div>
+                <div className="text-right shrink-0 space-y-0.5">
+                  {data.income > 0 && (
+                    <p className="text-xs text-emerald-600 font-medium">+{formatCurrency(data.income)}</p>
+                  )}
+                  {data.expenses > 0 && (
+                    <p className="text-xs text-rose-600 font-medium">-{formatCurrency(data.expenses)}</p>
+                  )}
+                  <p className={cn("font-bold", data.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                    {formatCurrency(data.net)}
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground w-12 text-right font-medium">
+                  {percentage.toFixed(1)}%
+                </span>
+              </button>
+
+              {isExpanded && (
+                <div className="border-t bg-muted/20 animate-fade-in">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/30">
+                        <TableHead className="text-xs font-semibold">Category</TableHead>
+                        <TableHead className="text-xs font-semibold text-right">Income</TableHead>
+                        <TableHead className="text-xs font-semibold text-right">Expenses</TableHead>
+                        <TableHead className="text-xs font-semibold text-right">Net</TableHead>
+                        <TableHead className="text-xs font-semibold text-right">Txns</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {categoryEntries.map(([catName, catData]) => (
+                        <TableRow key={catName} className="hover:bg-muted/30">
+                          <TableCell className="text-sm font-medium">{catName}</TableCell>
+                          <TableCell className="text-right text-sm text-emerald-600 tabular-nums">
+                            {catData.income > 0 ? formatCurrency(catData.income) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right text-sm text-rose-600 tabular-nums">
+                            {catData.expenses > 0 ? formatCurrency(-catData.expenses) : '—'}
+                          </TableCell>
+                          <TableCell className={cn("text-right text-sm font-bold tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                            {formatCurrency(catData.income - catData.expenses)}
+                          </TableCell>
+                          <TableCell className="text-right text-xs text-muted-foreground">
+                            {catData.transactions.length}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* Month Selector */}
       <Card className="border-0 shadow-xl">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -258,107 +327,29 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
             </div>
           </div>
 
-          {/* Group Breakdown */}
-          <div className="space-y-3">
-            {GROUPS.map(group => {
-              const data = groupedData[group.name];
-              if (!data || data.transactions.length === 0) return null;
+          {/* Income Groups */}
+          {renderGroupSection(INCOME_GROUPS, 'Income Sources', true)}
 
-              const isExpanded = expandedGroup === group.name;
-              const percentage = totalExpenses > 0 ? (data.expenses / totalExpenses) * 100 : 0;
-              const categoryEntries = Object.entries(data.categories).sort((a, b) => (b[1].expenses + b[1].income) - (a[1].expenses + a[1].income));
+          {/* Expense Groups */}
+          {renderGroupSection(EXPENSE_GROUPS, 'Expense Categories', false)}
 
-              return (
-                <div key={group.name} className="rounded-xl border overflow-hidden">
-                  <button
-                    onClick={() => setExpandedGroup(isExpanded ? null : group.name)}
-                    className="w-full p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
-                  >
-                    <span className="text-xl">{group.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-sm">{group.name}</span>
-                        <Badge variant="outline" className="text-[10px] rounded-lg">
-                          {data.transactions.length} txns
-                        </Badge>
-                      </div>
-                      <Progress value={percentage} className="h-1.5" />
-                    </div>
-                    <div className="text-right shrink-0 space-y-0.5">
-                      {data.income > 0 && (
-                        <p className="text-xs text-emerald-600 font-medium">+{formatCurrency(data.income)}</p>
-                      )}
-                      {data.expenses > 0 && (
-                        <p className="text-xs text-rose-600 font-medium">-{formatCurrency(data.expenses)}</p>
-                      )}
-                      <p className={cn("font-bold", data.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                        {formatCurrency(data.net)}
-                      </p>
-                    </div>
-                    <span className="text-xs text-muted-foreground w-12 text-right font-medium">
-                      {percentage.toFixed(1)}%
-                    </span>
-                  </button>
-
-                  {isExpanded && (
-                    <div className="border-t bg-muted/20 animate-fade-in">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/30">
-                            <TableHead className="text-xs font-semibold">Category</TableHead>
-                            <TableHead className="text-xs font-semibold text-right">Income</TableHead>
-                            <TableHead className="text-xs font-semibold text-right">Expenses</TableHead>
-                            <TableHead className="text-xs font-semibold text-right">Net</TableHead>
-                            <TableHead className="text-xs font-semibold text-right">Txns</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {categoryEntries.map(([catName, catData]) => (
-                            <TableRow key={catName} className="hover:bg-muted/30">
-                              <TableCell className="text-sm font-medium">{catName}</TableCell>
-                              <TableCell className="text-right text-sm text-emerald-600 tabular-nums">
-                                {catData.income > 0 ? formatCurrency(catData.income) : '—'}
-                              </TableCell>
-                              <TableCell className="text-right text-sm text-rose-600 tabular-nums">
-                                {catData.expenses > 0 ? formatCurrency(-catData.expenses) : '—'}
-                              </TableCell>
-                              <TableCell className={cn("text-right text-sm font-bold tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                                {formatCurrency(catData.income - catData.expenses)}
-                              </TableCell>
-                              <TableCell className="text-right text-xs text-muted-foreground">
-                                {catData.transactions.length}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
+          {/* Unmapped */}
+          {groupedData['Unmapped'] && groupedData['Unmapped'].transactions.length > 0 && (
+            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 overflow-hidden mt-3">
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">❓</span>
+                  <span className="font-semibold text-sm text-amber-700">Unmapped Categories</span>
+                  <Badge variant="outline" className="text-[10px] rounded-lg bg-amber-50 text-amber-700 border-amber-200">
+                    {groupedData['Unmapped'].transactions.length} txns
+                  </Badge>
                 </div>
-              );
-            })}
-
-            {/* Unmapped group */}
-            {groupedData['Unmapped'] && groupedData['Unmapped'].transactions.length > 0 && (
-              <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 overflow-hidden">
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">❓</span>
-                    <span className="font-semibold text-sm text-amber-700">Unmapped Categories</span>
-                    <Badge variant="outline" className="text-[10px] rounded-lg bg-amber-50 text-amber-700 border-amber-200">
-                      {groupedData['Unmapped'].transactions.length} txns
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {Object.keys(groupedData['Unmapped'].categories).join(', ')}
-                  </p>
-                  <p className="text-xs text-amber-600 mt-1">
-                    Map these categories in the Groups tab to include them in reports
-                  </p>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  {Object.keys(groupedData['Unmapped'].categories).join(', ')}
+                </p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -372,7 +363,6 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
   );
 };
 
-// Year Overview Sub-component
 const YearOverview = ({ 
   transactions, 
   categoryGroups, 
@@ -405,11 +395,12 @@ const YearOverview = ({
     return map;
   }, [categoryGroups]);
 
+  const allGroups = [...INCOME_GROUPS, ...EXPENSE_GROUPS];
+
   const yearData = useMemo(() => {
-    const yearMonths = availableMonths.filter(m => m.endsWith(selectedYear));
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    return monthNames.map((monthName, monthIdx) => {
+    return monthNames.map((monthName) => {
       const monthKey = `${monthName} ${selectedYear}`;
       const monthTxns = transactions.filter(t => t.mmm_yyyy === monthKey);
 
@@ -417,10 +408,12 @@ const YearOverview = ({
       const expenses = monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
 
       const groupTotals: Record<string, number> = {};
-      GROUPS.forEach(g => { groupTotals[g.name] = 0; });
-      monthTxns.filter(t => t.amount < 0).forEach(t => {
+      allGroups.forEach(g => { groupTotals[g.name] = 0; });
+      monthTxns.forEach(t => {
         const group = categoryToGroup[t.category_1] || 'Unmapped';
-        groupTotals[group] = (groupTotals[group] || 0) + Math.abs(t.amount);
+        if (t.amount < 0) {
+          groupTotals[group] = (groupTotals[group] || 0) + Math.abs(t.amount);
+        }
       });
 
       return {
@@ -484,7 +477,6 @@ const YearOverview = ({
         </div>
       </CardHeader>
       <CardContent>
-        {/* Year Summary */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-center">
             <p className="text-xs text-emerald-600 font-medium">Year Income</p>
@@ -500,7 +492,6 @@ const YearOverview = ({
           </div>
         </div>
 
-        {/* Monthly Grid */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -509,7 +500,7 @@ const YearOverview = ({
                 <TableHead className="text-xs font-semibold text-right">Income</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Expenses</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Net</TableHead>
-                {GROUPS.map(g => (
+                {EXPENSE_GROUPS.map(g => (
                   <TableHead key={g.name} className="text-xs font-semibold text-right hidden xl:table-cell">
                     <span className="flex items-center justify-end gap-1">{g.icon}</span>
                   </TableHead>
@@ -518,16 +509,8 @@ const YearOverview = ({
             </TableHeader>
             <TableBody>
               {yearData.map((month) => (
-                <TableRow 
-                  key={month.month} 
-                  className={cn(
-                    "hover:bg-muted/30",
-                    !month.hasData && "opacity-40"
-                  )}
-                >
-                  <TableCell className="font-medium text-sm sticky left-0 bg-background">
-                    {month.shortMonth}
-                  </TableCell>
+                <TableRow key={month.month} className={cn("hover:bg-muted/30", !month.hasData && "opacity-40")}>
+                  <TableCell className="font-medium text-sm sticky left-0 bg-background">{month.shortMonth}</TableCell>
                   <TableCell className="text-right text-sm text-emerald-600 tabular-nums">
                     {month.income > 0 ? formatCurrency(month.income) : '—'}
                   </TableCell>
@@ -537,20 +520,19 @@ const YearOverview = ({
                   <TableCell className={cn("text-right text-sm font-bold tabular-nums", month.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
                     {month.hasData ? formatCurrency(month.net) : '—'}
                   </TableCell>
-                  {GROUPS.map(g => (
+                  {EXPENSE_GROUPS.map(g => (
                     <TableCell key={g.name} className="text-right text-xs tabular-nums text-muted-foreground hidden xl:table-cell">
                       {month.groupTotals[g.name] > 0 ? formatCurrency(-month.groupTotals[g.name]) : '—'}
                     </TableCell>
                   ))}
                 </TableRow>
               ))}
-              {/* Year Total Row */}
               <TableRow className="bg-muted/30 font-bold">
                 <TableCell className="sticky left-0 bg-muted/30">Total</TableCell>
                 <TableCell className="text-right text-emerald-600">{formatCurrency(yearIncome)}</TableCell>
                 <TableCell className="text-right text-rose-600">{formatCurrency(-yearExpenses)}</TableCell>
                 <TableCell className={cn("text-right", yearNet >= 0 ? "text-emerald-600" : "text-rose-600")}>{formatCurrency(yearNet)}</TableCell>
-                {GROUPS.map(g => {
+                {EXPENSE_GROUPS.map(g => {
                   const total = yearData.reduce((s, m) => s + m.groupTotals[g.name], 0);
                   return (
                     <TableCell key={g.name} className="text-right text-muted-foreground hidden xl:table-cell">

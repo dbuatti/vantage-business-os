@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tags, Plus, Pencil, Trash2, Wand2, Search } from 'lucide-react';
+import { Tags, Plus, Pencil, Trash2, Wand2, Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { showSuccess, showError } from '@/utils/toast';
@@ -32,17 +32,26 @@ interface CategoryGroup {
 }
 
 interface CategoryGroupManagerProps {
-  transactions: Array<{ category_1: string }>;
+  transactions: Array<{ category_1: string; amount: number }>;
   onGroupsUpdated: () => void;
 }
 
-const GROUPS = [
+const INCOME_GROUPS = [
+  { name: '💰 Regular Income', color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' },
+  { name: '🎵 Music Performance', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800' },
+  { name: '🎹 Music Services', color: 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800' },
+  { name: '📋 Other Income', color: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' },
+];
+
+const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800', icon: '🏠' },
   { name: 'Flexible Essentials', color: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800', icon: '🛒' },
   { name: 'Sustenance', color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800', icon: '🍽️' },
   { name: 'Wellness & Growth', color: 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800', icon: '🌱' },
   { name: 'Lifestyle & Discretionary', color: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800', icon: '🎭' },
 ];
+
+const ALL_GROUPS = [...INCOME_GROUPS, ...EXPENSE_GROUPS];
 
 const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupManagerProps) => {
   const { session } = useAuth();
@@ -53,6 +62,20 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
   const [formCategory, setFormCategory] = useState('');
   const [formGroup, setFormGroup] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'all' | 'income' | 'expense'>('all');
+
+  // Determine if a category is primarily income or expense
+  const categoryType = useMemo(() => {
+    const result: Record<string, 'income' | 'expense'> = {};
+    transactions.forEach(t => {
+      const cat = t.category_1;
+      if (!cat) return;
+      if (!result[cat]) {
+        result[cat] = t.amount > 0 ? 'income' : 'expense';
+      }
+    });
+    return result;
+  }, [transactions]);
 
   const allCategories = useMemo(() => {
     const cats = new Set(transactions.map(t => t.category_1).filter(Boolean));
@@ -61,16 +84,27 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
 
   const unmappedCategories = useMemo(() => {
     const mapped = new Set(groups.map(g => g.category_name));
-    return allCategories.filter(c => !mapped.has(c));
-  }, [allCategories, groups]);
+    let unmapped = allCategories.filter(c => !mapped.has(c));
+    if (viewMode === 'income') unmapped = unmapped.filter(c => categoryType[c] === 'income');
+    if (viewMode === 'expense') unmapped = unmapped.filter(c => categoryType[c] === 'expense');
+    return unmapped;
+  }, [allCategories, groups, viewMode, categoryType]);
 
   const filteredGroups = useMemo(() => {
-    if (!searchQuery) return groups;
-    return groups.filter(g =>
-      g.category_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.group_name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [groups, searchQuery]);
+    let filtered = groups;
+    if (viewMode === 'income') {
+      filtered = groups.filter(g => INCOME_GROUPS.some(ig => ig.name === g.group_name));
+    } else if (viewMode === 'expense') {
+      filtered = groups.filter(g => EXPENSE_GROUPS.some(eg => eg.name === g.group_name));
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(g =>
+        g.category_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        g.group_name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return filtered;
+  }, [groups, searchQuery, viewMode]);
 
   useEffect(() => {
     fetchGroups();
@@ -134,58 +168,91 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
     if (!session || unmappedCategories.length === 0) return;
 
     const rules: Record<string, string> = {
-      // Fixed Essentials
-      'rent': 'Fixed Essentials',
-      'mortgage': 'Fixed Essentials',
-      'insurance': 'Fixed Essentials',
-      'car payment': 'Fixed Essentials',
-      'loan': 'Fixed Essentials',
+      // Income
+      'salary': '💰 Regular Income',
+      'teaching': '💰 Regular Income',
+      'aim': '💰 Regular Income',
+      'carey': '💰 Regular Income',
+      'vca': '💰 Regular Income',
+      'vcass': '💰 Regular Income',
+      'interest': '📋 Other Income',
+      'ato': '📋 Other Income',
+      'donation': '📋 Other Income',
+      'life like': '📋 Other Income',
+      'other': '📋 Other Income',
+      'gig': '🎵 Music Performance',
+      'wedding': '🎵 Music Performance',
+      'choir': '🎵 Music Performance',
+      'audition': '🎵 Music Performance',
+      'rehearsal': '🎵 Music Performance',
+      'corporate': '🎵 Music Performance',
+      'ministry': '🎵 Music Performance',
+      'piano backing': '🎹 Music Services',
+      'ameb': '🎹 Music Services',
+      'exam': '🎹 Music Services',
+      'arranging': '🎹 Music Services',
+      'repair': '🎹 Music Services',
+      // Expenses
+      'bill': 'Fixed Essentials',
       'subscription': 'Fixed Essentials',
       'phone': 'Fixed Essentials',
-      'internet': 'Fixed Essentials',
-      'utilities': 'Fixed Essentials',
-      'electric': 'Fixed Essentials',
-      'water': 'Fixed Essentials',
-      'gas bill': 'Fixed Essentials',
-      // Flexible Essentials
-      'transport': 'Flexible Essentials',
-      'fuel': 'Flexible Essentials',
-      'gas': 'Flexible Essentials',
+      'rego': 'Fixed Essentials',
+      'fee': 'Fixed Essentials',
       'car': 'Flexible Essentials',
+      'fuel': 'Flexible Essentials',
+      'myki': 'Flexible Essentials',
+      'toll': 'Flexible Essentials',
+      'parking': 'Flexible Essentials',
       'maintenance': 'Flexible Essentials',
-      'clothing': 'Flexible Essentials',
-      'household': 'Flexible Essentials',
-      'supplies': 'Flexible Essentials',
-      // Sustenance
-      'groceries': 'Sustenance',
-      'food': 'Sustenance',
-      'restaurant': 'Sustenance',
-      'dining': 'Sustenance',
+      'doctor': 'Flexible Essentials',
+      'dentist': 'Flexible Essentials',
+      'medicine': 'Flexible Essentials',
+      'health': 'Flexible Essentials',
+      'home': 'Flexible Essentials',
+      'it': 'Flexible Essentials',
+      'fine': 'Flexible Essentials',
+      'accountant': 'Flexible Essentials',
+      'printing': 'Flexible Essentials',
       'coffee': 'Sustenance',
-      'lunch': 'Sustenance',
-      'dinner': 'Sustenance',
-      'takeout': 'Sustenance',
-      // Wellness & Growth
-      'health': 'Wellness & Growth',
-      'medical': 'Wellness & Growth',
-      'doctor': 'Wellness & Growth',
-      'pharmacy': 'Wellness & Growth',
-      'gym': 'Wellness & Growth',
+      'meal': 'Sustenance',
+      'grocer': 'Sustenance',
+      'groc': 'Sustenance',
+      'take out': 'Sustenance',
+      'treat': 'Sustenance',
+      'drink': 'Sustenance',
+      'indulgence': 'Sustenance',
+      'food': 'Sustenance',
+      'wellbeing': 'Wellness & Growth',
       'fitness': 'Wellness & Growth',
-      'education': 'Wellness & Growth',
-      'course': 'Wellness & Growth',
+      'yoga': 'Wellness & Growth',
+      'kinesiology': 'Wellness & Growth',
       'book': 'Wellness & Growth',
-      'therapy': 'Wellness & Growth',
-      // Lifestyle & Discretionary
+      'study': 'Wellness & Growth',
+      'piano lesson': 'Wellness & Growth',
+      'technology': 'Wellness & Growth',
+      'software': 'Wellness & Growth',
+      'apple': 'Wellness & Growth',
+      'hobbie': 'Wellness & Growth',
+      'recreation': 'Lifestyle & Discretionary',
+      'clothe': 'Lifestyle & Discretionary',
+      'beauty': 'Lifestyle & Discretionary',
+      'cosmetic': 'Lifestyle & Discretionary',
+      'broadway': 'Lifestyle & Discretionary',
+      'theatre': 'Lifestyle & Discretionary',
       'entertainment': 'Lifestyle & Discretionary',
-      'movie': 'Lifestyle & Discretionary',
-      'streaming': 'Lifestyle & Discretionary',
-      'shopping': 'Lifestyle & Discretionary',
-      'hobby': 'Lifestyle & Discretionary',
-      'travel': 'Lifestyle & Discretionary',
-      'vacation': 'Lifestyle & Discretionary',
-      'gift': 'Lifestyle & Discretionary',
       'game': 'Lifestyle & Discretionary',
+      'going out': 'Lifestyle & Discretionary',
+      'fun': 'Lifestyle & Discretionary',
+      'uber': 'Lifestyle & Discretionary',
+      'holiday': 'Lifestyle & Discretionary',
+      'travel': 'Lifestyle & Discretionary',
+      'gift': 'Lifestyle & Discretionary',
+      'music': 'Lifestyle & Discretionary',
+      'sheet': 'Lifestyle & Discretionary',
+      'misc': 'Lifestyle & Discretionary',
+      'business': 'Lifestyle & Discretionary',
+      'paying musician': 'Lifestyle & Discretionary',
+      'account': 'Lifestyle & Discretionary',
     };
 
     const toInsert = unmappedCategories
@@ -229,19 +296,19 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
     setShowDialog(true);
   };
 
-  const getGroupStyle = (groupName: string) => {
-    return GROUPS.find(g => g.name === groupName) || GROUPS[0];
-  };
-
   const groupedByGroup = useMemo(() => {
     const result: Record<string, CategoryGroup[]> = {};
-    GROUPS.forEach(g => { result[g.name] = []; });
+    ALL_GROUPS.forEach(g => { result[g.name] = []; });
     groups.forEach(g => {
       if (!result[g.group_name]) result[g.group_name] = [];
       result[g.group_name].push(g);
     });
     return result;
   }, [groups]);
+
+  const getGroupStyle = (groupName: string) => {
+    return ALL_GROUPS.find(g => g.name === groupName) || { name: groupName, color: 'bg-gray-100 text-gray-700 border-gray-200' };
+  };
 
   return (
     <Card className="border-0 shadow-xl">
@@ -257,6 +324,34 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
+              <Button
+                variant={viewMode === 'all' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('all')}
+                className="rounded-lg h-7 text-xs"
+              >
+                All
+              </Button>
+              <Button
+                variant={viewMode === 'income' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('income')}
+                className="rounded-lg h-7 text-xs"
+              >
+                <ArrowUpRight className="w-3 h-3 mr-1" />
+                Income
+              </Button>
+              <Button
+                variant={viewMode === 'expense' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('expense')}
+                className="rounded-lg h-7 text-xs"
+              >
+                <ArrowDownRight className="w-3 h-3 mr-1" />
+                Expenses
+              </Button>
+            </div>
             {unmappedCategories.length > 0 && (
               <Button variant="outline" size="sm" onClick={handleAutoAssign} className="rounded-xl gap-1.5">
                 <Wand2 className="w-3.5 h-3.5" />
@@ -265,7 +360,7 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
             )}
             <Button size="sm" onClick={() => setShowDialog(true)} className="rounded-xl gap-1.5" disabled={unmappedCategories.length === 0}>
               <Plus className="w-3.5 h-3.5" />
-              Add Mapping
+              Add
             </Button>
           </div>
         </div>
@@ -283,23 +378,47 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
         </div>
 
         {/* Group Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          {GROUPS.map(group => {
-            const count = groupedByGroup[group.name]?.length || 0;
-            return (
-              <div
-                key={group.name}
-                className={cn(
-                  "p-3 rounded-xl border text-center transition-all",
-                  count > 0 ? group.color : "bg-muted/50 text-muted-foreground border-muted"
-                )}
-              >
-                <span className="text-lg">{group.icon}</span>
-                <p className="text-xs font-medium mt-1 leading-tight">{group.name}</p>
-                <p className="text-lg font-bold mt-0.5">{count}</p>
+        <div className="space-y-3">
+          {(viewMode === 'all' || viewMode === 'income') && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                Income Groups
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {INCOME_GROUPS.map(group => {
+                  const count = groupedByGroup[group.name]?.length || 0;
+                  return (
+                    <div key={group.name} className={cn("p-3 rounded-xl border text-center transition-all", count > 0 ? group.color : "bg-muted/50 text-muted-foreground border-muted")}>
+                      <p className="text-xs font-medium mt-1 leading-tight">{group.name}</p>
+                      <p className="text-lg font-bold mt-0.5">{count}</p>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          )}
+
+          {(viewMode === 'all' || viewMode === 'expense') && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <ArrowDownRight className="w-3 h-3 text-rose-500" />
+                Expense Groups
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {EXPENSE_GROUPS.map(group => {
+                  const count = groupedByGroup[group.name]?.length || 0;
+                  return (
+                    <div key={group.name} className={cn("p-3 rounded-xl border text-center transition-all", count > 0 ? group.color : "bg-muted/50 text-muted-foreground border-muted")}>
+                      <span className="text-lg">{group.icon}</span>
+                      <p className="text-xs font-medium mt-1 leading-tight">{group.name}</p>
+                      <p className="text-lg font-bold mt-0.5">{count}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mappings List */}
@@ -310,8 +429,12 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
             <p className="text-sm">Add mappings to organize your transactions</p>
           </div>
         ) : (
-          <div className="space-y-1 max-h-[400px] overflow-y-auto">
-            {GROUPS.map(group => {
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {ALL_GROUPS.filter(g => {
+              if (viewMode === 'income') return INCOME_GROUPS.some(ig => ig.name === g.name);
+              if (viewMode === 'expense') return EXPENSE_GROUPS.some(eg => eg.name === g.name);
+              return true;
+            }).map(group => {
               const items = groupedByGroup[group.name] || [];
               const filtered = searchQuery
                 ? items.filter(i => i.category_name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -321,26 +444,28 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
               return (
                 <div key={group.name} className="space-y-1">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 bg-background py-1">
-                    {group.icon} {group.name}
+                    {group.name}
                   </p>
-                  {filtered.map(item => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 transition-colors group"
-                    >
-                      <Badge variant="outline" className={cn("rounded-lg text-xs font-medium", group.color)}>
-                        {item.category_name}
-                      </Badge>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg" onClick={() => handleEdit(item)}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg hover:text-rose-600" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                  <div className="flex flex-wrap gap-1">
+                    {filtered.map(item => (
+                      <div
+                        key={item.id}
+                        className="group inline-flex items-center gap-1 p-1.5 rounded-lg hover:bg-muted/30 transition-colors border"
+                      >
+                        <Badge variant="outline" className={cn("rounded-md text-xs font-medium", group.color)}>
+                          {item.category_name}
+                        </Badge>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-5 w-5 rounded" onClick={() => handleEdit(item)}>
+                            <Pencil className="h-2.5 w-2.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 rounded hover:text-rose-600" onClick={() => handleDelete(item.id)}>
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               );
             })}
@@ -358,12 +483,18 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
                 <Badge
                   key={cat}
                   variant="outline"
-                  className="rounded-lg text-xs bg-gray-50 text-gray-500 border-gray-200 cursor-pointer hover:bg-primary/5 hover:text-primary hover:border-primary/20"
+                  className={cn(
+                    "rounded-lg text-xs cursor-pointer hover:bg-primary/5 hover:text-primary hover:border-primary/20",
+                    categoryType[cat] === 'income' 
+                      ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
+                      : "bg-gray-50 text-gray-500 border-gray-200"
+                  )}
                   onClick={() => {
                     setFormCategory(cat);
                     setShowDialog(true);
                   }}
                 >
+                  {categoryType[cat] === 'income' && <ArrowUpRight className="w-2.5 h-2.5 mr-0.5" />}
                   {cat}
                 </Badge>
               ))}
@@ -390,7 +521,12 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
                   </SelectTrigger>
                   <SelectContent>
                     {unmappedCategories.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <SelectItem key={cat} value={cat}>
+                        <span className="flex items-center gap-1.5">
+                          {categoryType[cat] === 'income' && <ArrowUpRight className="w-3 h-3 text-emerald-500" />}
+                          {cat}
+                        </span>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -403,7 +539,12 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
                   <SelectValue placeholder="Select a group" />
                 </SelectTrigger>
                 <SelectContent>
-                  {GROUPS.map(g => (
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Income</div>
+                  {INCOME_GROUPS.map(g => (
+                    <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>
+                  ))}
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Expenses</div>
+                  {EXPENSE_GROUPS.map(g => (
                     <SelectItem key={g.name} value={g.name}>
                       <span className="flex items-center gap-2">
                         <span>{g.icon}</span>
