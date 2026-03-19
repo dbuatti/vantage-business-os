@@ -59,7 +59,10 @@ import {
   Wifi,
   Droplets,
   Flame,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -97,6 +100,7 @@ const AccountantPortal = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['income']));
   
   const [settings, setSettings] = useState({
     deduction_keywords: {
@@ -280,7 +284,6 @@ const AccountantPortal = () => {
 
   const subscriptionGroups = useMemo(() => {
     const groups: Record<string, { total: number, items: Transaction[] }> = {};
-    // Only include subscriptions that are explicitly marked as work
     workTransactions.filter(t => t.category_1 === 'Subscription').forEach(t => {
       const subCat = t.category_2 || 'Other Subscriptions';
       if (!groups[subCat]) groups[subCat] = { total: 0, items: [] };
@@ -368,6 +371,18 @@ const AccountantPortal = () => {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(val));
   };
+
+  const toggleSection = (id: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const expandAll = (ids: string[]) => setExpandedSections(new Set(ids));
+  const collapseAll = () => setExpandedSections(new Set());
 
   const copyToClipboard = (text: string, id: string) => {
     const cleanText = text.replace(/[$,]/g, '');
@@ -469,39 +484,6 @@ const AccountantPortal = () => {
           </div>
         </div>
 
-        {/* Debug Dashboard */}
-        {showDebug && (
-          <Card className="border-2 border-primary/20 bg-primary/5 animate-fade-in print:hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                <Bug className="w-4 h-4" /> Data Pipeline Debugger
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-3 rounded-xl bg-background border">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase">1. Total Loaded</p>
-                <p className="text-xl font-black">{transactions.length}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-background border">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase">2. In Period</p>
-                <p className="text-xl font-black">{filteredTransactions.length}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-background border">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase">3. Marked as Work</p>
-                <p className="text-xl font-black">{workTransactions.length}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-background border">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase">4. Drop-off Rate</p>
-                <p className="text-xl font-black text-rose-600">
-                  {filteredTransactions.length > 0 
-                    ? Math.round((1 - (workTransactions.length / filteredTransactions.length)) * 100) 
-                    : 0}%
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Tax Readiness Score */}
         <Card className="border-0 shadow-xl bg-gradient-to-r from-primary/5 to-background print:hidden">
           <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-8">
@@ -547,7 +529,7 @@ const AccountantPortal = () => {
           </CardContent>
         </Card>
 
-        {/* Share Link Quick Access (Only for owner) */}
+        {/* Share Link Quick Access */}
         {!isPublic && profile?.accountant_share_token && (
           <Card className="border-0 shadow-lg bg-primary/5 border-primary/10 print:hidden">
             <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -697,87 +679,27 @@ const AccountantPortal = () => {
           </TabsList>
 
           <TabsContent value="summary" className="space-y-8 animate-fade-in">
-            {/* Empty State Helper */}
-            {filteredTransactions.length === 0 ? (
-              <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-muted/10">
-                <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mx-auto text-muted-foreground">
-                  <Database className="w-10 h-10" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black">No Transactions Found</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    We couldn't find any transactions for the period starting {format(parseISO(reportIntervalStrings.start), 'MMM dd, yyyy')}.
-                  </p>
-                </div>
-              </Card>
-            ) : workTransactions.length === 0 && (
-              <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-amber-50/30">
-                <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto text-amber-600">
-                  <Calculator className="w-10 h-10" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black">Categorization Required</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    We found {filteredTransactions.length} transactions in this period, but none are showing up here because they aren't marked as Work yet.
-                  </p>
-                </div>
-              </Card>
-            )}
+            <div className="flex justify-end gap-2 print:hidden">
+              <Button variant="ghost" size="sm" onClick={() => expandAll(['income', ...Object.keys(expenseGroups)])} className="h-8 text-xs gap-1.5 rounded-lg">
+                <Maximize2 className="w-3.5 h-3.5" /> Expand All
+              </Button>
+              <Button variant="ghost" size="sm" onClick={collapseAll} className="h-8 text-xs gap-1.5 rounded-lg">
+                <Minimize2 className="w-3.5 h-3.5" /> Collapse All
+              </Button>
+            </div>
 
             {/* Income Section */}
             {businessIncome.length > 0 && (
               <Card className="border-0 shadow-xl overflow-hidden">
-                <CardHeader className="bg-emerald-50 dark:bg-emerald-950/30 border-b">
+                <button 
+                  onClick={() => toggleSection('income')}
+                  className="w-full text-left bg-emerald-50 dark:bg-emerald-950/30 border-b p-4 flex items-center justify-between hover:bg-emerald-100/50 transition-colors"
+                >
                   <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        <TableHead className="w-32">Date</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {businessIncome.map((t) => (
-                        <TableRow key={t.id}>
-                          <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                          <TableCell className="text-sm font-bold">{t.description}</TableCell>
-                          <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
-                          <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Expense Groups */}
-            {Object.entries(expenseGroups).map(([key, bucket]) => {
-              if (bucket.items.length === 0) return null;
-              const rawTotal = bucket.items.reduce((s, t) => s + Math.abs(t.amount), 0);
-
-              return (
-                <Card key={key} className="border-0 shadow-xl overflow-hidden break-inside-avoid">
-                  <CardHeader className={cn("border-b", bucket.bg, "dark:bg-muted/20")}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={cn("p-2 rounded-xl bg-white dark:bg-card shadow-sm", bucket.color)}>
-                          <bucket.icon className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <CardTitle className={cn("text-xl", bucket.text, "dark:text-foreground")}>{bucket.label}</CardTitle>
-                          <CardDescription className={cn(bucket.text, "opacity-80 dark:text-muted-foreground")}>
-                            Total: <span className="font-bold">{formatCurrency(rawTotal)}</span>
-                          </CardDescription>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
+                  {expandedSections.has('income') ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                </button>
+                {expandedSections.has('income') && (
+                  <CardContent className="p-0 animate-fade-in">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/30">
@@ -785,22 +707,75 @@ const AccountantPortal = () => {
                           <TableHead>Description</TableHead>
                           <TableHead>Category</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
-                          <TableHead className="w-1/4">Notes</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {bucket.items.map((t) => (
-                          <TableRow key={t.id} className="hover:bg-muted/20 group">
+                        {businessIncome.map((t) => (
+                          <TableRow key={t.id}>
                             <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
                             <TableCell className="text-sm font-bold">{t.description}</TableCell>
                             <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
-                            <TableCell className="text-right font-black text-rose-600">{formatCurrency(t.amount)}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground italic">{t.notes || '—'}</TableCell>
+                            <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </CardContent>
+                )}
+              </Card>
+            )}
+
+            {/* Expense Groups */}
+            {Object.entries(expenseGroups).map(([key, bucket]) => {
+              if (bucket.items.length === 0) return null;
+              const rawTotal = bucket.items.reduce((s, t) => s + Math.abs(t.amount), 0);
+              const isExpanded = expandedSections.has(key);
+
+              return (
+                <Card key={key} className="border-0 shadow-xl overflow-hidden break-inside-avoid">
+                  <button 
+                    onClick={() => toggleSection(key)}
+                    className={cn("w-full text-left border-b p-4 flex items-center justify-between transition-colors", bucket.bg, "dark:bg-muted/20 hover:opacity-90")}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn("p-2 rounded-xl bg-white dark:bg-card shadow-sm", bucket.color)}>
+                        <bucket.icon className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <CardTitle className={cn("text-xl", bucket.text, "dark:text-foreground")}>{bucket.label}</CardTitle>
+                        <CardDescription className={cn(bucket.text, "opacity-80 dark:text-muted-foreground")}>
+                          Total: <span className="font-bold">{formatCurrency(rawTotal)}</span>
+                        </CardDescription>
+                      </div>
+                    </div>
+                    {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                  </button>
+                  {isExpanded && (
+                    <CardContent className="p-0 animate-fade-in">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead className="w-32">Date</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="w-1/4">Notes</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {bucket.items.map((t) => (
+                            <TableRow key={t.id} className="hover:bg-muted/20 group">
+                              <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell className="text-sm font-bold">{t.description}</TableCell>
+                              <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
+                              <TableCell className="text-right font-black text-rose-600">{formatCurrency(t.amount)}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground italic">{t.notes || '—'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  )}
                 </Card>
               );
             })}
@@ -914,7 +889,15 @@ const AccountantPortal = () => {
           </TabsContent>
 
           <TabsContent value="fixed-costs" className="space-y-8 animate-fade-in">
-            {/* Redesigned Summary Grid */}
+            <div className="flex justify-end gap-2 print:hidden">
+              <Button variant="ghost" size="sm" onClick={() => expandAll(fixedCostsData.map(d => d[0]))} className="h-8 text-xs gap-1.5 rounded-lg">
+                <Maximize2 className="w-3.5 h-3.5" /> Expand All
+              </Button>
+              <Button variant="ghost" size="sm" onClick={collapseAll} className="h-8 text-xs gap-1.5 rounded-lg">
+                <Minimize2 className="w-3.5 h-3.5" /> Collapse All
+              </Button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {fixedCostsData.map(([groupName, data]) => (
                 <Card key={groupName} className="border-0 shadow-lg hover:shadow-xl transition-all group overflow-hidden">
@@ -939,62 +922,70 @@ const AccountantPortal = () => {
                         <span className="text-[10px] font-bold text-muted-foreground">{data.items.length} items</span>
                       </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
-                      <span>Mixed-use deduction</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </div>
+                    <button 
+                      onClick={() => toggleSection(groupName)}
+                      className="mt-4 pt-4 border-t w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <span>{expandedSections.has(groupName) ? 'Hide details' : 'View details'}</span>
+                      {expandedSections.has(groupName) ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </button>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            {/* Detailed Lists */}
             <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="h-[1px] flex-1 bg-muted" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Detailed Breakdown</p>
-                <div className="h-[1px] flex-1 bg-muted" />
-              </div>
-              
-              {fixedCostsData.map(([groupName, data]) => (
-                <Card key={groupName} className="border-0 shadow-lg overflow-hidden">
-                  <CardHeader className="bg-muted/10 border-b py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={cn("p-1.5 rounded-lg", data.bg, data.color)}>
-                          <data.icon className="w-4 h-4" />
+              {fixedCostsData.map(([groupName, data]) => {
+                if (!expandedSections.has(groupName)) return null;
+                return (
+                  <Card key={groupName} className="border-0 shadow-lg overflow-hidden animate-fade-in">
+                    <CardHeader className="bg-muted/10 border-b py-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={cn("p-1.5 rounded-lg", data.bg, data.color)}>
+                            <data.icon className="w-4 h-4" />
+                          </div>
+                          <CardTitle className="text-sm font-black uppercase tracking-wider">{groupName}</CardTitle>
                         </div>
-                        <CardTitle className="text-sm font-black uppercase tracking-wider">{groupName}</CardTitle>
+                        <Badge variant="secondary" className="rounded-lg font-bold">{data.items.length} transactions</Badge>
                       </div>
-                      <Badge variant="secondary" className="rounded-lg font-bold">{data.items.length} transactions</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/5">
-                          <TableHead className="w-32 text-[10px] uppercase font-black">Date</TableHead>
-                          <TableHead className="text-[10px] uppercase font-black">Description</TableHead>
-                          <TableHead className="text-right pr-6 text-[10px] uppercase font-black">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {data.items.map((t) => (
-                          <TableRow key={t.id} className="hover:bg-muted/20">
-                            <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell className="text-xs font-bold">{t.description}</TableCell>
-                            <TableCell className="text-right pr-6 text-xs font-black tabular-nums text-rose-600">{formatCurrency(t.amount)}</TableCell>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/5">
+                            <TableHead className="w-32 text-[10px] uppercase font-black">Date</TableHead>
+                            <TableHead className="text-[10px] uppercase font-black">Description</TableHead>
+                            <TableHead className="text-right pr-6 text-[10px] uppercase font-black">Amount</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              ))}
+                        </TableHeader>
+                        <TableBody>
+                          {data.items.map((t) => (
+                            <TableRow key={t.id} className="hover:bg-muted/20">
+                              <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell className="text-xs font-bold">{t.description}</TableCell>
+                              <TableCell className="text-right pr-6 text-xs font-black tabular-nums text-rose-600">{formatCurrency(t.amount)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6 animate-fade-in">
+            <div className="flex justify-end gap-2 print:hidden">
+              <Button variant="ghost" size="sm" onClick={() => expandAll(subscriptionGroups.map(d => d[0]))} className="h-8 text-xs gap-1.5 rounded-lg">
+                <Maximize2 className="w-3.5 h-3.5" /> Expand All
+              </Button>
+              <Button variant="ghost" size="sm" onClick={collapseAll} className="h-8 text-xs gap-1.5 rounded-lg">
+                <Minimize2 className="w-3.5 h-3.5" /> Collapse All
+              </Button>
+            </div>
+
             <Card className="border-0 shadow-xl overflow-hidden">
               <CardHeader className="bg-muted/30 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -1034,36 +1025,45 @@ const AccountantPortal = () => {
             </Card>
 
             <div className="space-y-6">
-              {subscriptionGroups.map(([catName, data]) => (
-                <Card key={catName} className="border-0 shadow-lg overflow-hidden">
-                  <CardHeader className="bg-muted/10 border-b py-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">{catName}</CardTitle>
-                      <Badge variant="outline" className="rounded-lg">{data.items.length} transactions</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/5">
-                          <TableHead className="w-32 text-[10px] uppercase font-bold">Date</TableHead>
-                          <TableHead className="text-[10px] uppercase font-bold">Merchant</TableHead>
-                          <TableHead className="text-right pr-6 text-[10px] uppercase font-bold">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {data.items.map((t) => (
-                          <TableRow key={t.id}>
-                            <TableCell className="text-xs">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell className="text-xs font-medium">{t.description}</TableCell>
-                            <TableCell className="text-right pr-6 text-xs font-bold tabular-nums">{formatCurrency(t.amount)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              ))}
+              {subscriptionGroups.map(([catName, data]) => {
+                const isExpanded = expandedSections.has(catName);
+                return (
+                  <Card key={catName} className="border-0 shadow-lg overflow-hidden">
+                    <button 
+                      onClick={() => toggleSection(catName)}
+                      className="w-full text-left bg-muted/10 border-b py-3 px-4 flex items-center justify-between hover:bg-muted/20 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">{catName}</CardTitle>
+                        <Badge variant="outline" className="rounded-lg">{data.items.length} transactions</Badge>
+                      </div>
+                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    </button>
+                    {isExpanded && (
+                      <CardContent className="p-0 animate-fade-in">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/5">
+                              <TableHead className="w-32 text-[10px] uppercase font-bold">Date</TableHead>
+                              <TableHead className="text-[10px] uppercase font-bold">Merchant</TableHead>
+                              <TableHead className="text-right pr-6 text-[10px] uppercase font-bold">Amount</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {data.items.map((t) => (
+                              <TableRow key={t.id}>
+                                <TableCell className="text-xs">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                                <TableCell className="text-xs font-medium">{t.description}</TableCell>
+                                <TableCell className="text-right pr-6 text-xs font-bold tabular-nums">{formatCurrency(t.amount)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
         </Tabs>
