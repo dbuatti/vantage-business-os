@@ -45,7 +45,8 @@ import {
   Download,
   ExternalLink,
   PlusCircle,
-  X
+  X,
+  Package
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
@@ -68,11 +69,19 @@ interface Client {
   display_name: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  unit_price: number;
+}
+
 const Invoices = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDialog, setShowDialog] = useState(false);
@@ -89,6 +98,7 @@ const Invoices = () => {
     if (session) {
       fetchInvoices();
       fetchClients();
+      fetchProducts();
     }
   }, [session]);
 
@@ -113,6 +123,11 @@ const Invoices = () => {
     setClients(data || []);
   };
 
+  const fetchProducts = async () => {
+    const { data } = await supabase.from('products').select('id, name, description, unit_price');
+    setProducts(data || []);
+  };
+
   const handleAddLineItem = () => {
     setForm(prev => ({
       ...prev,
@@ -131,6 +146,19 @@ const Invoices = () => {
     const newItems = [...form.line_items];
     newItems[index] = { ...newItems[index], [field]: value };
     setForm(prev => ({ ...prev, line_items: newItems }));
+  };
+
+  const handleSelectProduct = (index: number, productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const newItems = [...form.line_items];
+      newItems[index] = {
+        ...newItems[index],
+        description: product.name,
+        unit_price: product.unit_price
+      };
+      setForm(prev => ({ ...prev, line_items: newItems }));
+    }
   };
 
   const calculateTotal = () => {
@@ -284,7 +312,7 @@ const Invoices = () => {
       </Card>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Invoice</DialogTitle>
             <DialogDescription>Fill in the details below to generate a professional invoice.</DialogDescription>
@@ -321,40 +349,64 @@ const Invoices = () => {
                   <PlusCircle className="w-3.5 h-3.5" /> Add Item
                 </Button>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {form.line_items.map((item, index) => (
-                  <div key={index} className="flex items-start gap-2 animate-fade-in">
-                    <div className="flex-1">
-                      <Input 
-                        placeholder="Description of service..." 
-                        value={item.description}
-                        onChange={(e) => handleLineItemChange(index, 'description', e.target.value)}
-                        className="rounded-xl"
-                      />
+                  <div key={index} className="space-y-2 p-4 rounded-2xl bg-muted/30 border animate-fade-in">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Select onValueChange={(v) => handleSelectProduct(index, v)}>
+                            <SelectTrigger className="h-9 rounded-lg bg-background">
+                              <SelectValue placeholder="Select from catalog..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {products.map(p => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  <div className="flex items-center gap-2">
+                                    <Package className="w-3 h-3 text-muted-foreground" />
+                                    <span>{p.name}</span>
+                                    <span className="text-xs text-muted-foreground ml-2">({formatCurrency(p.unit_price)})</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Input 
+                          placeholder="Description of service..." 
+                          value={item.description}
+                          onChange={(e) => handleLineItemChange(index, 'description', e.target.value)}
+                          className="rounded-xl bg-background"
+                        />
+                      </div>
+                      <div className="w-20">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Qty</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="Qty" 
+                          value={item.quantity}
+                          onChange={(e) => handleLineItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
+                          className="rounded-xl bg-background"
+                        />
+                      </div>
+                      <div className="w-32">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Price</Label>
+                        <Input 
+                          type="number" 
+                          placeholder="Price" 
+                          value={item.unit_price}
+                          onChange={(e) => handleLineItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                          className="rounded-xl bg-background font-bold"
+                        />
+                      </div>
+                      <div className="pt-6">
+                        {form.line_items.length > 1 && (
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveLineItem(index)} className="h-10 w-10 rounded-xl text-rose-500">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="w-20">
-                      <Input 
-                        type="number" 
-                        placeholder="Qty" 
-                        value={item.quantity}
-                        onChange={(e) => handleLineItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="rounded-xl"
-                      />
-                    </div>
-                    <div className="w-32">
-                      <Input 
-                        type="number" 
-                        placeholder="Price" 
-                        value={item.unit_price}
-                        onChange={(e) => handleLineItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                        className="rounded-xl"
-                      />
-                    </div>
-                    {form.line_items.length > 1 && (
-                      <Button variant="ghost" size="icon" onClick={() => handleRemoveLineItem(index)} className="h-10 w-10 rounded-xl text-rose-500">
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
                   </div>
                 ))}
               </div>

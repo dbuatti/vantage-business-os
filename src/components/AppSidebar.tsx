@@ -26,7 +26,8 @@ import {
   CreditCard,
   Users,
   FileText,
-  Briefcase
+  Briefcase,
+  Package
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -43,6 +44,7 @@ const AppSidebar = () => {
   const businessItems = [
     { title: "Clients", icon: Users, url: "/clients" },
     { title: "Invoices", icon: FileText, url: "/invoices" },
+    { title: "Catalog", icon: Package, url: "/products" },
     { title: "Tax Report", icon: Calculator, url: "/accountant-report" },
   ];
 
