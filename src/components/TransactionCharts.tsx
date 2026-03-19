@@ -29,8 +29,14 @@ interface Transaction {
   description: string;
 }
 
+interface CategoryGroup {
+  category_name: string;
+  group_name: string;
+}
+
 interface TransactionChartsProps {
   transactions: Transaction[];
+  categoryGroups: CategoryGroup[];
 }
 
 const COLORS = [
@@ -38,29 +44,56 @@ const COLORS = [
   '#06b6d4', '#f97316', '#ec4899', '#84cc16', '#14b8a6',
 ];
 
-const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
+const INCOME_GROUPS = [
+  '💰 Regular Income',
+  '🎵 Music Performance',
+  '🎹 Music Services',
+  '📋 Other Income'
+];
+
+const TransactionCharts = ({ transactions, categoryGroups }: TransactionChartsProps) => {
   const monthlyTrend = React.useMemo(() => {
     const months: Record<string, { month: string; income: number; expenses: number; net: number }> = {};
     
+    // Create a map for quick lookup
+    const catToGroup: Record<string, string> = {};
+    categoryGroups.forEach(cg => {
+      catToGroup[cg.category_name] = cg.group_name;
+    });
+
     transactions.forEach(t => {
       const monthKey = t.mmm_yyyy || new Date(t.transaction_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       if (!months[monthKey]) {
         months[monthKey] = { month: monthKey, income: 0, expenses: 0, net: 0 };
       }
-      if (t.amount > 0) months[monthKey].income += t.amount;
-      else months[monthKey].expenses += Math.abs(t.amount);
+
+      const groupName = catToGroup[t.category_1];
+      const isIncomeGroup = groupName && INCOME_GROUPS.includes(groupName);
+      
+      // Use category group to determine if it's income or expense
+      // Fallback to amount sign if category is unmapped
+      if (isIncomeGroup || (!groupName && t.amount > 0)) {
+        months[monthKey].income += Math.abs(t.amount);
+      } else {
+        months[monthKey].expenses += Math.abs(t.amount);
+      }
+      
       months[monthKey].net = months[monthKey].income - months[monthKey].expenses;
     });
 
     return Object.values(months)
       .sort((a, b) => {
         try {
-          const dateA = new Date(a.month);
-          const dateB = new Date(b.month);
-          return dateA.getTime() - dateB.getTime();
+          const parseMonth = (s: string) => {
+            const parts = s.split(' ');
+            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+            const monthIdx = monthNames.indexOf(parts[0].toLowerCase().substring(0, 3));
+            return new Date(parseInt(parts[1]), monthIdx);
+          };
+          return parseMonth(a.month).getTime() - parseMonth(b.month).getTime();
         } catch { return 0; }
       });
-  }, [transactions]);
+  }, [transactions, categoryGroups]);
 
   const categoryData = React.useMemo(() => {
     const categories: Record<string, number> = {};
@@ -105,11 +138,11 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
   }, [transactions]);
 
   const workPersonalData = React.useMemo(() => {
-    const work = transactions.filter(t => t.is_work).reduce((sum, t) => sum + t.amount, 0);
-    const personal = transactions.filter(t => !t.is_work).reduce((sum, t) => sum + t.amount, 0);
+    const work = transactions.filter(t => t.is_work).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const personal = transactions.filter(t => !t.is_work).reduce((sum, t) => sum + Math.abs(t.amount), 0);
     return [
-      { name: 'Work', value: Math.abs(work), color: '#f59e0b' },
-      { name: 'Personal', value: Math.abs(personal), color: '#6366f1' },
+      { name: 'Work', value: work, color: '#f59e0b' },
+      { name: 'Personal', value: personal, color: '#6366f1' },
     ];
   }, [transactions]);
 

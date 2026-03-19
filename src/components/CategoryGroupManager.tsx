@@ -130,20 +130,20 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
   const handleSave = async () => {
     if (!session || !formCategory || !formGroup) return;
     try {
-      if (editingGroup) {
-        const { error } = await supabase
-          .from('category_groups')
-          .update({ group_name: formGroup })
-          .eq('id', editingGroup.id);
-        if (error) throw error;
-        showSuccess('Category group updated');
-      } else {
-        const { error } = await supabase
-          .from('category_groups')
-          .insert([{ user_id: session.user.id, category_name: formCategory, group_name: formGroup }]);
-        if (error) throw error;
-        showSuccess('Category group added');
-      }
+      // Use upsert to handle potential duplicates gracefully
+      const { error } = await supabase
+        .from('category_groups')
+        .upsert({ 
+          user_id: session.user.id, 
+          category_name: formCategory, 
+          group_name: formGroup 
+        }, {
+          onConflict: 'user_id,category_name'
+        });
+
+      if (error) throw error;
+      showSuccess(editingGroup ? 'Category group updated' : 'Category group added');
+      
       await fetchGroups();
       onGroupsUpdated();
       resetForm();
@@ -272,7 +272,10 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
     }
 
     try {
-      const { error } = await supabase.from('category_groups').insert(toInsert);
+      const { error } = await supabase
+        .from('category_groups')
+        .upsert(toInsert, { onConflict: 'user_id,category_name' });
+      
       if (error) throw error;
       showSuccess(`Auto-assigned ${toInsert.length} categories`);
       await fetchGroups();

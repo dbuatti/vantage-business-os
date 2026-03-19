@@ -873,7 +873,7 @@ const Transactions = () => {
                 </TabsList>
 
                 <TabsContent value="charts" className="space-y-4">
-                  <TransactionCharts transactions={analyticsTransactions} />
+                  <TransactionCharts transactions={analyticsTransactions} categoryGroups={categoryGroups} />
                 </TabsContent>
                 <TabsContent value="categories" className="space-y-4">
                   <CategoryBreakdown transactions={analyticsTransactions} />
@@ -931,7 +931,7 @@ const Transactions = () => {
               </div>
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setShowBulkCategorize(false)} className="rounded-xl">Cancel</Button>
+              <Button variant="outline" onClick={() => setShowBulkCategorize(false)} className="rounded-xl Cancel">Cancel</Button>
               <Button onClick={handleBulkCategorize} className="rounded-xl" disabled={!bulkCategory}>Update All</Button>
             </DialogFooter>
           </DialogContent>
