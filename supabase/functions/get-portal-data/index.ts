@@ -21,13 +21,13 @@ serve(async (req: Request) => {
     const { token } = await req.json()
     if (!token) throw new Error('Token is required')
 
-    // Initialize Supabase with Service Role Key to bypass RLS for this specific read-only request
+    console.log("[get-portal-data] Fetching data for token:", token)
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1. Find the owner of this token
     const { data: settings, error: settingsError } = await supabaseAdmin
       .from('settings')
       .select('owner_user_id, company_name, company_email, company_abn')
@@ -43,14 +43,34 @@ serve(async (req: Request) => {
     }
 
     const userId = settings.owner_user_id
+    console.log("[get-portal-data] Found owner:", userId)
 
-    // 2. Fetch all relevant data for this user
-    const [transactions, categoryGroups, accountantSettings] = await Promise.all([
-      supabaseAdmin
+    // Fetch transactions with pagination to bypass 1000 limit
+    let allTransactions: any[] = []
+    let from = 0
+    const step = 1000
+    let hasMore = true
+
+    while (hasMore) {
+      const { data, error } = await supabaseAdmin
         .from('finance_transactions')
         .select('*')
         .eq('user_id', userId)
-        .order('transaction_date', { ascending: false }),
+        .order('transaction_date', { ascending: false })
+        .range(from, from + step - 1)
+
+      if (error) throw error
+      if (data && data.length > 0) {
+        allTransactions = [...allTransactions, ...data]
+        console.log(`[get-portal-data] Fetched ${allTransactions.length} transactions so far...`)
+        if (data.length < step) hasMore = false
+        else from += step
+      } else {
+        hasMore = false
+      }
+    }
+
+    const [categoryGroups, accountantSettings] = await Promise.all([
       supabaseAdmin
         .from('category_groups')
         .select('category_name, group_name')
@@ -62,10 +82,12 @@ serve(async (req: Request) => {
         .maybeSingle()
     ])
 
+    console.log("[get-portal-data] Success. Returning total transactions:", allTransactions.length)
+
     return new Response(
       JSON.stringify({
         profile: settings,
-        transactions: transactions.data || [],
+        transactions: allTransactions,
         categoryGroups: categoryGroups.data || [],
         accountantSettings: accountantSettings.data || null
       }),

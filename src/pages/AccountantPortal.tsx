@@ -65,7 +65,8 @@ import {
   Check,
   Share2,
   Wifi,
-  Droplets
+  Droplets,
+  History
 } from 'lucide-react';
 import { format, parseISO, isValid, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -126,6 +127,7 @@ const AccountantPortal = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    console.log("[AccountantPortal] Starting data fetch...");
     try {
       if (isPublic) {
         const { data, error } = await supabase.functions.invoke('get-portal-data', {
@@ -144,6 +146,7 @@ const AccountantPortal = () => {
             deduction_keywords: data.accountantSettings.deduction_keywords
           });
         }
+        console.log(`[AccountantPortal] Public fetch complete. Loaded ${data.transactions.length} transactions.`);
       } else {
         let allData: Transaction[] = [];
         let from = 0;
@@ -155,11 +158,11 @@ const AccountantPortal = () => {
             .from('finance_transactions')
             .select('*')
             .order('transaction_date', { ascending: false })
-            .order('id', { ascending: false })
             .range(from, from + step - 1);
           if (error) throw error;
           if (data && data.length > 0) {
             allData = [...allData, ...data];
+            console.log(`[AccountantPortal] Fetched batch: ${from} to ${from + step}. Total: ${allData.length}`);
             if (data.length < step) hasMore = false;
             else from += step;
           } else { hasMore = false; }
@@ -186,8 +189,10 @@ const AccountantPortal = () => {
           .eq('owner_user_id', session?.user.id)
           .single();
         setProfile(profileData);
+        console.log(`[AccountantPortal] Private fetch complete. Loaded ${allData.length} transactions.`);
       }
     } catch (error: any) {
+      console.error("[AccountantPortal] Fetch error:", error);
       showError(error.message);
     } finally {
       setLoading(false);
@@ -210,7 +215,9 @@ const AccountantPortal = () => {
   }, [selectedYear, reportType]);
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => {
+    console.log(`[AccountantPortal] Filtering ${transactions.length} transactions for period:`, reportIntervalStrings);
+    
+    const result = transactions.filter(t => {
       const dateStr = t.transaction_date;
       if (!dateStr) return false;
 
@@ -225,10 +232,15 @@ const AccountantPortal = () => {
       
       return inInterval && matchesSearch;
     });
+
+    console.log(`[AccountantPortal] Filter complete. Found ${result.length} transactions in period.`);
+    return result;
   }, [transactions, reportIntervalStrings, searchQuery]);
 
   const workTransactions = useMemo(() => {
-    return filteredTransactions.filter(t => t.is_work);
+    const result = filteredTransactions.filter(t => t.is_work);
+    console.log(`[AccountantPortal] Work filter complete. Found ${result.length} work transactions.`);
+    return result;
   }, [filteredTransactions]);
 
   const businessIncome = useMemo(() => {
@@ -426,20 +438,18 @@ const AccountantPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowDebug(!showDebug)} 
+              className={cn("rounded-xl gap-2", showDebug && "bg-primary/10 text-primary")}
+            >
+              <Bug className="w-4 h-4" /> Debug
+            </Button>
             {!isPublic && (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowDebug(!showDebug)} 
-                  className={cn("rounded-xl gap-2", showDebug && "bg-primary/10 text-primary")}
-                >
-                  <Bug className="w-4 h-4" /> Debug
-                </Button>
-                <Button variant="outline" asChild className="rounded-xl gap-2">
-                  <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
-                </Button>
-              </>
+              <Button variant="outline" asChild className="rounded-xl gap-2">
+                <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
+              </Button>
             )}
             <Button variant="outline" onClick={exportCSV} className="rounded-xl gap-2">
               <Download className="w-4 h-4" /> Export CSV
@@ -449,6 +459,43 @@ const AccountantPortal = () => {
             </Button>
           </div>
         </div>
+
+        {/* Debug Dashboard */}
+        {showDebug && (
+          <Card className="border-2 border-primary/20 bg-primary/5 animate-fade-in print:hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                <Bug className="w-4 h-4" /> Data Pipeline Debugger
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="p-3 rounded-xl bg-background border">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">1. Total Loaded</p>
+                <p className="text-xl font-black">{transactions.length}</p>
+                <p className="text-[10px] text-muted-foreground">From database</p>
+              </div>
+              <div className="p-3 rounded-xl bg-background border">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">2. In Period</p>
+                <p className="text-xl font-black">{filteredTransactions.length}</p>
+                <p className="text-[10px] text-muted-foreground">{reportIntervalStrings.start} to {reportIntervalStrings.end}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-background border">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">3. Marked as Work</p>
+                <p className="text-xl font-black">{workTransactions.length}</p>
+                <p className="text-[10px] text-muted-foreground">is_work = true</p>
+              </div>
+              <div className="p-3 rounded-xl bg-background border">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">4. Drop-off Rate</p>
+                <p className="text-xl font-black text-rose-600">
+                  {filteredTransactions.length > 0 
+                    ? Math.round((1 - (workTransactions.length / filteredTransactions.length)) * 100) 
+                    : 0}%
+                </p>
+                <p className="text-[10px] text-muted-foreground">Transactions not marked work</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tax Readiness Score */}
         <Card className="border-0 shadow-xl bg-gradient-to-r from-primary/5 to-background print:hidden">
