@@ -72,56 +72,9 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
     return isNaN(num) ? null : num;
   };
 
+  // Generate a unique signature for a transaction to detect duplicates
   const generateSignature = (t: { transaction_date: string; description: string; amount: number }) => {
     return `${t.transaction_date}-${t.description.toLowerCase().trim()}-${t.amount.toFixed(2)}`;
-  };
-
-  // Derive mmm-yyyy from a date string like 2022-07-01
-  const deriveMonthYear = (dateStr: string): string => {
-    if (!dateStr) return '';
-    try {
-      const date = new Date(dateStr);
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${months[date.getMonth()]} ${date.getFullYear()}`;
-    } catch {
-      return '';
-    }
-  };
-
-  // Derive month_code (YYYYMM) from date
-  const deriveMonthCode = (dateStr: string): string => {
-    if (!dateStr) return '';
-    try {
-      const date = new Date(dateStr);
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      return `${date.getFullYear()}${month}`;
-    } catch {
-      return '';
-    }
-  };
-
-  // Derive month_name from date
-  const deriveMonthName = (dateStr: string): string => {
-    if (!dateStr) return '';
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'long' });
-    } catch {
-      return '';
-    }
-  };
-
-  // Derive week number from date
-  const deriveWeek = (dateStr: string): number => {
-    if (!dateStr) return 0;
-    try {
-      const date = new Date(dateStr);
-      const startOfYear = new Date(date.getFullYear(), 0, 1);
-      const days = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-      return Math.ceil((days + startOfYear.getDay() + 1) / 7);
-    } catch {
-      return 0;
-    }
   };
 
   const processFile = async (file: File) => {
@@ -142,7 +95,6 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
           );
 
           const parsedData = results.data.map((row: any) => {
-            // Handle different column name variations across years
             const credit = parseAmount(row['Credit'] || row['credit']);
             const debit = parseAmount(row['Debit'] || row['debit']);
             const dollarAmount = parseAmount(row['$'] || row['Amount']);
@@ -153,15 +105,8 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
             }
 
             const transactionDate = parseCSVDate(row['Date'] || row['date']);
-            
-            // Handle Work column - default to false if missing
             const workValue = (row['Work'] || row['work'] || '').toLowerCase().trim();
             const isWork = workValue === 'yes' || workValue === 'true' || workValue === '1';
-            
-            // Derive month info from date if MONTH column is missing
-            const monthCode = row['MONTH'] || row['month'] || deriveMonthCode(transactionDate);
-            const mmmYyyy = row['mmm-yyyy'] || row['mmm_yyyy'] || deriveMonthYear(transactionDate);
-            const monthName = row['MONTH (2)'] || deriveMonthName(transactionDate);
 
             return {
               transaction_date: transactionDate,
@@ -175,14 +120,15 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
               category_2: (row['Category 2'] || row['Category 2'] || row['category_2'] || '').trim(),
               is_work: isWork,
               notes: (row['Notes'] || row['notes'] || '').trim(),
-              week: parseInt(row['Week'] || row['week']) || deriveWeek(transactionDate),
-              month_code: monthCode,
-              month_name: monthName,
-              mmm_yyyy: mmmYyyy,
+              week: parseInt(row['Week'] || row['week']) || 0,
+              month_code: row['MONTH'] || row['month'] || '',
+              month_name: row['MONTH (2)'] || '',
+              mmm_yyyy: row['mmm-yyyy'] || row['mmm_yyyy'] || '',
               _isDuplicate: false
             };
           }).filter(t => t.transaction_date && t.description);
 
+          // Mark duplicates
           parsedData.forEach(t => {
             const sig = generateSignature(t);
             t._isDuplicate = existingSignatures.has(sig);
@@ -221,6 +167,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
     setImporting(true);
     setProgress(30);
 
+    // Only import non-duplicates
     const newData = parsedData.filter(t => !t._isDuplicate);
     const duplicates = parsedData.filter(t => t._isDuplicate).length;
 
@@ -293,7 +240,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
           Import Transactions
         </CardTitle>
         <CardDescription>
-          Upload a CSV file — supports 2022, 2023, and 2024 formats. Duplicates are automatically detected.
+          Upload a CSV file. Duplicates are automatically detected and skipped.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -335,10 +282,6 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
                   <p className="font-medium">Drop your CSV file here</p>
                   <p className="text-sm text-muted-foreground">or click to browse</p>
                 </div>
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                  <FileText className="w-3 h-3" />
-                  <span>Supports: Date, Description, Credit, Debit, Category, Work columns</span>
-                </div>
               </div>
             )}
           </div>
@@ -367,7 +310,6 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
                   <TableRow className="bg-muted/50">
                     <TableHead className="text-xs">Date</TableHead>
                     <TableHead className="text-xs">Description</TableHead>
-                    <TableHead className="text-xs">Category</TableHead>
                     <TableHead className="text-xs text-right">Amount</TableHead>
                     <TableHead className="text-xs w-20">Status</TableHead>
                   </TableRow>
@@ -377,7 +319,6 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
                     <TableRow key={i} className={cn(t._isDuplicate && "opacity-50 bg-amber-50/50")}>
                       <TableCell className="text-sm">{t.transaction_date}</TableCell>
                       <TableCell className="text-sm max-w-[200px] truncate">{t.description}</TableCell>
-                      <TableCell className="text-sm">{t.category_1}</TableCell>
                       <TableCell className="text-sm text-right font-medium">{formatCurrency(t.amount)}</TableCell>
                       <TableCell>
                         {t._isDuplicate ? (
