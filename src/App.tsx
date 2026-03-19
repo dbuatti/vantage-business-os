@@ -16,6 +16,7 @@ import InvoiceDetail from "./pages/InvoiceDetail";
 import Products from "./pages/Products";
 import Settings from "./pages/Settings";
 import Insights from "./pages/Insights";
+import Metronome from "./pages/Metronome";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
             <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/metronome" element={<ProtectedRoute><Metronome /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
