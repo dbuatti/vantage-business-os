@@ -55,7 +55,8 @@ import {
   Briefcase,
   Repeat,
   ArrowUpRight,
-  Tags
+  Tags,
+  User
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns';
@@ -309,6 +310,23 @@ const Transactions = () => {
       showSuccess(`Updated ${selectedIds.size} transactions`);
       setSelectedIds(new Set());
       setShowBulkCategorize(false);
+      fetchTransactions();
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
+
+  const handleBulkWorkStatus = async (isWork: boolean) => {
+    if (selectedIds.size === 0) return;
+    try {
+      const { error } = await supabase
+        .from('finance_transactions')
+        .update({ is_work: isWork })
+        .in('id', Array.from(selectedIds));
+      
+      if (error) throw error;
+      showSuccess(`Updated ${selectedIds.size} transactions to ${isWork ? 'Work' : 'Personal'}`);
+      setSelectedIds(new Set());
       fetchTransactions();
     } catch (error: any) {
       showError(error.message);
@@ -744,6 +762,12 @@ const Transactions = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleBulkWorkStatus(true)} className="rounded-xl gap-2 bg-background text-amber-700 border-amber-200 hover:bg-amber-50">
+                            <Briefcase className="w-4 h-4" /> Mark Work
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleBulkWorkStatus(false)} className="rounded-xl gap-2 bg-background text-blue-700 border-blue-200 hover:bg-blue-50">
+                            <User className="w-4 h-4" /> Mark Personal
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => setShowBulkCategorize(true)} className="rounded-xl gap-2 bg-background">
                             <Tags className="w-4 h-4" /> Categorize
                           </Button>
