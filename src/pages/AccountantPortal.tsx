@@ -49,7 +49,7 @@ import {
   Database,
   Calendar
 } from 'lucide-react';
-import { format, isWithinInterval, parseISO } from 'date-fns';
+import { format, isWithinInterval, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 
@@ -72,7 +72,6 @@ const AccountantPortal = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   
-  // Dynamic Settings from DB
   const [settings, setSettings] = useState({
     business_percents: { rent: 25, bills: 25, phone: 50, fuel: 40 },
     deduction_keywords: {
@@ -94,29 +93,47 @@ const AccountantPortal = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch Transactions
-      const { data: txnData, error: txnError } = await supabase
-        .from('finance_transactions')
-        .select('*')
-        .order('transaction_date', { ascending: false });
+      console.log("[AccountantPortal] Starting data fetch...");
+      let allData: Transaction[] = [];
+      let from = 0;
+      const step = 1000;
+      let hasMore = true;
 
-      if (txnError) throw txnError;
-      setTransactions(txnData || []);
+      // Fetch all transactions using pagination to bypass 1000 limit
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('finance_transactions')
+          .select('*')
+          .order('transaction_date', { ascending: false })
+          .range(from, from + step - 1);
 
-      // Fetch Accountant Settings
-      const { data: settingsData, error: settingsError } = await supabase
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          if (data.length < step) hasMore = false;
+          else from += step;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      console.log(`[AccountantPortal] Fetched ${allData.length} total transactions.`);
+      setTransactions(allData);
+
+      const { data: settingsData } = await supabase
         .from('accountant_settings')
         .select('*')
         .eq('owner_user_id', session?.user.id)
         .single();
       
-      if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
       if (settingsData) setSettings({
         business_percents: settingsData.business_percents,
         deduction_keywords: settingsData.deduction_keywords
       });
 
     } catch (error: any) {
+      console.error("[AccountantPortal] Fetch error:", error);
       showError(error.message);
     } finally {
       setLoading(false);
@@ -133,10 +150,20 @@ const AccountantPortal = () => {
   }, [selectedYear, reportType]);
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => {
+    console.log(`[AccountantPortal] Filtering for period: ${format(reportInterval.start, 'yyyy-MM-dd')} to ${format(reportInterval.end, 'yyyy-MM-dd')}`);
+    
+    const filtered = transactions.filter(t => {
       const date = parseISO(t.transaction_date);
+      if (!isValid(date)) return false;
       return isWithinInterval(date, reportInterval);
     });
+
+    console.log(`[AccountantPortal] Found ${filtered.length} transactions in range.`);
+    if (filtered.length === 0 && transactions.length > 0) {
+      console.warn(`[AccountantPortal] Range mismatch! Newest txn: ${transactions[0].transaction_date}, Oldest txn: ${transactions[transactions.length-1].transaction_date}`);
+    }
+
+    return filtered;
   }, [transactions, reportInterval]);
 
   const businessIncome = useMemo(() => {
@@ -154,42 +181,17 @@ const AccountantPortal = () => {
 
     filteredTransactions.forEach(t => {
       if (t.amount > 0) return;
-      
       const desc = t.description.toLowerCase();
       const cat = (t.category_1 || '').toLowerCase();
-      
-      if (buckets.rent.keywords.some(k => desc.includes(k) || cat.includes(k))) {
-        buckets.rent.items.push(t);
-      } else if (buckets.bills.keywords.some(k => desc.includes(k) || cat.includes(k))) {
-        buckets.bills.items.push(t);
-      } else if (buckets.phone.keywords.some(k => desc.includes(k) || cat.includes(k))) {
-        buckets.phone.items.push(t);
-      } else if (buckets.fuel.keywords.some(k => desc.includes(k) || cat.includes(k))) {
-        buckets.fuel.items.push(t);
-      } else if (t.is_work) {
-        buckets.other.items.push(t);
-      }
+      if (buckets.rent.keywords.some(k => desc.includes(k) || cat.includes(k))) buckets.rent.items.push(t);
+      else if (buckets.bills.keywords.some(k => desc.includes(k) || cat.includes(k))) buckets.bills.items.push(t);
+      else if (buckets.phone.keywords.some(k => desc.includes(k) || cat.includes(k))) buckets.phone.items.push(t);
+      else if (buckets.fuel.keywords.some(k => desc.includes(k) || cat.includes(k))) buckets.fuel.items.push(t);
+      else if (t.is_work) buckets.other.items.push(t);
     });
 
     return buckets;
   }, [filteredTransactions, settings]);
-
-  const auditAlerts = useMemo(() => {
-    const alerts = [];
-    const workItems = filteredTransactions.filter(t => t.is_work || Object.values(deductionBuckets).some(b => b.items.includes(t)));
-    
-    const missingNotes = workItems.filter(t => !t.notes && Math.abs(t.amount) > 100);
-    if (missingNotes.length > 0) {
-      alerts.push({ title: `${missingNotes.length} Large items missing notes`, type: 'warning', icon: Info });
-    }
-
-    const unmapped = filteredTransactions.filter(t => !t.category_1 && Math.abs(t.amount) > 50);
-    if (unmapped.length > 0) {
-      alerts.push({ title: `${unmapped.length} Uncategorized transactions`, type: 'info', icon: Search });
-    }
-
-    return alerts;
-  }, [filteredTransactions, deductionBuckets]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(val));
@@ -201,7 +203,7 @@ const AccountantPortal = () => {
     return s + (bucketTotal * (b.percent / 100));
   }, 0);
 
-  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
+  const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
@@ -229,30 +231,10 @@ const AccountantPortal = () => {
             <Button variant="outline" onClick={() => window.print()} className="rounded-xl gap-2">
               <Printer className="w-4 h-4" /> Print Report
             </Button>
-            <Button className="rounded-xl gap-2">
-              <Download className="w-4 h-4" /> Export for Tax
-            </Button>
           </div>
         </div>
 
-        {/* Print Header */}
-        <div className="hidden print:block border-b-4 border-primary pb-6 mb-8">
-          <div className="flex justify-between items-end">
-            <div>
-              <h1 className="text-4xl font-black tracking-tight text-primary uppercase">Tax Deduction Report</h1>
-              <p className="text-lg font-bold mt-1">
-                {reportType === 'fy' ? 'Financial Year' : 'Calendar Year'} Ending {selectedYear}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">Generated for: {session?.user.email}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Date Generated</p>
-              <p className="font-bold">{format(new Date(), 'MMMM dd, yyyy')}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Audit & Controls Row */}
+        {/* Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
           <Card className="lg:col-span-2 border-0 shadow-lg">
             <CardContent className="p-6 flex flex-wrap items-end gap-6">
@@ -288,23 +270,15 @@ const AccountantPortal = () => {
                 Audit Readiness
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {auditAlerts.length === 0 ? (
-                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                  <CheckCircle2 className="w-4 h-4" /> All items look good
-                </div>
-              ) : (
-                auditAlerts.map((alert, i) => (
-                  <div key={i} className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-medium">
-                    <alert.icon className="w-3.5 h-3.5" /> {alert.title}
-                  </div>
-                ))
-              )}
+            <CardContent>
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-medium">
+                {filteredTransactions.length === 0 ? "No data in selected range" : "Reviewing your data..."}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Data Status Debugger (Helpful for user) */}
+        {/* Data Status Debugger */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 print:hidden">
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border">
             <div className="p-2 rounded-xl bg-background shadow-sm"><Database className="w-4 h-4 text-primary" /></div>
@@ -358,24 +332,20 @@ const AccountantPortal = () => {
 
         {/* Detailed Breakdown Sections */}
         <div className="space-y-8">
-          {/* Empty State Helper */}
-          {filteredTransactions.length > 0 && businessIncome.length === 0 && Object.values(deductionBuckets).every(b => b.items.length === 0) && (
+          {filteredTransactions.length === 0 && transactions.length > 0 && (
             <Card className="border-2 border-dashed p-12 text-center space-y-4">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
                 <Search className="w-8 h-8 text-muted-foreground" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold">No business data found in this period</h3>
+                <h3 className="text-xl font-bold">No data found for {selectedYear}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  We found {filteredTransactions.length} transactions between {format(reportInterval.start, 'MMM yyyy')} and {format(reportInterval.end, 'MMM yyyy')}, but none are marked as **Work** or match your **Deduction Keywords**.
+                  We found {transactions.length} transactions in your database, but none fall within the selected period. Try changing the "Year Ending" to **2026**.
                 </p>
               </div>
               <div className="flex justify-center gap-3">
-                <Button asChild variant="outline" className="rounded-xl">
-                  <Link to="/transactions">Go to Transactions</Link>
-                </Button>
-                <Button asChild className="rounded-xl">
-                  <Link to="/settings?tab=accountant">Update Keywords</Link>
+                <Button onClick={() => setSelectedYear((parseInt(selectedYear) + 1).toString())} className="rounded-xl">
+                  Try Next Year
                 </Button>
               </div>
             </Card>
@@ -482,42 +452,6 @@ const AccountantPortal = () => {
             );
           })}
         </div>
-
-        {/* Accountant Summary Box */}
-        <Card className="border-2 border-dashed border-primary/30 bg-primary/5 print:border-solid print:border-2">
-          <CardContent className="p-8">
-            <div className="flex items-start gap-6">
-              <div className="p-4 bg-primary rounded-2xl text-white shrink-0">
-                <FileText className="w-10 h-10" />
-              </div>
-              <div className="space-y-4 flex-1">
-                <div>
-                  <h3 className="text-2xl font-black tracking-tight">Accountant Summary</h3>
-                  <p className="text-muted-foreground">Key figures for tax return preparation</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-4">
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Business Income</p>
-                    <p className="text-3xl font-black text-emerald-600">{formatCurrency(totalIncome)}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Deductions</p>
-                    <p className="text-3xl font-black text-rose-600">{formatCurrency(totalDeductions)}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Estimated Profit</p>
-                    <p className="text-3xl font-black text-primary">{formatCurrency(totalIncome - totalDeductions)}</p>
-                  </div>
-                </div>
-                <div className="pt-4 border-t border-primary/10">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    <strong>Note to Accountant:</strong> This report includes all transactions identified as business-related or mixed-use. Mixed-use items (Rent, Utilities, Phone, Fuel) have been estimated at the percentages shown above. Please review and adjust based on actual logbooks or home-office calculations.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
