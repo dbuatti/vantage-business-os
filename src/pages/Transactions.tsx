@@ -876,7 +876,7 @@ const Transactions = () => {
                   <TransactionCharts transactions={analyticsTransactions} categoryGroups={categoryGroups} />
                 </TabsContent>
                 <TabsContent value="categories" className="space-y-4">
-                  <CategoryBreakdown transactions={analyticsTransactions} />
+                  <CategoryBreakdown transactions={analyticsTransactions} categoryGroups={categoryGroups} />
                 </TabsContent>
                 <TabsContent value="merchants" className="space-y-4">
                   <MerchantAnalysis transactions={analyticsTransactions} />

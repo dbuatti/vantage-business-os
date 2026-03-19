@@ -27,8 +27,14 @@ interface Transaction {
   mmm_yyyy: string;
 }
 
+interface CategoryGroup {
+  category_name: string;
+  group_name: string;
+}
+
 interface CategoryBreakdownProps {
   transactions: Transaction[];
+  categoryGroups: CategoryGroup[];
 }
 
 interface CategoryData {
@@ -56,81 +62,110 @@ const COLORS = [
   '#a855f7', '#e11d48', '#0ea5e9', '#84cc16', '#d946ef',
 ];
 
-const CategoryBreakdown = ({ transactions }: CategoryBreakdownProps) => {
+const INCOME_GROUPS = [
+  '💰 Regular Income',
+  '🎵 Music Performance',
+  '🎹 Music Services',
+  '📋 Other Income'
+];
+
+const CategoryBreakdown = ({ transactions, categoryGroups }: CategoryBreakdownProps) => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'expenses' | 'income'>('expenses');
 
   const categoryData = useMemo(() => {
-    const filtered = transactions.filter(t => 
-      viewMode === 'expenses' ? t.amount < 0 : t.amount > 0
-    );
+    // Create a map for quick group lookup
+    const catToGroup: Record<string, string> = {};
+    categoryGroups.forEach(cg => {
+      catToGroup[cg.category_name] = cg.group_name;
+    });
 
-    const totalAmount = filtered.reduce((s, t) => s + Math.abs(t.amount), 0);
-
+    // Group transactions by category first
     const categories: Record<string, Transaction[]> = {};
-    filtered.forEach(t => {
+    transactions.forEach(t => {
       const cat = t.category_1 || 'Uncategorized';
       if (!categories[cat]) categories[cat] = [];
       categories[cat].push(t);
     });
 
-    const result: CategoryData[] = Object.entries(categories).map(([name, txns]) => {
-      const total = txns.reduce((s, t) => s + Math.abs(t.amount), 0);
-      const count = txns.length;
+    // Filter and process categories based on their intended type (Income vs Expense)
+    const processedCategories: CategoryData[] = Object.entries(categories)
+      .map(([name, txns]) => {
+        const groupName = catToGroup[name];
+        // Determine if this is an income category based on mapping or majority of transactions
+        const isIncomeCategory = groupName 
+          ? INCOME_GROUPS.includes(groupName) 
+          : txns.reduce((s, t) => s + t.amount, 0) > 0;
+        
+        // Skip if it doesn't match current view mode
+        if (viewMode === 'expenses' && isIncomeCategory) return null;
+        if (viewMode === 'income' && !isIncomeCategory) return null;
 
-      // Subcategories
-      const subcats: Record<string, { total: number; count: number }> = {};
-      txns.forEach(t => {
-        const sub = t.category_2 || 'Other';
-        if (!subcats[sub]) subcats[sub] = { total: 0, count: 0 };
-        subcats[sub].total += Math.abs(t.amount);
-        subcats[sub].count++;
-      });
+        const total = txns.reduce((s, t) => s + Math.abs(t.amount), 0);
+        const count = txns.length;
 
-      // Top merchants
-      const merchants: Record<string, number> = {};
-      txns.forEach(t => {
-        merchants[t.description] = (merchants[t.description] || 0) + Math.abs(t.amount);
-      });
+        // Subcategories
+        const subcats: Record<string, { total: number; count: number }> = {};
+        txns.forEach(t => {
+          const sub = t.category_2 || 'Other';
+          if (!subcats[sub]) subcats[sub] = { total: 0, count: 0 };
+          subcats[sub].total += Math.abs(t.amount);
+          subcats[sub].count++;
+        });
 
-      // Monthly average
-      const months = new Set(txns.map(t => t.mmm_yyyy));
-      const monthlyAvg = total / Math.max(1, months.size);
+        // Top merchants
+        const merchants: Record<string, number> = {};
+        txns.forEach(t => {
+          merchants[t.description] = (merchants[t.description] || 0) + Math.abs(t.amount);
+        });
 
-      // Trend calculation
-      const sorted = [...txns].sort((a, b) => 
-        new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
-      );
-      let trend: 'up' | 'down' | 'stable' = 'stable';
-      if (sorted.length >= 6) {
-        const half = Math.floor(sorted.length / 2);
-        const firstHalf = sorted.slice(0, half).reduce((s, t) => s + Math.abs(t.amount), 0) / half;
-        const secondHalf = sorted.slice(half).reduce((s, t) => s + Math.abs(t.amount), 0) / (sorted.length - half);
-        if (secondHalf > firstHalf * 1.15) trend = 'up';
-        else if (secondHalf < firstHalf * 0.85) trend = 'down';
-      }
+        // Monthly average
+        const months = new Set(txns.map(t => t.mmm_yyyy));
+        const monthlyAvg = total / Math.max(1, months.size);
 
-      return {
-        name,
-        total,
-        count,
-        percentage: totalAmount > 0 ? (total / totalAmount) * 100 : 0,
-        avgAmount: total / count,
-        monthlyAvg,
-        trend,
-        isWork: txns.some(t => t.is_work),
-        subcategories: Object.entries(subcats)
-          .map(([subName, data]) => ({ name: subName, ...data }))
-          .sort((a, b) => b.total - a.total),
-        topMerchants: Object.entries(merchants)
-          .map(([mName, mTotal]) => ({ name: mName, total: mTotal }))
-          .sort((a, b) => b.total - a.total)
-          .slice(0, 3)
-      };
-    }).sort((a, b) => b.total - a.total);
+        // Trend calculation
+        const sorted = [...txns].sort((a, b) => 
+          new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
+        );
+        let trend: 'up' | 'down' | 'stable' = 'stable';
+        if (sorted.length >= 6) {
+          const half = Math.floor(sorted.length / 2);
+          const firstHalf = sorted.slice(0, half).reduce((s, t) => s + Math.abs(t.amount), 0) / half;
+          const secondHalf = sorted.slice(half).reduce((s, t) => s + Math.abs(t.amount), 0) / (sorted.length - half);
+          if (secondHalf > firstHalf * 1.15) trend = 'up';
+          else if (secondHalf < firstHalf * 0.85) trend = 'down';
+        }
 
-    return { categories: result, totalAmount };
-  }, [transactions, viewMode]);
+        return {
+          name,
+          total,
+          count,
+          percentage: 0, // Calculated below
+          avgAmount: total / count,
+          monthlyAvg,
+          trend,
+          isWork: txns.some(t => t.is_work),
+          subcategories: Object.entries(subcats)
+            .map(([subName, data]) => ({ name: subName, ...data }))
+            .sort((a, b) => b.total - a.total),
+          topMerchants: Object.entries(merchants)
+            .map(([mName, mTotal]) => ({ name: mName, total: mTotal }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 3)
+        };
+      })
+      .filter((cat): cat is CategoryData => cat !== null)
+      .sort((a, b) => b.total - a.total);
+
+    const totalAmount = processedCategories.reduce((s, c) => s + c.total, 0);
+    
+    // Calculate percentages
+    processedCategories.forEach(cat => {
+      cat.percentage = totalAmount > 0 ? (cat.total / totalAmount) * 100 : 0;
+    });
+
+    return { categories: processedCategories, totalAmount };
+  }, [transactions, categoryGroups, viewMode]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -149,7 +184,7 @@ const CategoryBreakdown = ({ transactions }: CategoryBreakdownProps) => {
             <Layers className="w-5 h-5 text-primary" />
             Category Breakdown
           </CardTitle>
-          <CardDescription>No data to display</CardDescription>
+          <CardDescription>No data to display for {viewMode}</CardDescription>
         </CardHeader>
       </Card>
     );
