@@ -31,9 +31,10 @@ interface ManualTransactionDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   categories: string[];
+  subcategories: string[];
 }
 
-const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories }: ManualTransactionDialogProps) => {
+const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, subcategories }: ManualTransactionDialogProps) => {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -41,6 +42,7 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories }: 
     description: '',
     amount: '',
     category_1: 'Other',
+    category_2: '',
     is_work: false,
     notes: '',
     account_label: 'Manual Entry'
@@ -62,6 +64,7 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories }: 
           description: form.description,
           amount: amount,
           category_1: form.category_1,
+          category_2: form.category_2 === 'none' ? '' : form.category_2,
           is_work: form.is_work,
           notes: form.notes,
           account_label: form.account_label,
@@ -81,6 +84,7 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories }: 
         description: '',
         amount: '',
         category_1: 'Other',
+        category_2: '',
         is_work: false,
         notes: '',
         account_label: 'Manual Entry'
@@ -121,7 +125,7 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories }: 
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input 
                   type="number" 
-                  step="0.01"
+                  step="0.01" 
                   placeholder="0.00"
                   value={form.amount} 
                   onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
@@ -147,7 +151,7 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories }: 
               <Label>Category</Label>
               <Select value={form.category_1} onValueChange={(v) => setForm(prev => ({ ...prev, category_1: v }))}>
                 <SelectTrigger className="rounded-xl">
-                  <SelectValue />
+                  <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.filter(c => c !== 'All').map(cat => (
@@ -157,13 +161,28 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories }: 
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Account Label</Label>
-              <Input 
-                value={form.account_label}
-                onChange={(e) => setForm(prev => ({ ...prev, account_label: e.target.value }))}
-                className="rounded-xl"
-              />
+              <Label>Subcategory</Label>
+              <Select value={form.category_2} onValueChange={(v) => setForm(prev => ({ ...prev, category_2: v }))}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="Select subcategory" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {subcategories.map(sub => (
+                    <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Account Label</Label>
+            <Input 
+              value={form.account_label}
+              onChange={(e) => setForm(prev => ({ ...prev, account_label: e.target.value }))}
+              className="rounded-xl"
+            />
           </div>
 
           <div className="flex items-center gap-2 pt-2">

@@ -144,7 +144,7 @@ const AccountantReport = () => {
         description: editForm.description,
         amount: parseFloat(editForm.amount) || 0,
         category_1: editForm.category_1,
-        category_2: editForm.category_2,
+        category_2: editForm.category_2 === 'none' ? '' : editForm.category_2,
         is_work: editForm.is_work,
         notes: editForm.notes
       }).eq('id', editingTransaction.id);
@@ -162,6 +162,16 @@ const AccountantReport = () => {
     const currentYear = new Date().getFullYear();
     return Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
   }, []);
+
+  const categories = useMemo(() => {
+    const cats = new Set(transactions.map(t => t.category_1).filter(Boolean));
+    return Array.from(cats).sort();
+  }, [transactions]);
+
+  const subcategories = useMemo(() => {
+    const subs = new Set(transactions.map(t => t.category_2).filter(Boolean));
+    return Array.from(subs).sort();
+  }, [transactions]);
 
   const reportInterval = useMemo(() => {
     const year = parseInt(selectedYear);
@@ -553,11 +563,30 @@ const AccountantReport = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Input value={editForm.category_1} onChange={(e) => setEditForm(prev => ({ ...prev, category_1: e.target.value }))} className="rounded-xl" />
+                  <Select value={editForm.category_1} onValueChange={(v) => setEditForm(prev => ({ ...prev, category_1: v }))}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Subcategory</Label>
-                  <Input value={editForm.category_2} onChange={(e) => setEditForm(prev => ({ ...prev, category_2: e.target.value }))} className="rounded-xl" />
+                  <Select value={editForm.category_2} onValueChange={(v) => setEditForm(prev => ({ ...prev, category_2: v }))}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {subcategories.map(sub => (
+                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="flex items-center gap-2">
