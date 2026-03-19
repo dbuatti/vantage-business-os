@@ -454,7 +454,7 @@ const AccountantPortal = () => {
                 <div className="space-y-2">
                   <h2 className="text-2xl font-black">Welcome, Accountant</h2>
                   <p className="text-white/80 max-w-xl">
-                    This portal provides a consolidated view of **{profile?.company_name}**'s business finances. 
+                    This portal provides a consolidated view of {profile?.company_name}'s business finances. 
                     You can review income, categorized deductions, and download reports for tax preparation.
                   </p>
                 </div>
@@ -597,7 +597,7 @@ const AccountantPortal = () => {
                 <div className="space-y-2">
                   <h3 className="text-2xl font-black">Categorization Required</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    We found **{filteredTransactions.length}** transactions in this period, but none are showing up here because they aren't marked as **Work** yet.
+                    We found {filteredTransactions.length} transactions in this period, but none are showing up here because they aren't marked as Work yet.
                   </p>
                 </div>
                 {!isPublic && (
@@ -748,7 +748,6 @@ const AccountantPortal = () => {
                     ) : (
                       groupedWorkData.map(([groupName, data]) => (
                         <React.Fragment key={groupName}>
-                          {/* Group Header Row */}
                           <TableRow className="bg-muted/20 hover:bg-muted/20">
                             <TableCell className="pl-6 font-black uppercase tracking-wider text-xs text-primary">
                               {groupName}
@@ -783,7 +782,6 @@ const AccountantPortal = () => {
                               {formatCurrency(data.income - data.expenses)}
                             </TableCell>
                           </TableRow>
-                          {/* Category Rows */}
                           {Object.entries(data.categories)
                             .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
                             .map(([catName, catData]) => (
@@ -826,7 +824,6 @@ const AccountantPortal = () => {
                         </React.Fragment>
                       ))
                     )}
-                    {/* Grand Total Row */}
                     {groupedWorkData.length > 0 && (
                       <TableRow className="bg-primary text-white hover:bg-primary">
                         <TableCell className="pl-6 font-black uppercase">Grand Total</TableCell>
