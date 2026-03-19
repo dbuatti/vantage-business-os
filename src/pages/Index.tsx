@@ -8,10 +8,11 @@ import MonthlySummary from '@/components/MonthlySummary';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles } from 'lucide-react';
+import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
@@ -31,17 +32,25 @@ interface TransactionSummary {
   }>;
 }
 
+interface BusinessStats {
+  totalClients: number;
+  outstandingAmount: number;
+  recentInvoices: any[];
+}
+
 const Index = () => {
   const { session } = useAuth();
   const [entries, setEntries] = useState<FinanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] = useState<TransactionSummary | null>(null);
+  const [businessStats, setBusinessStats] = useState<BusinessStats | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (session) {
       fetchEntries();
       fetchTransactionSummary();
+      fetchBusinessStats();
     }
   }, [session]);
 
@@ -94,6 +103,25 @@ const Index = () => {
         recentTransactions: (data || []).slice(0, 5)
       });
     } catch (error: any) {
+      // Silently fail
+    }
+  };
+
+  const fetchBusinessStats = async () => {
+    try {
+      const { data: clients } = await supabase.from('clients').select('total_receivable');
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('*')
+        .order('invoice_date', { ascending: false })
+        .limit(3);
+
+      setBusinessStats({
+        totalClients: clients?.length || 0,
+        outstandingAmount: clients?.reduce((s, c) => s + (c.total_receivable || 0), 0) || 0,
+        recentInvoices: invoices || []
+      });
+    } catch (error) {
       // Silently fail
     }
   };
@@ -165,6 +193,33 @@ const Index = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+              {/* Business Health Widget */}
+              {businessStats && (
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-purple-700 text-white overflow-hidden relative">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+                  <CardContent className="p-6 relative">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold uppercase tracking-widest opacity-80">Business Health</p>
+                        <p className="text-4xl font-black">{formatCurrency(businessStats.outstandingAmount)}</p>
+                        <p className="text-sm opacity-80">Total Outstanding Receivables</p>
+                      </div>
+                      <div className="p-3 bg-white/20 rounded-2xl">
+                        <Briefcase className="w-8 h-8" />
+                      </div>
+                    </div>
+                    <div className="mt-8 grid grid-cols-2 gap-4">
+                      <Button variant="secondary" asChild className="rounded-xl font-bold">
+                        <Link to="/invoices">Manage Invoices</Link>
+                      </Button>
+                      <Button variant="outline" asChild className="rounded-xl bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                        <Link to="/clients">View {businessStats.totalClients} Clients</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <FinanceChart entries={calculatedEntries} />
               <MonthlySummary entries={calculatedEntries} />
             </div>
@@ -197,6 +252,29 @@ const Index = () => {
                   </Button>
                 </CardContent>
               </Card>
+
+              {/* Recent Invoices Widget */}
+              {businessStats && businessStats.recentInvoices.length > 0 && (
+                <Card className="border-0 shadow-xl">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Recent Invoices</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {businessStats.recentInvoices.map((inv) => (
+                      <Link key={inv.id} to={`/invoices/${inv.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors border">
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold truncate">{inv.client_display_name}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold">{inv.number}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-black">{formatCurrency(inv.total_amount)}</p>
+                          <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md">{inv.status}</Badge>
+                        </div>
+                      </Link>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
 

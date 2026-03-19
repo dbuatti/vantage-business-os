@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -69,6 +70,7 @@ interface Client {
 
 const Invoices = () => {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,6 +194,11 @@ const Invoices = () => {
     }
   };
 
+  const filteredInvoices = invoices.filter(i => 
+    i.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    i.client_display_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -231,7 +238,7 @@ const Invoices = () => {
             <TableBody>
               {loading ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-10">Loading invoices...</TableCell></TableRow>
-              ) : invoices.length === 0 ? (
+              ) : filteredInvoices.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-20 text-muted-foreground">
                     <FileText className="w-12 h-12 mx-auto opacity-10 mb-4" />
@@ -240,8 +247,8 @@ const Invoices = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                invoices.map((invoice) => (
-                  <TableRow key={invoice.id} className="group hover:bg-muted/30 transition-colors">
+                filteredInvoices.map((invoice) => (
+                  <TableRow key={invoice.id} className="group hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/invoices/${invoice.id}`)}>
                     <TableCell>
                       <p className="font-bold">{invoice.number}</p>
                       <p className="text-[10px] text-muted-foreground uppercase font-bold">Due {format(new Date(invoice.due_date), 'MMM dd')}</p>
@@ -254,15 +261,17 @@ const Invoices = () => {
                     <TableCell className="text-right font-black">
                       {formatCurrency(invoice.total_amount)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {invoice.status !== 'Paid' && (
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-emerald-600" onClick={() => updateStatus(invoice.id, 'Paid')}>
                             <CheckCircle2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
-                          <Download className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg">
+                          <Link to={`/invoices/${invoice.id}`}>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Link>
                         </Button>
                       </div>
                     </TableCell>
