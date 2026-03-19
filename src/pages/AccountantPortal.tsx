@@ -61,7 +61,8 @@ import {
   Repeat,
   CreditCard,
   Copy,
-  Check
+  Check,
+  Share2
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, isValid, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -108,6 +109,7 @@ const AccountantPortal = () => {
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   
   const [settings, setSettings] = useState({
     business_percents: { rent: 25, bills: 25, phone: 50, fuel: 40 },
@@ -186,7 +188,7 @@ const AccountantPortal = () => {
 
         const { data: profileData } = await supabase
           .from('settings')
-          .select('company_name, company_email, company_abn')
+          .select('company_name, company_email, company_abn, accountant_share_token')
           .eq('owner_user_id', session?.user.id)
           .single();
         setProfile(profileData);
@@ -365,6 +367,15 @@ const AccountantPortal = () => {
     showSuccess('Amount copied');
   };
 
+  const copyShareLink = () => {
+    if (!profile?.accountant_share_token) return;
+    const url = `${window.location.origin}/portal/${profile.accountant_share_token}`;
+    navigator.clipboard.writeText(url);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+    showSuccess('Share link copied');
+  };
+
   const exportCSV = () => {
     if (workTransactions.length === 0) return;
     const headers = ['Date', 'Description', 'Category', 'Amount', 'Notes', 'Account'];
@@ -444,6 +455,45 @@ const AccountantPortal = () => {
             </Button>
           </div>
         </div>
+
+        {/* Share Link Quick Access (Only for owner) */}
+        {!isPublic && profile?.accountant_share_token && (
+          <Card className="border-0 shadow-lg bg-primary/5 border-primary/10 print:hidden">
+            <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                  <Share2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Share Access</p>
+                  <p className="text-xs text-muted-foreground">Send this secret link to your accountant for read-only access.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={copyShareLink}
+                  className="rounded-xl gap-2 flex-1 sm:flex-none bg-background"
+                >
+                  {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {linkCopied ? 'Copied' : 'Copy Link'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  asChild
+                  className="rounded-xl gap-2 flex-1 sm:flex-none bg-background"
+                >
+                  <a href={`/portal/${profile.accountant_share_token}`} target="_blank" rel="noreferrer">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open Portal
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Public Welcome Card */}
         {isPublic && (
