@@ -58,7 +58,8 @@ import {
   Share2,
   Wifi,
   Droplets,
-  Flame
+  Flame,
+  ChevronRight
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -290,7 +291,7 @@ const AccountantPortal = () => {
   }, [workTransactions]);
 
   const fixedCostsData = useMemo(() => {
-    const groups: Record<string, { total: number, items: Transaction[], icon: any }> = {};
+    const groups: Record<string, { total: number, items: Transaction[], icon: any, color: string, bg: string }> = {};
     
     filteredTransactions.forEach(t => {
       if (t.amount > 0) return;
@@ -300,38 +301,55 @@ const AccountantPortal = () => {
       
       let groupKey = '';
       let icon = Info;
+      let color = 'text-gray-600';
+      let bg = 'bg-gray-50';
 
       if (settings.deduction_keywords.rent.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Rent & Home Office';
         icon = Home;
+        color = 'text-blue-600';
+        bg = 'bg-blue-50';
       } else if (settings.deduction_keywords.bills.some(k => desc.includes(k) || cat.includes(k))) {
-        // Break down Utilities & Bills into secondary categories
         if (desc.includes('internet') || subCat.includes('internet') || cat.includes('internet')) {
           groupKey = 'Utilities: Internet';
           icon = Wifi;
+          color = 'text-indigo-600';
+          bg = 'bg-indigo-50';
         } else if (desc.includes('electricity') || subCat.includes('electricity') || desc.includes('power') || subCat.includes('power')) {
           groupKey = 'Utilities: Electricity';
           icon = Zap;
+          color = 'text-amber-600';
+          bg = 'bg-amber-50';
         } else if (desc.includes('gas') || subCat.includes('gas')) {
           groupKey = 'Utilities: Gas';
           icon = Flame;
+          color = 'text-orange-600';
+          bg = 'bg-orange-50';
         } else if (desc.includes('water') || subCat.includes('water')) {
           groupKey = 'Utilities: Water';
           icon = Droplets;
+          color = 'text-cyan-600';
+          bg = 'bg-cyan-50';
         } else {
           groupKey = t.category_1 === 'Utilities' && t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities & Bills';
           icon = Zap;
+          color = 'text-amber-600';
+          bg = 'bg-amber-50';
         }
       } else if (settings.deduction_keywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Phone & Internet';
         icon = Phone;
+        color = 'text-purple-600';
+        bg = 'bg-purple-50';
       } else if (settings.deduction_keywords.fuel.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Fuel & Transport';
         icon = Fuel;
+        color = 'text-rose-600';
+        bg = 'bg-rose-50';
       }
 
       if (groupKey) {
-        if (!groups[groupKey]) groups[groupKey] = { total: 0, items: [], icon };
+        if (!groups[groupKey]) groups[groupKey] = { total: 0, items: [], icon, color, bg };
         groups[groupKey].total += Math.abs(t.amount);
         groups[groupKey].items.push(t);
       }
@@ -895,75 +913,77 @@ const AccountantPortal = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="fixed-costs" className="space-y-6 animate-fade-in">
-            <Card className="border-0 shadow-xl overflow-hidden">
-              <CardHeader className="bg-muted/30 border-b">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Home className="w-5 h-5 text-primary" />
-                  Fixed & Mixed Costs Summary
-                </CardTitle>
-                <CardDescription>Consolidated totals for Rent, Fuel, Phone, and Utilities.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="pl-6">Cost Group</TableHead>
-                      <TableHead className="text-right pr-6">Total Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {fixedCostsData.map(([groupName, data]) => (
-                      <TableRow key={groupName}>
-                        <TableCell className="pl-6 font-bold flex items-center gap-2">
-                          <data.icon className="w-4 h-4 text-muted-foreground" />
-                          {groupName}
-                        </TableCell>
-                        <TableCell className="text-right pr-6 font-black text-rose-600">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 font-bold text-rose-600 hover:bg-rose-50 gap-2"
-                            onClick={() => copyToClipboard(data.total.toString(), `${groupName}-fixed`)}
-                          >
-                            {formatCurrency(data.total)}
-                            {copiedId === `${groupName}-fixed` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+          <TabsContent value="fixed-costs" className="space-y-8 animate-fade-in">
+            {/* Redesigned Summary Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {fixedCostsData.map(([groupName, data]) => (
+                <Card key={groupName} className="border-0 shadow-lg hover:shadow-xl transition-all group overflow-hidden">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={cn("p-3 rounded-2xl shadow-sm", data.bg, data.color)}>
+                        <data.icon className="w-6 h-6" />
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => copyToClipboard(data.total.toString(), `${groupName}-fixed`)}
+                      >
+                        {copiedId === `${groupName}-fixed` ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{groupName}</p>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-2xl font-black text-rose-600">{formatCurrency(data.total)}</p>
+                        <span className="text-[10px] font-bold text-muted-foreground">{data.items.length} items</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
+                      <span>Mixed-use deduction</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
+            {/* Detailed Lists */}
             <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="h-[1px] flex-1 bg-muted" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Detailed Breakdown</p>
+                <div className="h-[1px] flex-1 bg-muted" />
+              </div>
+              
               {fixedCostsData.map(([groupName, data]) => (
                 <Card key={groupName} className="border-0 shadow-lg overflow-hidden">
                   <CardHeader className="bg-muted/10 border-b py-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <data.icon className="w-4 h-4 text-primary" />
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider">{groupName}</CardTitle>
+                        <div className={cn("p-1.5 rounded-lg", data.bg, data.color)}>
+                          <data.icon className="w-4 h-4" />
+                        </div>
+                        <CardTitle className="text-sm font-black uppercase tracking-wider">{groupName}</CardTitle>
                       </div>
-                      <Badge variant="secondary" className="rounded-lg">{data.items.length} items</Badge>
+                      <Badge variant="secondary" className="rounded-lg font-bold">{data.items.length} transactions</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/5">
-                          <TableHead className="w-32 text-[10px] uppercase font-bold">Date</TableHead>
-                          <TableHead className="text-[10px] uppercase font-bold">Description</TableHead>
-                          <TableHead className="text-right pr-6 text-[10px] uppercase font-bold">Amount</TableHead>
+                          <TableHead className="w-32 text-[10px] uppercase font-black">Date</TableHead>
+                          <TableHead className="text-[10px] uppercase font-black">Description</TableHead>
+                          <TableHead className="text-right pr-6 text-[10px] uppercase font-black">Amount</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {data.items.map((t) => (
-                          <TableRow key={t.id}>
-                            <TableCell className="text-xs">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell className="text-xs font-medium">{t.description}</TableCell>
-                            <TableCell className="text-right pr-6 text-xs font-bold tabular-nums">{formatCurrency(t.amount)}</TableCell>
+                          <TableRow key={t.id} className="hover:bg-muted/20">
+                            <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="text-xs font-bold">{t.description}</TableCell>
+                            <TableCell className="text-right pr-6 text-xs font-black tabular-nums text-rose-600">{formatCurrency(t.amount)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
