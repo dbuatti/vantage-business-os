@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -38,7 +39,11 @@ import {
   ExternalLink,
   Info,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  TrendingUp,
+  TrendingDown,
+  Percent,
+  ShieldAlert
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -62,6 +67,14 @@ const AccountantPortal = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
+  
+  // Business Use Percentages (State for estimation)
+  const [businessPercents, setBusinessPercents] = useState({
+    rent: 25,
+    bills: 25,
+    phone: 50,
+    fuel: 40
+  });
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -104,17 +117,22 @@ const AccountantPortal = () => {
     });
   }, [transactions, reportInterval]);
 
-  // Logic to identify specific deduction buckets
+  const businessIncome = useMemo(() => {
+    return filteredTransactions.filter(t => t.is_work && t.amount > 0);
+  }, [filteredTransactions]);
+
   const deductionBuckets = useMemo(() => {
     const buckets = {
-      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', keywords: ['rent', 'lease', 'storage'], items: [] as Transaction[] },
-      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', keywords: ['bill', 'electricity', 'water', 'gas', 'power', 'rates'], items: [] as Transaction[] },
-      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', keywords: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'], items: [] as Transaction[] },
-      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', keywords: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking'], items: [] as Transaction[] },
-      other: { label: 'Other Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', keywords: [], items: [] as Transaction[] }
+      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', keywords: ['rent', 'lease', 'storage'], items: [] as Transaction[], percent: businessPercents.rent },
+      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', keywords: ['bill', 'electricity', 'water', 'gas', 'power', 'rates'], items: [] as Transaction[], percent: businessPercents.bills },
+      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', keywords: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'], items: [] as Transaction[], percent: businessPercents.phone },
+      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', keywords: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking'], items: [] as Transaction[], percent: businessPercents.fuel },
+      other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', keywords: [], items: [] as Transaction[], percent: 100 }
     };
 
     filteredTransactions.forEach(t => {
+      if (t.amount > 0) return; // Skip income
+      
       const desc = t.description.toLowerCase();
       const cat = (t.category_1 || '').toLowerCase();
       
@@ -132,11 +150,34 @@ const AccountantPortal = () => {
     });
 
     return buckets;
-  }, [filteredTransactions]);
+  }, [filteredTransactions, businessPercents]);
+
+  const auditAlerts = useMemo(() => {
+    const alerts = [];
+    const workItems = filteredTransactions.filter(t => t.is_work || Object.values(deductionBuckets).some(b => b.items.includes(t)));
+    
+    const missingNotes = workItems.filter(t => !t.notes && Math.abs(t.amount) > 100);
+    if (missingNotes.length > 0) {
+      alerts.push({ title: `${missingNotes.length} Large items missing notes`, type: 'warning', icon: Info });
+    }
+
+    const unmapped = filteredTransactions.filter(t => !t.category_1 && Math.abs(t.amount) > 50);
+    if (unmapped.length > 0) {
+      alerts.push({ title: `${unmapped.length} Uncategorized transactions`, type: 'info', icon: Search });
+    }
+
+    return alerts;
+  }, [filteredTransactions, deductionBuckets]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(val));
   };
+
+  const totalIncome = businessIncome.reduce((s, t) => s + t.amount, 0);
+  const totalDeductions = Object.values(deductionBuckets).reduce((s, b) => {
+    const bucketTotal = b.items.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    return s + (bucketTotal * (b.percent / 100));
+  }, 0);
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
 
@@ -186,61 +227,165 @@ const AccountantPortal = () => {
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Audit & Controls Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
+          <Card className="lg:col-span-2 border-0 shadow-lg">
+            <CardContent className="p-6 flex flex-wrap items-end gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
+                <Select value={reportType} onValueChange={(v: any) => setReportType(v)}>
+                  <SelectTrigger className="w-48 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fy">Financial Year (Jul-Jun)</SelectItem>
+                    <SelectItem value="cy">Calendar Year (Jan-Dec)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Year Ending</label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-32 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 text-right">
+                <p className="text-sm text-muted-foreground">
+                  Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-amber-50/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-amber-600" />
+                Audit Readiness
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {auditAlerts.length === 0 ? (
+                <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                  <CheckCircle2 className="w-4 h-4" /> All items look good
+                </div>
+              ) : (
+                auditAlerts.map((alert, i) => (
+                  <div key={i} className="flex items-center gap-2 text-amber-700 text-xs font-medium">
+                    <alert.icon className="w-3.5 h-3.5" /> {alert.title}
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* High Level P&L Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-0 shadow-xl bg-emerald-600 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium opacity-80">Business Income</p>
+                <TrendingUp className="w-5 h-5 opacity-50" />
+              </div>
+              <p className="text-3xl font-black">{formatCurrency(totalIncome)}</p>
+              <p className="text-xs opacity-70 mt-1">{businessIncome.length} transactions</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-xl bg-rose-600 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium opacity-80">Estimated Deductions</p>
+                <TrendingDown className="w-5 h-5 opacity-50" />
+              </div>
+              <p className="text-3xl font-black">{formatCurrency(totalDeductions)}</p>
+              <p className="text-xs opacity-70 mt-1">Adjusted for business use %</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-xl bg-primary text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium opacity-80">Net Business Position</p>
+                <Calculator className="w-5 h-5 opacity-50" />
+              </div>
+              <p className="text-3xl font-black">{formatCurrency(totalIncome - totalDeductions)}</p>
+              <p className="text-xs opacity-70 mt-1">Estimated taxable profit</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Deduction Estimator (Mixed Use) */}
         <Card className="border-0 shadow-lg print:hidden">
-          <CardContent className="p-6 flex flex-wrap items-end gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
-              <Select value={reportType} onValueChange={(v: any) => setReportType(v)}>
-                <SelectTrigger className="w-48 rounded-xl"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fy">Financial Year (Jul-Jun)</SelectItem>
-                  <SelectItem value="cy">Calendar Year (Jan-Dec)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Year Ending</label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-32 rounded-xl"><SelectValue /></SelectTrigger>
-                <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1 text-right">
-              <p className="text-sm text-muted-foreground">
-                Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span>
-              </p>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Percent className="w-5 h-5 text-primary" />
+              Business Use Estimator
+            </CardTitle>
+            <CardDescription>Adjust the percentage of mixed-use expenses that are business-related.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {Object.entries(deductionBuckets).filter(([k]) => k !== 'other').map(([key, bucket]) => (
+                <div key={key} className="space-y-2">
+                  <Label className="text-xs font-bold uppercase text-muted-foreground">{bucket.label}</Label>
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      type="number" 
+                      value={businessPercents[key as keyof typeof businessPercents]} 
+                      onChange={(e) => setBusinessPercents(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
+                      className="h-9 rounded-xl font-bold"
+                    />
+                    <span className="text-muted-foreground font-bold">%</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Deduction Summary Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {Object.entries(deductionBuckets).map(([key, bucket]) => {
-            const total = bucket.items.reduce((s, t) => s + Math.abs(t.amount), 0);
-            return (
-              <Card key={key} className="border-0 shadow-xl overflow-hidden group hover:shadow-2xl transition-all">
-                <div className={cn("h-1", bucket.color.replace('text', 'bg'))} />
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={cn("p-2 rounded-xl", bucket.bg)}>
-                      <bucket.icon className={cn("w-5 h-5", bucket.color)} />
-                    </div>
-                    <Badge variant="outline" className="rounded-lg text-[10px]">{bucket.items.length} items</Badge>
-                  </div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{bucket.label}</p>
-                  <p className={cn("text-2xl font-black mt-1", bucket.color)}>{formatCurrency(total)}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
         {/* Detailed Breakdown Sections */}
         <div className="space-y-8">
+          {/* Income Section */}
+          <Card className="border-0 shadow-xl overflow-hidden">
+            <CardHeader className="bg-emerald-50 border-b">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white shadow-sm text-emerald-600">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Business Income</CardTitle>
+                  <CardDescription>Total gross income for this period: <span className="font-bold text-foreground">{formatCurrency(totalIncome)}</span></CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="w-32">Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {businessIncome.map((t) => (
+                    <TableRow key={t.id}>
+                      <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                      <TableCell className="text-sm font-bold">{t.description}</TableCell>
+                      <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white">{t.category_1}</Badge></TableCell>
+                      <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Deduction Buckets */}
           {Object.entries(deductionBuckets).map(([key, bucket]) => {
             if (bucket.items.length === 0) return null;
-            const total = bucket.items.reduce((s, t) => s + Math.abs(t.amount), 0);
+            const rawTotal = bucket.items.reduce((s, t) => s + Math.abs(t.amount), 0);
+            const adjustedTotal = rawTotal * (bucket.percent / 100);
 
             return (
               <Card key={key} className="border-0 shadow-xl overflow-hidden break-inside-avoid">
@@ -252,12 +397,13 @@ const AccountantPortal = () => {
                       </div>
                       <div>
                         <CardTitle className="text-xl">{bucket.label}</CardTitle>
-                        <CardDescription>Total identified for this period: <span className="font-bold text-foreground">{formatCurrency(total)}</span></CardDescription>
+                        <CardDescription>
+                          Raw Total: <span className="font-bold">{formatCurrency(rawTotal)}</span> 
+                          {bucket.percent < 100 && (
+                            <> · Claiming <span className="font-bold text-primary">{bucket.percent}%</span> → <span className="font-bold text-foreground">{formatCurrency(adjustedTotal)}</span></>
+                          )}
+                        </CardDescription>
                       </div>
-                    </div>
-                    <div className="text-right print:hidden">
-                      <p className="text-[10px] font-bold uppercase text-muted-foreground">Accountant Note</p>
-                      <p className="text-xs italic">Review for business % use</p>
                     </div>
                   </div>
                 </CardHeader>
@@ -310,28 +456,21 @@ const AccountantPortal = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-4">
                   <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Work Expenses</p>
-                    <p className="text-3xl font-black text-primary">
-                      {formatCurrency(Object.values(deductionBuckets).reduce((s, b) => s + b.items.reduce((sum, t) => sum + Math.abs(t.amount), 0), 0))}
-                    </p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Business Income</p>
+                    <p className="text-3xl font-black text-emerald-600">{formatCurrency(totalIncome)}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Mixed-Use Items</p>
-                    <p className="text-3xl font-black text-amber-600">
-                      {deductionBuckets.rent.items.length + deductionBuckets.bills.items.length + deductionBuckets.phone.items.length + deductionBuckets.fuel.items.length}
-                    </p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Deductions</p>
+                    <p className="text-3xl font-black text-rose-600">{formatCurrency(totalDeductions)}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Audit Readiness</p>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                      <span className="font-bold text-emerald-600">High</span>
-                    </div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Estimated Profit</p>
+                    <p className="text-3xl font-black text-primary">{formatCurrency(totalIncome - totalDeductions)}</p>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-primary/10">
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    <strong>Note to Accountant:</strong> This report includes all transactions identified as business-related or mixed-use (Rent, Utilities, Phone, Fuel). Please apply the relevant business-use percentages as discussed during our consultation.
+                    <strong>Note to Accountant:</strong> This report includes all transactions identified as business-related or mixed-use. Mixed-use items (Rent, Utilities, Phone, Fuel) have been estimated at the percentages shown above. Please review and adjust based on actual logbooks or home-office calculations.
                   </p>
                 </div>
               </div>
