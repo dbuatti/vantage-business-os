@@ -77,6 +77,7 @@ const Index = () => {
           .from('finance_entries')
           .select('*')
           .order('date', { ascending: false })
+          .order('id', { ascending: false }) // Deterministic sort
           .range(from, from + step - 1);
 
         if (error) throw error;
@@ -125,6 +126,7 @@ const Index = () => {
           .from('finance_transactions')
           .select('id, description, amount, transaction_date, category_1')
           .order('transaction_date', { ascending: false })
+          .order('id', { ascending: false }) // Deterministic sort
           .range(from, from + step - 1);
 
         if (error) throw error;

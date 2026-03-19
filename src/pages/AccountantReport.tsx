@@ -80,6 +80,7 @@ const AccountantReport = () => {
           .from('finance_transactions')
           .select('*')
           .order('transaction_date', { ascending: false })
+          .order('id', { ascending: false }) // Deterministic sort
           .range(from, from + step - 1);
 
         if (error) throw error;

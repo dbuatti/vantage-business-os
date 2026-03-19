@@ -141,12 +141,35 @@ const Transactions = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('finance_transactions')
-        .select('*')
-        .order('transaction_date', { ascending: false });
-      if (error) throw error;
-      setTransactions(data || []);
+      let allData: Transaction[] = [];
+      let from = 0;
+      const step = 1000;
+      let hasMore = true;
+
+      // Loop to fetch all transactions in chunks of 1000 to bypass default limits
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('finance_transactions')
+          .select('*')
+          .order('transaction_date', { ascending: false })
+          .order('id', { ascending: false }) // Deterministic sort to prevent pagination issues
+          .range(from, from + step - 1);
+
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          if (data.length < step) {
+            hasMore = false;
+          } else {
+            from += step;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      setTransactions(allData);
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -421,7 +444,7 @@ const Transactions = () => {
         {/* Summary Cards - uses analyticsTransactions (excludes Account) */}
         {analyticsTransactions.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
-            <Card className="border-0 shadow-lg bg-emerald-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
@@ -431,7 +454,7 @@ const Transactions = () => {
                 {summaryStats.workIncome > 0 && <p className="text-xs text-white/70 mt-2">{formatCurrency(summaryStats.workIncome)} from work</p>}
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-rose-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-rose-500 to-rose-600 text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
