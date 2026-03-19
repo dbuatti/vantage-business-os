@@ -57,7 +57,8 @@ import {
   Check,
   Share2,
   Wifi,
-  Droplets
+  Droplets,
+  Flame
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -295,6 +296,7 @@ const AccountantPortal = () => {
       if (t.amount > 0) return;
       const desc = t.description.toLowerCase();
       const cat = (t.category_1 || '').toLowerCase();
+      const subCat = (t.category_2 || '').toLowerCase();
       
       let groupKey = '';
       let icon = Info;
@@ -303,10 +305,23 @@ const AccountantPortal = () => {
         groupKey = 'Rent & Home Office';
         icon = Home;
       } else if (settings.deduction_keywords.bills.some(k => desc.includes(k) || cat.includes(k))) {
-        groupKey = t.category_1 === 'Utilities' && t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities & Bills';
-        icon = Zap;
-        if (desc.includes('internet') || (t.category_2 || '').toLowerCase().includes('internet')) icon = Wifi;
-        if (desc.includes('water') || (t.category_2 || '').toLowerCase().includes('water')) icon = Droplets;
+        // Break down Utilities & Bills into secondary categories
+        if (desc.includes('internet') || subCat.includes('internet') || cat.includes('internet')) {
+          groupKey = 'Utilities: Internet';
+          icon = Wifi;
+        } else if (desc.includes('electricity') || subCat.includes('electricity') || desc.includes('power') || subCat.includes('power')) {
+          groupKey = 'Utilities: Electricity';
+          icon = Zap;
+        } else if (desc.includes('gas') || subCat.includes('gas')) {
+          groupKey = 'Utilities: Gas';
+          icon = Flame;
+        } else if (desc.includes('water') || subCat.includes('water')) {
+          groupKey = 'Utilities: Water';
+          icon = Droplets;
+        } else {
+          groupKey = t.category_1 === 'Utilities' && t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities & Bills';
+          icon = Zap;
+        }
       } else if (settings.deduction_keywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Phone & Internet';
         icon = Phone;
