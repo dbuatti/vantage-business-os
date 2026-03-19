@@ -40,6 +40,9 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             
+            {/* Public Portal Route */}
+            <Route path="/portal/:token" element={<AccountantPortal />} />
+            
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
             <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />

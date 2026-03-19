@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -53,7 +53,10 @@ import {
   Bug,
   LayoutGrid,
   PieChart,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck,
+  Lock,
+  ClipboardCheck
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -76,10 +79,13 @@ interface CategoryGroup {
 }
 
 const AccountantPortal = () => {
+  const { token } = useParams();
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -95,55 +101,80 @@ const AccountantPortal = () => {
     }
   });
 
+  const isPublic = !!token;
+
   useEffect(() => {
-    if (!authLoading && !session) {
+    if (!isPublic && !authLoading && !session) {
       navigate('/login');
-    } else if (session) {
+    } else {
       fetchData();
     }
-  }, [session, authLoading, navigate]);
+  }, [session, authLoading, navigate, token]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      let allData: Transaction[] = [];
-      let from = 0;
-      const step = 1000;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data, error } = await supabase
-          .from('finance_transactions')
-          .select('*')
-          .order('transaction_date', { ascending: false })
-          .range(from, from + step - 1);
+      if (isPublic) {
+        // Fetch via Edge Function for public access
+        const { data, error } = await supabase.functions.invoke('get-portal-data', {
+          body: { token }
+        });
 
         if (error) throw error;
-        
-        if (data && data.length > 0) {
-          allData = [...allData, ...data];
-          if (data.length < step) hasMore = false;
-          else from += step;
-        } else {
-          hasMore = false;
+        if (data.error) throw new Error(data.error);
+
+        setTransactions(data.transactions);
+        setCategoryGroups(data.categoryGroups);
+        setProfile(data.profile);
+        if (data.accountantSettings) {
+          setSettings({
+            business_percents: data.accountantSettings.business_percents,
+            deduction_keywords: data.accountantSettings.deduction_keywords
+          });
         }
+      } else {
+        // Standard authenticated fetch
+        let allData: Transaction[] = [];
+        let from = 0;
+        const step = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('finance_transactions')
+            .select('*')
+            .order('transaction_date', { ascending: false })
+            .range(from, from + step - 1);
+          if (error) throw error;
+          if (data && data.length > 0) {
+            allData = [...allData, ...data];
+            if (data.length < step) hasMore = false;
+            else from += step;
+          } else { hasMore = false; }
+        }
+        setTransactions(allData);
+
+        const { data: groupsData } = await supabase.from('category_groups').select('category_name, group_name');
+        setCategoryGroups(groupsData || []);
+
+        const { data: settingsData } = await supabase
+          .from('accountant_settings')
+          .select('*')
+          .eq('owner_user_id', session?.user.id)
+          .maybeSingle();
+        
+        if (settingsData) setSettings({
+          business_percents: settingsData.business_percents,
+          deduction_keywords: settingsData.deduction_keywords
+        });
+
+        const { data: profileData } = await supabase
+          .from('settings')
+          .select('company_name, company_email, company_abn')
+          .eq('owner_user_id', session?.user.id)
+          .single();
+        setProfile(profileData);
       }
-      setTransactions(allData);
-
-      const { data: groupsData } = await supabase.from('category_groups').select('category_name, group_name');
-      setCategoryGroups(groupsData || []);
-
-      const { data: settingsData } = await supabase
-        .from('accountant_settings')
-        .select('*')
-        .eq('owner_user_id', session?.user.id)
-        .maybeSingle();
-      
-      if (settingsData) setSettings({
-        business_percents: settingsData.business_percents,
-        deduction_keywords: settingsData.deduction_keywords
-      });
-
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -231,61 +262,70 @@ const AccountantPortal = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="min-h-screen bg-background pb-20 print:bg-white print:pb-0">
+    <div className={cn("min-h-screen bg-background pb-20 print:bg-white print:pb-0", isPublic && "pt-8")}>
       <div className="max-w-6xl mx-auto p-4 sm:p-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 print:hidden">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild className="rounded-xl">
-              <Link to="/"><ArrowLeft className="w-5 h-5" /></Link>
-            </Button>
+            {!isPublic && (
+              <Button variant="ghost" size="icon" asChild className="rounded-xl">
+                <Link to="/"><ArrowLeft className="w-5 h-5" /></Link>
+              </Button>
+            )}
             <div>
-              <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                <Calculator className="w-8 h-8 text-primary" />
-                Accountant Portal
-              </h1>
-              <p className="text-muted-foreground">Consolidated business deductions and work expenses</p>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+                  <Calculator className="w-8 h-8 text-primary" />
+                  Accountant Portal
+                </h1>
+                {isPublic && (
+                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 rounded-full px-3 py-1 gap-1.5">
+                    <Lock className="w-3 h-3" /> Read-Only Access
+                  </Badge>
+                )}
+              </div>
+              <p className="text-muted-foreground">
+                {profile?.company_name || 'Business'} · Tax Report for {profile?.company_abn || 'ABN Not Set'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowDebug(!showDebug)} 
-              className={cn("rounded-xl gap-2", showDebug && "bg-primary/10 text-primary")}
-            >
-              <Bug className="w-4 h-4" /> Debug
-            </Button>
-            <Button variant="outline" asChild className="rounded-xl gap-2">
-              <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
-            </Button>
+            {!isPublic && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowDebug(!showDebug)} 
+                  className={cn("rounded-xl gap-2", showDebug && "bg-primary/10 text-primary")}
+                >
+                  <Bug className="w-4 h-4" /> Debug
+                </Button>
+                <Button variant="outline" asChild className="rounded-xl gap-2">
+                  <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
+                </Button>
+              </>
+            )}
             <Button variant="outline" onClick={() => window.print()} className="rounded-xl gap-2">
               <Printer className="w-4 h-4" /> Print Report
             </Button>
           </div>
         </div>
 
-        {/* Debug View */}
-        {showDebug && (
-          <Card className="border-2 border-primary/20 bg-primary/5 animate-fade-in print:hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <Bug className="w-4 h-4" /> Data Debugger
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-3 rounded-xl bg-background border">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Total Transactions</p>
-                  <p className="text-xl font-black">{transactions.length}</p>
+        {/* Public Welcome Card */}
+        {isPublic && (
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-purple-700 text-white overflow-hidden relative print:hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+            <CardContent className="p-8 relative">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black">Welcome, Accountant</h2>
+                  <p className="text-white/80 max-w-xl">
+                    This portal provides a consolidated view of **{profile?.company_name}**'s business finances. 
+                    You can review income, categorized deductions, and download reports for tax preparation.
+                  </p>
                 </div>
-                <div className="p-3 rounded-xl bg-background border">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">In Date Range</p>
-                  <p className="text-xl font-black">{filteredTransactions.length}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-background border">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Marked as "Work"</p>
-                  <p className="text-xl font-black text-primary">{workTransactions.length}</p>
+                <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md">
+                  <ShieldCheck className="w-10 h-10" />
                 </div>
               </div>
             </CardContent>
@@ -324,13 +364,22 @@ const AccountantPortal = () => {
           <Card className="border-0 shadow-lg bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                Audit Readiness
+                <ClipboardCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                Tax Checklist
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-medium">
-                {filteredTransactions.length === 0 ? "No data in selected range" : "Reviewing your data..."}
+            <CardContent className="space-y-2">
+              <div className="flex items-center gap-2 text-xs">
+                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", businessIncome.length > 0 ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white")}>
+                  {businessIncome.length > 0 && <CheckCircle2 className="w-3 h-3" />}
+                </div>
+                <span className={businessIncome.length > 0 ? "line-through opacity-50" : ""}>Income Categorized</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", totalDeductions > 0 ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white")}>
+                  {totalDeductions > 0 && <CheckCircle2 className="w-3 h-3" />}
+                </div>
+                <span className={totalDeductions > 0 ? "line-through opacity-50" : ""}>Deductions Mapped</span>
               </div>
             </CardContent>
           </Card>
@@ -394,11 +443,13 @@ const AccountantPortal = () => {
                     We found **{filteredTransactions.length}** transactions in this period, but none are showing up here because they aren't marked as **Work** yet.
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row justify-center gap-3">
-                  <Button asChild size="lg" className="rounded-2xl gap-2 bg-amber-600 hover:bg-amber-700">
-                    <Link to="/transactions"><Wand2 className="w-5 h-5" /> Run Work Wizard</Link>
-                  </Button>
-                </div>
+                {!isPublic && (
+                  <div className="flex flex-col sm:flex-row justify-center gap-3">
+                    <Button asChild size="lg" className="rounded-2xl gap-2 bg-amber-600 hover:bg-amber-700">
+                      <Link to="/transactions"><Wand2 className="w-5 h-5" /> Run Work Wizard</Link>
+                    </Button>
+                  </div>
+                )}
               </Card>
             )}
 
