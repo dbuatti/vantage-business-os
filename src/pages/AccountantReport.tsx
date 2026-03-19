@@ -45,11 +45,13 @@ import {
   Info,
   Download,
   Pencil,
-  ExternalLink
+  ExternalLink,
+  Wand2
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showSuccess, showError } from '@/utils/toast';
+import WorkWizard from '@/components/WorkWizard';
 
 interface Transaction {
   id: string;
@@ -70,6 +72,7 @@ const AccountantReport = () => {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
+  const [showWizard, setShowWizard] = useState(false);
   
   // Edit state
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -249,6 +252,14 @@ const AccountantReport = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowWizard(true)}
+              className="rounded-xl gap-2 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+            >
+              <Wand2 className="w-4 h-4" />
+              Work Wizard
+            </Button>
             <Button variant="outline" onClick={() => window.print()} className="rounded-xl gap-2">
               <Printer className="w-4 h-4" />
               Print PDF
@@ -468,6 +479,14 @@ const AccountantReport = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Work Wizard */}
+        <WorkWizard 
+          transactions={transactions} 
+          open={showWizard} 
+          onOpenChange={setShowWizard}
+          onComplete={fetchTransactions}
+        />
       </div>
     </div>
   );

@@ -52,7 +52,8 @@ import {
   Layers,
   Activity,
   Tags,
-  Calculator
+  Calculator,
+  Wand2
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -70,6 +71,7 @@ import CategoryBreakdown from '@/components/CategoryBreakdown';
 import TransactionStats from '@/components/TransactionStats';
 import CategoryGroupManager from '@/components/CategoryGroupManager';
 import MonthlyGroupReport from '@/components/MonthlyGroupReport';
+import WorkWizard from '@/components/WorkWizard';
 
 interface Transaction {
   id?: string;
@@ -113,6 +115,7 @@ const Transactions = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
@@ -146,24 +149,20 @@ const Transactions = () => {
       const step = 1000;
       let hasMore = true;
 
-      // Loop to fetch all transactions in chunks of 1000 to bypass default limits
       while (hasMore) {
         const { data, error } = await supabase
           .from('finance_transactions')
           .select('*')
           .order('transaction_date', { ascending: false })
-          .order('id', { ascending: false }) // Deterministic sort to prevent pagination issues
+          .order('id', { ascending: false })
           .range(from, from + step - 1);
 
         if (error) throw error;
         
         if (data && data.length > 0) {
           allData = [...allData, ...data];
-          if (data.length < step) {
-            hasMore = false;
-          } else {
-            from += step;
-          }
+          if (data.length < step) hasMore = false;
+          else from += step;
         } else {
           hasMore = false;
         }
@@ -194,7 +193,6 @@ const Transactions = () => {
   const handleImport = async (parsedData: any[]) => {
     if (!session) return { total: 0, imported: 0, duplicates: 0, errors: 1 };
     try {
-      // Strip internal _isDuplicate property before sending to Supabase
       const dataToInsert = parsedData.map(({ _isDuplicate, ...rest }) => ({
         ...rest,
         user_id: session.user.id
@@ -337,7 +335,6 @@ const Transactions = () => {
     });
   }, [transactions, searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount, sortField, sortOrder]);
 
-  // Analytics transactions exclude 'Account' category (internal transfers)
   const analyticsTransactions = useMemo(() => {
     return filteredTransactions.filter(t => t.category_1 !== 'Account');
   }, [filteredTransactions]);
@@ -424,6 +421,15 @@ const Transactions = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowWizard(true)}
+              className="rounded-xl gap-2 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+            >
+              <Wand2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Work Wizard</span>
+            </Button>
             <Button variant="outline" size="sm" asChild className="rounded-xl gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10">
               <Link to="/accountant-report">
                 <Calculator className="w-4 h-4" />
@@ -441,7 +447,7 @@ const Transactions = () => {
           </div>
         </div>
 
-        {/* Summary Cards - uses analyticsTransactions (excludes Account) */}
+        {/* Summary Cards */}
         {analyticsTransactions.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
             <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white overflow-hidden relative">
@@ -454,7 +460,7 @@ const Transactions = () => {
                 {summaryStats.workIncome > 0 && <p className="text-xs text-white/70 mt-2">{formatCurrency(summaryStats.workIncome)} from work</p>}
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-rose-500 to-rose-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-lg bg-rose-500 to-rose-600 text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
@@ -896,6 +902,14 @@ const Transactions = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Work Wizard */}
+        <WorkWizard 
+          transactions={transactions} 
+          open={showWizard} 
+          onOpenChange={setShowWizard}
+          onComplete={fetchTransactions}
+        />
       </div>
 
       {/* Bottom Summary Bar */}
