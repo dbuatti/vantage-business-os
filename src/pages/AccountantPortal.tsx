@@ -301,7 +301,8 @@ const AccountantPortal = () => {
   const subscriptionData = useMemo(() => {
     const groups: Record<string, Transaction[]> = {};
     
-    filteredTransactions.filter(t => t.amount < 0).forEach(t => {
+    // Only include transactions categorized as 'Subscription'
+    filteredTransactions.filter(t => t.amount < 0 && t.category_1 === 'Subscription').forEach(t => {
       const normalized = t.description.toLowerCase()
         .replace(/\d+/g, '')
         .replace(/receipt/gi, '')
@@ -314,7 +315,7 @@ const AccountantPortal = () => {
     });
 
     const result: SubscriptionGroup[] = Object.entries(groups)
-      .filter(([, txns]) => txns.length >= 2)
+      .filter(([, txns]) => txns.length >= 1) // Show even single occurrences if categorized as subscription
       .map(([normalizedName, txns]) => {
         const sorted = [...txns].sort((a, b) => parseISO(a.transaction_date).getTime() - parseISO(b.transaction_date).getTime());
         const amounts = sorted.map(t => Math.abs(t.amount));
