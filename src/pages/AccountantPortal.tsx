@@ -125,13 +125,14 @@ const AccountantPortal = () => {
       console.log(`[AccountantPortal] Fetched ${allData.length} total transactions.`);
       setTransactions(allData);
 
+      // Use maybeSingle() to avoid 406 error when no settings exist yet
       const { data: settingsData, error: settingsError } = await supabase
         .from('accountant_settings')
         .select('*')
         .eq('owner_user_id', session?.user.id)
-        .single();
+        .maybeSingle();
       
-      if (settingsError && settingsError.code !== 'PGRST116') {
+      if (settingsError) {
         console.error("[AccountantPortal] Settings fetch error:", settingsError);
       }
       
@@ -339,6 +340,24 @@ const AccountantPortal = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Data Status Debugger */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 print:hidden">
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border">
+            <div className="p-2 rounded-xl bg-background shadow-sm"><Database className="w-4 h-4 text-primary" /></div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total in Database</p>
+              <p className="text-lg font-black">{transactions.length} transactions</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border">
+            <div className="p-2 rounded-xl bg-background shadow-sm"><Calendar className="w-4 h-4 text-primary" /></div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">In Selected Period</p>
+              <p className="text-lg font-black">{filteredTransactions.length} transactions</p>
+            </div>
+          </div>
         </div>
 
         {/* High Level P&L Summary */}
