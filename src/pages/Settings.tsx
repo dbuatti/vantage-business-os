@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -276,9 +277,9 @@ const Settings = () => {
                           {copied ? 'Copied' : 'Copy Link'}
                         </Button>
                         <Button variant="outline" asChild className="rounded-xl shrink-0">
-                          <a href={`/portal/${form.accountant_share_token}`} target="_blank" rel="noreferrer">
+                          <Link to={`/portal/${form.accountant_share_token}`}>
                             <ExternalLink className="w-4 h-4" />
-                          </a>
+                          </Link>
                         </Button>
                       </div>
                     </div>

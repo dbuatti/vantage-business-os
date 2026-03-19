@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -36,19 +37,15 @@ import {
   Fuel, 
   Briefcase,
   Search,
-  FileText,
   ExternalLink,
-  Info,
   CheckCircle2,
   TrendingUp,
   TrendingDown,
   Loader2,
   Settings as SettingsIcon,
-  Database,
   Bug,
   LayoutGrid,
   PieChart,
-  ShieldCheck,
   Lock,
   ClipboardCheck,
   ListChecks,
@@ -62,7 +59,8 @@ import {
   ChevronRight,
   ChevronDown,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Info
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -90,10 +88,6 @@ const AccountantPortal = () => {
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
@@ -102,46 +96,24 @@ const AccountantPortal = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   
-  const [settings, setSettings] = useState({
-    deduction_keywords: {
-      rent: ['rent', 'lease', 'storage'],
-      bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates', 'utilities'],
-      phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'],
-      fuel: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking']
-    }
-  });
-
   const isPublic = !!token;
 
-  useEffect(() => {
-    if (!isPublic && !authLoading && !session) {
-      navigate('/login');
-    } else {
-      fetchData();
-    }
-  }, [session, authLoading, navigate, token]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
+  // Use React Query for data fetching and caching
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['accountant-portal-data', token, session?.user?.id],
+    queryFn: async () => {
       if (isPublic) {
         const { data, error } = await supabase.functions.invoke('get-portal-data', {
           body: { token }
         });
-
         if (error) throw error;
         if (data.error) throw new Error(data.error);
-
-        setTransactions(data.transactions);
-        setCategoryGroups(data.categoryGroups);
-        setProfile(data.profile);
-        if (data.accountantSettings) {
-          setSettings({
-            deduction_keywords: data.accountantSettings.deduction_keywords
-          });
-        }
+        return data;
       } else {
-        let allData: Transaction[] = [];
+        if (!session) return null;
+
+        // Fetch transactions with pagination
+        let allTransactions: Transaction[] = [];
         let from = 0;
         const step = 1000;
         let hasMore = true;
@@ -154,39 +126,43 @@ const AccountantPortal = () => {
             .range(from, from + step - 1);
           if (error) throw error;
           if (data && data.length > 0) {
-            allData = [...allData, ...data];
+            allTransactions = [...allTransactions, ...data];
             if (data.length < step) hasMore = false;
             else from += step;
           } else { hasMore = false; }
         }
-        setTransactions(allData);
 
-        const { data: groupsData } = await supabase.from('category_groups').select('category_name, group_name');
-        setCategoryGroups(groupsData || []);
+        const [groupsData, settingsData, profileData] = await Promise.all([
+          supabase.from('category_groups').select('category_name, group_name'),
+          supabase.from('accountant_settings').select('*').eq('owner_user_id', session.user.id).maybeSingle(),
+          supabase.from('settings').select('company_name, company_email, company_abn, accountant_share_token').eq('owner_user_id', session.user.id).single()
+        ]);
 
-        const { data: settingsData } = await supabase
-          .from('accountant_settings')
-          .select('*')
-          .eq('owner_user_id', session?.user.id)
-          .maybeSingle();
-        
-        if (settingsData) setSettings({
-          deduction_keywords: settingsData.deduction_keywords
-        });
-
-        const { data: profileData } = await supabase
-          .from('settings')
-          .select('company_name, company_email, company_abn, accountant_share_token')
-          .eq('owner_user_id', session?.user.id)
-          .single();
-        setProfile(profileData);
+        return {
+          transactions: allTransactions,
+          categoryGroups: groupsData.data || [],
+          accountantSettings: settingsData.data || null,
+          profile: profileData.data
+        };
       }
-    } catch (error: any) {
-      showError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    enabled: isPublic || (!authLoading && !!session),
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+  });
+
+  const transactions = data?.transactions || [];
+  const categoryGroups = data?.categoryGroups || [];
+  const profile = data?.profile || null;
+  const accountantSettings = data?.accountantSettings || null;
+
+  const deductionKeywords = useMemo(() => {
+    return accountantSettings?.deduction_keywords || {
+      rent: ['rent', 'lease', 'storage'],
+      bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates', 'utilities'],
+      phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'],
+      fuel: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking']
+    };
+  }, [accountantSettings]);
 
   const reportIntervalStrings = useMemo(() => {
     const year = parseInt(selectedYear);
@@ -225,10 +201,10 @@ const AccountantPortal = () => {
 
   const expenseGroups = useMemo(() => {
     const buckets = {
-      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', text: 'text-blue-900', keywords: settings.deduction_keywords.rent, items: [] as Transaction[] },
-      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', text: 'text-amber-900', keywords: settings.deduction_keywords.bills, items: [] as Transaction[] },
-      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', text: 'text-purple-900', keywords: settings.deduction_keywords.phone, items: [] as Transaction[] },
-      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', text: 'text-orange-900', keywords: settings.deduction_keywords.fuel, items: [] as Transaction[] },
+      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', text: 'text-blue-900', keywords: deductionKeywords.rent, items: [] as Transaction[] },
+      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', text: 'text-amber-900', keywords: deductionKeywords.bills, items: [] as Transaction[] },
+      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', text: 'text-purple-900', keywords: deductionKeywords.phone, items: [] as Transaction[] },
+      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', text: 'text-orange-900', keywords: deductionKeywords.fuel, items: [] as Transaction[] },
       other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-900', keywords: [], items: [] as Transaction[] }
     };
 
@@ -244,7 +220,7 @@ const AccountantPortal = () => {
     });
 
     return buckets;
-  }, [workTransactions, settings]);
+  }, [workTransactions, deductionKeywords]);
 
   const groupedWorkData = useMemo(() => {
     const groups: Record<string, { 
@@ -277,7 +253,6 @@ const AccountantPortal = () => {
       const cat = group.categories[catName];
       cat.count++;
 
-      // Only track subcategories that aren't "Other" or empty
       const subCatName = t.category_2;
       if (subCatName && subCatName.toLowerCase() !== 'other') {
         if (!cat.subcategories[subCatName]) {
@@ -329,12 +304,12 @@ const AccountantPortal = () => {
       let color = 'text-gray-600';
       let bg = 'bg-gray-50';
 
-      if (settings.deduction_keywords.rent.some(k => desc.includes(k) || cat.includes(k))) {
+      if (deductionKeywords.rent.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Rent & Home Office';
         icon = Home;
         color = 'text-blue-600';
         bg = 'bg-blue-50';
-      } else if (settings.deduction_keywords.bills.some(k => desc.includes(k) || cat.includes(k))) {
+      } else if (deductionKeywords.bills.some(k => desc.includes(k) || cat.includes(k))) {
         if (desc.includes('internet') || subCat.includes('internet') || cat.includes('internet')) {
           groupKey = 'Utilities: Internet';
           icon = Wifi;
@@ -356,12 +331,12 @@ const AccountantPortal = () => {
           color = 'text-cyan-600';
           bg = 'bg-cyan-50';
         }
-      } else if (settings.deduction_keywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
+      } else if (deductionKeywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Phone & Internet';
         icon = Phone;
         color = 'text-purple-600';
         bg = 'bg-purple-50';
-      } else if (settings.deduction_keywords.fuel.some(k => desc.includes(k) || cat.includes(k))) {
+      } else if (deductionKeywords.fuel.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Fuel & Transport';
         icon = Fuel;
         color = 'text-rose-600';
@@ -376,7 +351,7 @@ const AccountantPortal = () => {
     });
 
     return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
-  }, [workTransactions, settings]);
+  }, [workTransactions, deductionKeywords]);
 
   const taxReadiness = useMemo(() => {
     if (workTransactions.length === 0) return 0;
@@ -446,7 +421,8 @@ const AccountantPortal = () => {
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isLoading || authLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-rose-600 font-bold">Error loading portal data. Please check your link.</div>;
 
   return (
     <div className={cn("min-h-screen bg-background pb-20 print:bg-white print:pb-0", isPublic && "pt-8")}>
@@ -565,9 +541,9 @@ const AccountantPortal = () => {
                   {linkCopied ? 'Copied' : 'Copy Link'}
                 </Button>
                 <Button variant="outline" size="sm" asChild className="rounded-xl gap-2 flex-1 sm:flex-none bg-background">
-                  <a href={`/portal/${profile.accountant_share_token}`} target="_blank" rel="noreferrer">
+                  <Link to={`/portal/${profile.accountant_share_token}`}>
                     <ExternalLink className="w-3.5 h-3.5" /> Open Portal
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </CardContent>
