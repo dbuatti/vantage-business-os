@@ -67,7 +67,7 @@ import {
   Wifi,
   Droplets
 } from 'lucide-react';
-import { format, isWithinInterval, parseISO, isValid, differenceInDays } from 'date-fns';
+import { format, isWithinInterval, parseISO, isValid, differenceInDays, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 
@@ -196,9 +196,15 @@ const AccountantPortal = () => {
   const reportInterval = useMemo(() => {
     const year = parseInt(selectedYear);
     if (reportType === 'cy') {
-      return { start: new Date(year, 0, 1), end: new Date(year, 11, 31) };
+      return { 
+        start: startOfDay(new Date(year, 0, 1)), 
+        end: endOfDay(new Date(year, 11, 31)) 
+      };
     } else {
-      return { start: new Date(year - 1, 6, 1), end: new Date(year, 5, 30) };
+      return { 
+        start: startOfDay(new Date(year - 1, 6, 1)), 
+        end: endOfDay(new Date(year, 5, 30)) 
+      };
     }
   }, [selectedYear, reportType]);
 
@@ -562,6 +568,14 @@ const AccountantPortal = () => {
                   </div>
                 </div>
               </div>
+              <div className="pt-2 border-t flex justify-between items-center">
+                <p className="text-xs text-muted-foreground">
+                  Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Found <span className="font-bold text-foreground">{filteredTransactions.length}</span> total transactions in this period
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -598,6 +612,7 @@ const AccountantPortal = () => {
                 <TrendingUp className="w-5 h-5 opacity-50" />
               </div>
               <p className="text-3xl font-black">{formatCurrency(totalIncome)}</p>
+              <p className="text-xs opacity-70 mt-1">{businessIncome.length} work transactions</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-xl bg-rose-600 text-white">
@@ -607,6 +622,7 @@ const AccountantPortal = () => {
                 <TrendingDown className="w-5 h-5 opacity-50" />
               </div>
               <p className="text-3xl font-black">{formatCurrency(totalDeductions)}</p>
+              <p className="text-xs opacity-70 mt-1">Adjusted for business use %</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-xl bg-primary text-white">
@@ -616,6 +632,7 @@ const AccountantPortal = () => {
                 <Calculator className="w-5 h-5 opacity-50" />
               </div>
               <p className="text-3xl font-black">{formatCurrency(totalIncome - totalDeductions)}</p>
+              <p className="text-xs opacity-70 mt-1">Estimated taxable profit</p>
             </CardContent>
           </Card>
         </div>
@@ -638,6 +655,28 @@ const AccountantPortal = () => {
           </TabsList>
 
           <TabsContent value="summary" className="space-y-8 animate-fade-in">
+            {/* Empty State Helper */}
+            {filteredTransactions.length > 0 && workTransactions.length === 0 && (
+              <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-amber-50/30">
+                <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto text-amber-600">
+                  <Wand2 className="w-10 h-10" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black">Categorization Required</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    We found {filteredTransactions.length} transactions in this period, but none are showing up here because they aren't marked as Work yet.
+                  </p>
+                </div>
+                {!isPublic && (
+                  <div className="flex flex-col sm:flex-row justify-center gap-3">
+                    <Button asChild size="lg" className="rounded-2xl gap-2 bg-amber-600 hover:bg-amber-700">
+                      <Link to="/transactions"><Wand2 className="w-5 h-5" /> Run Work Wizard</Link>
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            )}
+
             {/* Income Section */}
             {businessIncome.length > 0 && (
               <Card className="border-0 shadow-xl overflow-hidden">
