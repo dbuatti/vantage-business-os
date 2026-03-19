@@ -100,7 +100,7 @@ const AccountantPortal = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['income']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   
   const [settings, setSettings] = useState({
     deduction_keywords: {
@@ -333,8 +333,12 @@ const AccountantPortal = () => {
           icon = Droplets;
           color = 'text-cyan-600';
           bg = 'bg-cyan-50';
+        } else {
+          groupKey = t.category_1 === 'Utilities' && t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities & Bills';
+          icon = Zap;
+          color = 'text-amber-600';
+          bg = 'bg-amber-50';
         }
-        // Generic "Utilities & Bills" removed as per user request
       } else if (settings.deduction_keywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Phone & Internet';
         icon = Phone;
