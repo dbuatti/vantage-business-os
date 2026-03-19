@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, PieChart, TrendingUp, Store, Calendar } from 'lucide-react';
+import { BarChart3, PieChart, TrendingUp, Store, Calendar, Layers } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -51,16 +51,26 @@ const INCOME_GROUPS = [
   '📋 Other Income'
 ];
 
+const EXPENSE_GROUPS = [
+  'Fixed Essentials',
+  'Flexible Essentials',
+  'Sustenance',
+  'Wellness & Growth',
+  'Lifestyle & Discretionary'
+];
+
 const TransactionCharts = ({ transactions, categoryGroups }: TransactionChartsProps) => {
+  const catToGroup = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    categoryGroups.forEach(cg => {
+      map[cg.category_name] = cg.group_name;
+    });
+    return map;
+  }, [categoryGroups]);
+
   const monthlyTrend = React.useMemo(() => {
     const months: Record<string, { month: string; income: number; expenses: number; net: number }> = {};
     
-    // Create a map for quick lookup
-    const catToGroup: Record<string, string> = {};
-    categoryGroups.forEach(cg => {
-      catToGroup[cg.category_name] = cg.group_name;
-    });
-
     transactions.forEach(t => {
       const monthKey = t.mmm_yyyy || new Date(t.transaction_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       if (!months[monthKey]) {
@@ -70,8 +80,6 @@ const TransactionCharts = ({ transactions, categoryGroups }: TransactionChartsPr
       const groupName = catToGroup[t.category_1];
       const isIncomeGroup = groupName && INCOME_GROUPS.includes(groupName);
       
-      // Use category group to determine if it's income or expense
-      // Fallback to amount sign if category is unmapped
       if (isIncomeGroup || (!groupName && t.amount > 0)) {
         months[monthKey].income += Math.abs(t.amount);
       } else {
@@ -93,59 +101,41 @@ const TransactionCharts = ({ transactions, categoryGroups }: TransactionChartsPr
           return parseMonth(a.month).getTime() - parseMonth(b.month).getTime();
         } catch { return 0; }
       });
-  }, [transactions, categoryGroups]);
+  }, [transactions, catToGroup]);
 
-  const categoryData = React.useMemo(() => {
-    const categories: Record<string, number> = {};
-    transactions.filter(t => t.amount < 0).forEach(t => {
-      const cat = t.category_1 || 'Uncategorized';
-      categories[cat] = (categories[cat] || 0) + Math.abs(t.amount);
-    });
-    return Object.entries(categories)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
-  }, [transactions]);
-
-  const topMerchants = React.useMemo(() => {
-    const merchants: Record<string, { total: number; count: number }> = {};
-    // Filter out 'Account' category transactions as they are internal transfers
-    transactions.filter(t => t.amount < 0 && t.category_1 !== 'Account').forEach(t => {
-      const name = t.description.length > 30 ? t.description.substring(0, 30) + '...' : t.description;
-      if (!merchants[name]) merchants[name] = { total: 0, count: 0 };
-      merchants[name].total += Math.abs(t.amount);
-      merchants[name].count++;
-    });
-    return Object.entries(merchants)
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 8);
-  }, [transactions]);
-
-  const dayOfWeekData = React.useMemo(() => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const dayTotals = days.map(d => ({ day: d, total: 0, count: 0 }));
+  const groupTrendData = React.useMemo(() => {
+    const months: Record<string, any> = {};
     
     transactions.filter(t => t.amount < 0).forEach(t => {
-      const dayIndex = new Date(t.transaction_date).getDay();
-      dayTotals[dayIndex].total += Math.abs(t.amount);
-      dayTotals[dayIndex].count++;
+      const monthKey = t.mmm_yyyy || new Date(t.transaction_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      if (!months[monthKey]) {
+        months[monthKey] = { month: monthKey };
+        EXPENSE_GROUPS.forEach(g => { months[monthKey][g] = 0; });
+        months[monthKey]['Other'] = 0;
+      }
+
+      const groupName = catToGroup[t.category_1] || 'Other';
+      if (months[monthKey][groupName] !== undefined) {
+        months[monthKey][groupName] += Math.abs(t.amount);
+      } else {
+        months[monthKey]['Other'] += Math.abs(t.amount);
+      }
     });
 
-    return dayTotals.map(d => ({
-      ...d,
-      average: d.count > 0 ? d.total / d.count : 0
-    }));
-  }, [transactions]);
-
-  const workPersonalData = React.useMemo(() => {
-    const work = transactions.filter(t => t.is_work).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const personal = transactions.filter(t => !t.is_work).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    return [
-      { name: 'Work', value: work, color: '#f59e0b' },
-      { name: 'Personal', value: personal, color: '#6366f1' },
-    ];
-  }, [transactions]);
+    return Object.values(months)
+      .sort((a, b) => {
+        try {
+          const parseMonth = (s: string) => {
+            const parts = s.split(' ');
+            const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+            const monthIdx = monthNames.indexOf(parts[0].toLowerCase().substring(0, 3));
+            return new Date(parseInt(parts[1]), monthIdx);
+          };
+          return parseMonth(a.month).getTime() - parseMonth(b.month).getTime();
+        } catch { return 0; }
+      })
+      .slice(-6); // Last 6 months
+  }, [transactions, catToGroup]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -167,24 +157,14 @@ const TransactionCharts = ({ transactions, categoryGroups }: TransactionChartsPr
     boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
   };
 
-  const tooltipItemStyle = {
-    color: 'hsl(var(--foreground))',
-  };
-
-  const tooltipLabelStyle = {
-    color: 'hsl(var(--muted-foreground))',
-    fontWeight: 'bold',
-    marginBottom: '4px',
-  };
-
   return (
     <div className="space-y-6">
-      {/* Monthly Trend - Full Width */}
+      {/* Monthly Trend */}
       <Card className="border-0 shadow-xl">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <TrendingUp className="w-5 h-5 text-primary" />
-            Monthly Trend
+            Cash Flow Trend
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -207,13 +187,41 @@ const TransactionCharts = ({ transactions, categoryGroups }: TransactionChartsPr
                 <Tooltip 
                   formatter={(value: number) => formatCurrency(value)} 
                   contentStyle={tooltipContentStyle}
-                  itemStyle={tooltipItemStyle}
-                  labelStyle={tooltipLabelStyle}
                 />
                 <Legend wrapperStyle={{ paddingTop: '16px', fontSize: '12px' }} />
                 <Area type="monotone" dataKey="income" name="Income" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorIncome)" />
                 <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#colorExpenses)" />
               </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Group Spending Trend */}
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Layers className="w-5 h-5 text-primary" />
+            Group Spending Trend
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={groupTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                <Tooltip 
+                  formatter={(value: number) => formatCurrency(value)} 
+                  contentStyle={tooltipContentStyle}
+                />
+                <Legend wrapperStyle={{ paddingTop: '16px', fontSize: '12px' }} />
+                {EXPENSE_GROUPS.map((group, i) => (
+                  <Bar key={group} dataKey={group} stackId="a" fill={COLORS[i % COLORS.length]} radius={i === EXPENSE_GROUPS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
+                ))}
+                <Bar dataKey="Other" stackId="a" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>

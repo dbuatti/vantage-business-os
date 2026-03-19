@@ -27,6 +27,9 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   TrendingUp,
+  LayoutGrid,
+  Table as TableIcon,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -51,10 +54,10 @@ interface MonthlyGroupReportProps {
 }
 
 const INCOME_GROUPS = [
-  { name: '💰 Regular Income', color: 'bg-emerald-500', lightColor: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { name: '🎵 Music Performance', color: 'bg-blue-500', lightColor: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { name: '🎹 Music Services', color: 'bg-violet-500', lightColor: 'bg-violet-50 text-violet-700 border-violet-200' },
-  { name: '📋 Other Income', color: 'bg-amber-500', lightColor: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { name: '💰 Regular Income', color: 'bg-emerald-500', lightColor: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: '💰' },
+  { name: '🎵 Music Performance', color: 'bg-blue-500', lightColor: 'bg-blue-50 text-blue-700 border-blue-200', icon: '🎵' },
+  { name: '🎹 Music Services', color: 'bg-violet-500', lightColor: 'bg-violet-50 text-violet-700 border-violet-200', icon: '🎹' },
+  { name: '📋 Other Income', color: 'bg-amber-500', lightColor: 'bg-amber-50 text-amber-700 border-amber-200', icon: '📋' },
 ];
 
 const EXPENSE_GROUPS = [
@@ -68,6 +71,7 @@ const EXPENSE_GROUPS = [
 const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReportProps) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [view, setView] = useState<'monthly' | 'yearly'>('monthly');
 
   const categoryToGroup = useMemo(() => {
     const map: Record<string, string> = {};
@@ -232,10 +236,10 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
                     <TableHeader>
                       <TableRow className="bg-muted/30">
                         <TableHead className="text-xs font-semibold">Category</TableHead>
-                        <TableHead className="text-xs font-semibold text-right">Income</TableHead>
-                        <TableHead className="text-xs font-semibold text-right">Expenses</TableHead>
-                        <TableHead className="text-xs font-semibold text-right">Net</TableHead>
-                        <TableHead className="text-xs font-semibold text-right">Txns</TableHead>
+                        <TableHead className="text-right text-xs font-semibold">Income</TableHead>
+                        <TableHead className="text-right text-xs font-semibold">Expenses</TableHead>
+                        <TableHead className="text-right text-xs font-semibold">Net</TableHead>
+                        <TableHead className="text-right text-xs font-semibold">Txns</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -269,96 +273,118 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
 
   return (
     <div className="space-y-6">
-      <Card className="border-0 shadow-xl">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CalendarDays className="w-5 h-5 text-primary" />
-                Monthly Group Report
-              </CardTitle>
-              <CardDescription>
-                {monthTransactions.length} transactions in {selectedMonth}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => navigateMonth(1)} className="rounded-xl h-9 w-9">
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-40 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableMonths.map(month => (
-                    <SelectItem key={month} value={month}>{month}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)} className="rounded-xl h-9 w-9">
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Month Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950">
-              <div className="flex items-center gap-1.5 mb-1">
-                <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">Income</span>
-              </div>
-              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(totalIncome)}</p>
-            </div>
-            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950">
-              <div className="flex items-center gap-1.5 mb-1">
-                <ArrowDownRight className="w-4 h-4 text-rose-600" />
-                <span className="text-xs text-rose-700 dark:text-rose-300 font-medium">Expenses</span>
-              </div>
-              <p className="text-2xl font-bold text-rose-700 dark:text-rose-300">{formatCurrency(-totalExpenses)}</p>
-            </div>
-            <div className={cn("p-4 rounded-xl", totalNet >= 0 ? "bg-blue-50 dark:bg-blue-950" : "bg-amber-50 dark:bg-amber-950")}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <TrendingUp className={cn("w-4 h-4", totalNet >= 0 ? "text-blue-600" : "text-amber-600")} />
-                <span className={cn("text-xs font-medium", totalNet >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>Net</span>
-              </div>
-              <p className={cn("text-2xl font-bold", totalNet >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>{formatCurrency(totalNet)}</p>
-            </div>
-          </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
+          <Button
+            variant={view === 'monthly' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setView('monthly')}
+            className="rounded-lg h-8 gap-2"
+          >
+            <LayoutGrid className="w-4 h-4" /> Monthly Detail
+          </Button>
+          <Button
+            variant={view === 'yearly' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setView('yearly')}
+            className="rounded-lg h-8 gap-2"
+          >
+            <TableIcon className="w-4 h-4" /> Yearly Matrix
+          </Button>
+        </div>
+      </div>
 
-          {/* Income Groups */}
-          {renderGroupSection(INCOME_GROUPS, 'Income Sources', true)}
-
-          {/* Expense Groups */}
-          {renderGroupSection(EXPENSE_GROUPS, 'Expense Categories', false)}
-
-          {/* Unmapped */}
-          {groupedData['Unmapped'] && groupedData['Unmapped'].transactions.length > 0 && (
-            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 overflow-hidden mt-3">
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">❓</span>
-                  <span className="font-semibold text-sm text-amber-700">Unmapped Categories</span>
-                  <Badge variant="outline" className="text-[10px] rounded-lg bg-amber-50 text-amber-700 border-amber-200">
-                    {groupedData['Unmapped'].transactions.length} txns
-                  </Badge>
+      {view === 'monthly' ? (
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CalendarDays className="w-5 h-5 text-primary" />
+                  Monthly Group Report
+                </CardTitle>
+                <CardDescription>
+                  {monthTransactions.length} transactions in {selectedMonth}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={() => navigateMonth(1)} className="rounded-xl h-9 w-9">
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-40 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableMonths.map(month => (
+                      <SelectItem key={month} value={month}>{month}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)} className="rounded-xl h-9 w-9">
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Month Summary */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+                  <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">Income</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {Object.keys(groupedData['Unmapped'].categories).join(', ')}
-                </p>
+                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(totalIncome)}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <ArrowDownRight className="w-4 h-4 text-rose-600" />
+                  <span className="text-xs text-rose-700 dark:text-rose-300 font-medium">Expenses</span>
+                </div>
+                <p className="text-2xl font-bold text-rose-700 dark:text-rose-300">{formatCurrency(-totalExpenses)}</p>
+              </div>
+              <div className={cn("p-4 rounded-xl", totalNet >= 0 ? "bg-blue-50 dark:bg-blue-950" : "bg-amber-50 dark:bg-amber-950")}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <TrendingUp className={cn("w-4 h-4", totalNet >= 0 ? "text-blue-600" : "text-amber-600")} />
+                  <span className={cn("text-xs font-medium", totalNet >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>Net</span>
+                </div>
+                <p className={cn("text-2xl font-bold", totalNet >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>{formatCurrency(totalNet)}</p>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Year Overview */}
-      <YearOverview
-        transactions={transactions}
-        categoryGroups={categoryGroups}
-        availableMonths={availableMonths}
-      />
+            {/* Income Groups */}
+            {renderGroupSection(INCOME_GROUPS, 'Income Sources', true)}
+
+            {/* Expense Groups */}
+            {renderGroupSection(EXPENSE_GROUPS, 'Expense Categories', false)}
+
+            {/* Unmapped */}
+            {groupedData['Unmapped'] && groupedData['Unmapped'].transactions.length > 0 && (
+              <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 overflow-hidden mt-3">
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">❓</span>
+                    <span className="font-semibold text-sm text-amber-700">Unmapped Categories</span>
+                    <Badge variant="outline" className="text-[10px] rounded-lg bg-amber-50 text-amber-700 border-amber-200">
+                      {groupedData['Unmapped'].transactions.length} txns
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {Object.keys(groupedData['Unmapped'].categories).join(', ')}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <YearOverview
+          transactions={transactions}
+          categoryGroups={categoryGroups}
+          availableMonths={availableMonths}
+        />
+      )}
     </div>
   );
 };
@@ -373,6 +399,7 @@ const YearOverview = ({
   availableMonths: string[];
 }) => {
   const [selectedYear, setSelectedYear] = useState<string>('');
+  const [showIncome, setShowIncome] = useState(false);
 
   const availableYears = useMemo(() => {
     const years = new Set<string>();
@@ -411,8 +438,8 @@ const YearOverview = ({
       allGroups.forEach(g => { groupTotals[g.name] = 0; });
       monthTxns.forEach(t => {
         const group = categoryToGroup[t.category_1] || 'Unmapped';
-        if (t.amount < 0) {
-          groupTotals[group] = (groupTotals[group] || 0) + Math.abs(t.amount);
+        if (groupTotals[group] !== undefined) {
+          groupTotals[group] += Math.abs(t.amount);
         }
       });
 
@@ -444,35 +471,57 @@ const YearOverview = ({
 
   if (availableYears.length === 0) return null;
 
+  const activeGroups = showIncome ? INCOME_GROUPS : EXPENSE_GROUPS;
+
   return (
     <Card className="border-0 shadow-xl">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <CardTitle className="text-lg">Year Overview — {selectedYear}</CardTitle>
             <CardDescription>Monthly breakdown by category group</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => {
-              const idx = availableYears.indexOf(selectedYear);
-              if (idx < availableYears.length - 1) setSelectedYear(availableYears[idx + 1]);
-            }} className="rounded-xl h-8 w-8">
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-24 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableYears.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Button variant="ghost" size="icon" onClick={() => {
-              const idx = availableYears.indexOf(selectedYear);
-              if (idx > 0) setSelectedYear(availableYears[idx - 1]);
-            }} className="rounded-xl h-8 w-8">
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
+              <Button
+                variant={!showIncome ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setShowIncome(false)}
+                className="rounded-lg h-7 text-xs"
+              >
+                Expenses
+              </Button>
+              <Button
+                variant={showIncome ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setShowIncome(true)}
+                className="rounded-lg h-7 text-xs"
+              >
+                Income
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => {
+                const idx = availableYears.indexOf(selectedYear);
+                if (idx < availableYears.length - 1) setSelectedYear(availableYears[idx + 1]);
+              }} className="rounded-xl h-8 w-8">
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-24 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="icon" onClick={() => {
+                const idx = availableYears.indexOf(selectedYear);
+                if (idx > 0) setSelectedYear(availableYears[idx - 1]);
+              }} className="rounded-xl h-8 w-8">
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -496,50 +545,51 @@ const YearOverview = ({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="text-xs font-semibold sticky left-0 bg-muted/50">Month</TableHead>
-                <TableHead className="text-xs font-semibold text-right">Income</TableHead>
-                <TableHead className="text-xs font-semibold text-right">Expenses</TableHead>
-                <TableHead className="text-xs font-semibold text-right">Net</TableHead>
-                {EXPENSE_GROUPS.map(g => (
-                  <TableHead key={g.name} className="text-xs font-semibold text-right hidden xl:table-cell">
-                    <span className="flex items-center justify-end gap-1">{g.icon}</span>
+                <TableHead className="text-xs font-semibold sticky left-0 bg-muted/50 z-10">Month</TableHead>
+                <TableHead className="text-xs font-semibold text-right">Total {showIncome ? 'Inc' : 'Exp'}</TableHead>
+                {activeGroups.map(g => (
+                  <TableHead key={g.name} className="text-xs font-semibold text-right min-w-[100px]">
+                    <span className="flex items-center justify-end gap-1" title={g.name}>
+                      {g.icon} <span className="hidden lg:inline">{g.name.split(' ').pop()}</span>
+                    </span>
                   </TableHead>
                 ))}
+                <TableHead className="text-xs font-semibold text-right sticky right-0 bg-muted/50 z-10">Net</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {yearData.map((month) => (
                 <TableRow key={month.month} className={cn("hover:bg-muted/30", !month.hasData && "opacity-40")}>
                   <TableCell className="font-medium text-sm sticky left-0 bg-background">{month.shortMonth}</TableCell>
-                  <TableCell className="text-right text-sm text-emerald-600 tabular-nums">
-                    {month.income > 0 ? formatCurrency(month.income) : '—'}
+                  <TableCell className={cn("text-right text-sm font-bold tabular-nums", showIncome ? "text-emerald-600" : "text-rose-600")}>
+                    {month.hasData ? formatCurrency(showIncome ? month.income : -month.expenses) : '—'}
                   </TableCell>
-                  <TableCell className="text-right text-sm text-rose-600 tabular-nums">
-                    {month.expenses > 0 ? formatCurrency(-month.expenses) : '—'}
-                  </TableCell>
-                  <TableCell className={cn("text-right text-sm font-bold tabular-nums", month.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                    {month.hasData ? formatCurrency(month.net) : '—'}
-                  </TableCell>
-                  {EXPENSE_GROUPS.map(g => (
-                    <TableCell key={g.name} className="text-right text-xs tabular-nums text-muted-foreground hidden xl:table-cell">
-                      {month.groupTotals[g.name] > 0 ? formatCurrency(-month.groupTotals[g.name]) : '—'}
+                  {activeGroups.map(g => (
+                    <TableCell key={g.name} className="text-right text-xs tabular-nums text-muted-foreground">
+                      {month.groupTotals[g.name] > 0 ? formatCurrency(showIncome ? month.groupTotals[g.name] : -month.groupTotals[g.name]) : '—'}
                     </TableCell>
                   ))}
+                  <TableCell className={cn("text-right text-sm font-bold tabular-nums sticky right-0 bg-background", month.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                    {month.hasData ? formatCurrency(month.net) : '—'}
+                  </TableCell>
                 </TableRow>
               ))}
               <TableRow className="bg-muted/30 font-bold">
                 <TableCell className="sticky left-0 bg-muted/30">Total</TableCell>
-                <TableCell className="text-right text-emerald-600">{formatCurrency(yearIncome)}</TableCell>
-                <TableCell className="text-right text-rose-600">{formatCurrency(-yearExpenses)}</TableCell>
-                <TableCell className={cn("text-right", yearNet >= 0 ? "text-emerald-600" : "text-rose-600")}>{formatCurrency(yearNet)}</TableCell>
-                {EXPENSE_GROUPS.map(g => {
+                <TableCell className={cn("text-right", showIncome ? "text-emerald-600" : "text-rose-600")}>
+                  {formatCurrency(showIncome ? yearIncome : -yearExpenses)}
+                </TableCell>
+                {activeGroups.map(g => {
                   const total = yearData.reduce((s, m) => s + m.groupTotals[g.name], 0);
                   return (
-                    <TableCell key={g.name} className="text-right text-muted-foreground hidden xl:table-cell">
-                      {total > 0 ? formatCurrency(-total) : '—'}
+                    <TableCell key={g.name} className="text-right text-muted-foreground">
+                      {total > 0 ? formatCurrency(showIncome ? total : -total) : '—'}
                     </TableCell>
                   );
                 })}
+                <TableCell className={cn("text-right sticky right-0 bg-muted/30", yearNet >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                  {formatCurrency(yearNet)}
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>
