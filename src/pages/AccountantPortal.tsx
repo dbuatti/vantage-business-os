@@ -67,7 +67,7 @@ import {
   Wifi,
   Droplets
 } from 'lucide-react';
-import { format, isWithinInterval, parseISO, isValid, differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, isValid, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 
@@ -155,6 +155,7 @@ const AccountantPortal = () => {
             .from('finance_transactions')
             .select('*')
             .order('transaction_date', { ascending: false })
+            .order('id', { ascending: false })
             .range(from, from + step - 1);
           if (error) throw error;
           if (data && data.length > 0) {
@@ -193,30 +194,27 @@ const AccountantPortal = () => {
     }
   };
 
-  const reportInterval = useMemo(() => {
+  const reportIntervalStrings = useMemo(() => {
     const year = parseInt(selectedYear);
     if (reportType === 'cy') {
       return { 
-        start: startOfDay(new Date(year, 0, 1)), 
-        end: endOfDay(new Date(year, 11, 31)) 
+        start: `${year}-01-01`, 
+        end: `${year}-12-31` 
       };
     } else {
       return { 
-        start: startOfDay(new Date(year - 1, 6, 1)), 
-        end: endOfDay(new Date(year, 5, 30)) 
+        start: `${year - 1}-07-01`, 
+        end: `${year}-06-30` 
       };
     }
   }, [selectedYear, reportType]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      const date = parseISO(t.transaction_date);
-      if (!isValid(date)) return false;
-      
-      // Filter out 'Account' category
-      if (t.category_1 === 'Account') return false;
+      const dateStr = t.transaction_date;
+      if (!dateStr) return false;
 
-      const inInterval = isWithinInterval(date, reportInterval);
+      const inInterval = dateStr >= reportIntervalStrings.start && dateStr <= reportIntervalStrings.end;
       const matchesSearch = !searchQuery || 
         t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.category_1 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -224,7 +222,7 @@ const AccountantPortal = () => {
       
       return inInterval && matchesSearch;
     });
-  }, [transactions, reportInterval, searchQuery]);
+  }, [transactions, reportIntervalStrings, searchQuery]);
 
   const workTransactions = useMemo(() => {
     return filteredTransactions.filter(t => t.is_work);
@@ -570,11 +568,16 @@ const AccountantPortal = () => {
               </div>
               <div className="pt-2 border-t flex justify-between items-center">
                 <p className="text-xs text-muted-foreground">
-                  Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span>
+                  Period: <span className="font-bold text-foreground">{format(parseISO(reportIntervalStrings.start), 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(parseISO(reportIntervalStrings.end), 'MMM dd, yyyy')}</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Found <span className="font-bold text-foreground">{filteredTransactions.length}</span> total transactions in this period
-                </p>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="rounded-lg bg-muted/50">
+                    {transactions.length} Total Loaded
+                  </Badge>
+                  <p className="text-xs text-muted-foreground">
+                    Found <span className="font-bold text-foreground">{filteredTransactions.length}</span> in this period
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -656,7 +659,20 @@ const AccountantPortal = () => {
 
           <TabsContent value="summary" className="space-y-8 animate-fade-in">
             {/* Empty State Helper */}
-            {filteredTransactions.length > 0 && workTransactions.length === 0 && (
+            {filteredTransactions.length === 0 ? (
+              <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-muted/10">
+                <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mx-auto text-muted-foreground">
+                  <Database className="w-10 h-10" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black">No Transactions Found</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    We couldn't find any transactions for the period starting {format(parseISO(reportIntervalStrings.start), 'MMM dd, yyyy')}. 
+                    Try selecting a different year or importing more data.
+                  </p>
+                </div>
+              </Card>
+            ) : workTransactions.length === 0 && (
               <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-amber-50/30">
                 <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto text-amber-600">
                   <Wand2 className="w-10 h-10" />
