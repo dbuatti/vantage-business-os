@@ -279,21 +279,21 @@ const AccountantPortal = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-amber-50/50">
+          <Card className="border-0 shadow-lg bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/50">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-amber-600" />
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 Audit Readiness
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {auditAlerts.length === 0 ? (
-                <div className="flex items-center gap-2 text-emerald-600 text-sm font-medium">
+                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
                   <CheckCircle2 className="w-4 h-4" /> All items look good
                 </div>
               ) : (
                 auditAlerts.map((alert, i) => (
-                  <div key={i} className="flex items-center gap-2 text-amber-700 text-xs font-medium">
+                  <div key={i} className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-xs font-medium">
                     <alert.icon className="w-3.5 h-3.5" /> {alert.title}
                   </div>
                 ))
@@ -340,9 +340,9 @@ const AccountantPortal = () => {
         <div className="space-y-8">
           {/* Income Section */}
           <Card className="border-0 shadow-xl overflow-hidden">
-            <CardHeader className="bg-emerald-50 border-b">
+            <CardHeader className="bg-emerald-50 dark:bg-emerald-950/30 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-white shadow-sm text-emerald-600">
+                <div className="p-2 rounded-xl bg-white dark:bg-card shadow-sm text-emerald-600">
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
@@ -366,7 +366,7 @@ const AccountantPortal = () => {
                     <TableRow key={t.id}>
                       <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
                       <TableCell className="text-sm font-bold">{t.description}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white">{t.category_1}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
                       <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
                     </TableRow>
                   ))}
@@ -383,10 +383,10 @@ const AccountantPortal = () => {
 
             return (
               <Card key={key} className="border-0 shadow-xl overflow-hidden break-inside-avoid">
-                <CardHeader className={cn("border-b", bucket.bg)}>
+                <CardHeader className={cn("border-b", bucket.bg, "dark:bg-muted/20")}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={cn("p-2 rounded-xl bg-white shadow-sm", bucket.color)}>
+                      <div className={cn("p-2 rounded-xl bg-white dark:bg-card shadow-sm", bucket.color)}>
                         <bucket.icon className="w-6 h-6" />
                       </div>
                       <div>
@@ -418,7 +418,7 @@ const AccountantPortal = () => {
                           <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
                           <TableCell className="text-sm font-bold">{t.description}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="text-[10px] rounded-lg bg-white">
+                            <Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">
                               {t.category_1 || 'Uncategorized'}
                             </Badge>
                           </TableCell>
