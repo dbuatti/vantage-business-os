@@ -16,12 +16,11 @@ import {
   Wand2, 
   Briefcase, 
   User, 
-  ChevronRight, 
-  ChevronLeft, 
   CheckCircle2, 
   AlertCircle,
-  ArrowRight,
-  Sparkles
+  Sparkles,
+  Layers,
+  Calendar
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -37,6 +36,14 @@ interface Transaction {
   is_work: boolean;
 }
 
+interface SuggestionGroup {
+  normalizedDescription: string;
+  displayDescription: string;
+  transactions: Transaction[];
+  reason: string;
+  totalAmount: number;
+}
+
 interface WorkWizardProps {
   transactions: Transaction[];
   onComplete: () => void;
@@ -45,6 +52,7 @@ interface WorkWizardProps {
 }
 
 const WORK_KEYWORDS = [
+  { word: 'moises', reason: 'AI Music Tools' },
   { word: 'salary', reason: 'Likely regular income' },
   { word: 'teaching', reason: 'Education services' },
   { word: 'aim', reason: 'Institutional income' },
@@ -81,37 +89,69 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const suggestions = useMemo(() => {
-    return transactions
+  // Helper to strip unique IDs, dates, and card numbers from descriptions
+  const normalizeDescription = (desc: string) => {
+    return desc
+      .toLowerCase()
+      // Remove dates like "14 Feb 2026"
+      .replace(/\d{1,2}\s(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s\d{4}/gi, '')
+      // Remove receipt numbers
+      .replace(/receipt\s\d+/gi, '')
+      // Remove card numbers like "420274xxxxxx8765"
+      .replace(/\d{4}x+\d{4}/gi, '')
+      // Remove foreign currency amounts
+      .replace(/foreign currency amount: \d+/gi, '')
+      // Clean up extra spaces
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const suggestionGroups = useMemo(() => {
+    const groups: Record<string, SuggestionGroup> = {};
+
+    transactions
       .filter(t => !t.is_work)
-      .map(t => {
-        const desc = t.description.toLowerCase();
-        const cat = (t.category_1 || '').toLowerCase();
-        const match = WORK_KEYWORDS.find(k => desc.includes(k.word) || cat.includes(k.word));
+      .forEach(t => {
+        const normalized = normalizeDescription(t.description);
+        const match = WORK_KEYWORDS.find(k => normalized.includes(k.word) || (t.category_1 || '').toLowerCase().includes(k.word));
         
         if (match) {
-          return { ...t, suggestionReason: match.reason, keyword: match.word };
+          if (!groups[normalized]) {
+            groups[normalized] = {
+              normalizedDescription: normalized,
+              displayDescription: t.description.split('-')[0].trim(), // Use first part for cleaner display
+              transactions: [],
+              reason: match.reason,
+              totalAmount: 0
+            };
+          }
+          groups[normalized].transactions.push(t);
+          groups[normalized].totalAmount += t.amount;
         }
-        return null;
-      })
-      .filter(Boolean) as Array<Transaction & { suggestionReason: string; keyword: string }>;
+      });
+
+    return Object.values(groups).sort((a, b) => b.transactions.length - a.transactions.length);
   }, [transactions, open]);
 
-  const currentSuggestion = suggestions[currentIndex];
-  const progress = suggestions.length > 0 ? ((currentIndex) / suggestions.length) * 100 : 0;
+  const currentGroup = suggestionGroups[currentIndex];
+  const progress = suggestionGroups.length > 0 ? ((currentIndex) / suggestionGroups.length) * 100 : 0;
 
   const handleMoveToWork = async () => {
-    if (!currentSuggestion || !currentSuggestion.id) return;
+    if (!currentGroup) return;
     setIsProcessing(true);
     try {
+      const ids = currentGroup.transactions.map(t => t.id).filter(Boolean) as string[];
+      
       const { error } = await supabase
         .from('finance_transactions')
         .update({ is_work: true })
-        .eq('id', currentSuggestion.id);
+        .in('id', ids);
       
       if (error) throw error;
       
-      if (currentIndex < suggestions.length - 1) {
+      showSuccess(`Moved ${ids.length} transactions to Work`);
+      
+      if (currentIndex < suggestionGroups.length - 1) {
         setCurrentIndex(prev => prev + 1);
       } else {
         showSuccess('Wizard complete!');
@@ -126,7 +166,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
   };
 
   const handleSkip = () => {
-    if (currentIndex < suggestions.length - 1) {
+    if (currentIndex < suggestionGroups.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
       onComplete();
@@ -141,7 +181,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
     }).format(val);
   };
 
-  if (suggestions.length === 0 && open) {
+  if (suggestionGroups.length === 0 && open) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md rounded-2xl">
@@ -180,42 +220,64 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                   Work Category Wizard
                 </DialogTitle>
                 <DialogDescription>
-                  Reviewing {suggestions.length} potential work items
+                  Reviewing {suggestionGroups.length} groups of potential work items
                 </DialogDescription>
               </div>
               <Badge variant="outline" className="rounded-full px-3 py-1 bg-background/50 backdrop-blur-sm">
-                {currentIndex + 1} of {suggestions.length}
+                {currentIndex + 1} of {suggestionGroups.length}
               </Badge>
             </div>
             <Progress value={progress} className="h-1.5 mt-4" />
           </DialogHeader>
 
-          {currentSuggestion && (
+          {currentGroup && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              {/* Transaction Card */}
+              {/* Group Card */}
               <div className="bg-card border rounded-2xl p-5 shadow-sm space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {format(new Date(currentSuggestion.transaction_date), 'MMMM dd, yyyy')}
-                    </p>
-                    <h3 className="font-bold text-lg leading-tight">{currentSuggestion.description}</h3>
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Layers className="w-3 h-3" />
+                      {currentGroup.transactions.length} Similar Transactions
+                    </div>
+                    <h3 className="font-bold text-lg leading-tight">{currentGroup.displayDescription}</h3>
                   </div>
-                  <div className={cn(
-                    "text-xl font-black tabular-nums",
-                    currentSuggestion.amount > 0 ? "text-emerald-600" : "text-rose-600"
-                  )}>
-                    {formatCurrency(currentSuggestion.amount)}
+                  <div className="text-right">
+                    <div className={cn(
+                      "text-xl font-black tabular-nums",
+                      currentGroup.totalAmount > 0 ? "text-emerald-600" : "text-rose-600"
+                    )}>
+                      {formatCurrency(currentGroup.totalAmount)}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Total Group Value</p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary" className="rounded-lg font-medium">
-                    {currentSuggestion.category_1 || 'Uncategorized'}
+                    {currentGroup.transactions[0].category_1 || 'Uncategorized'}
                   </Badge>
                   <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 font-medium">
                     <AlertCircle className="w-3.5 h-3.5" />
-                    Suggestion: {currentSuggestion.suggestionReason}
+                    Suggestion: {currentGroup.reason}
+                  </div>
+                </div>
+
+                {/* Mini Timeline */}
+                <div className="pt-2 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Recent occurrences:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {currentGroup.transactions.slice(0, 6).map((t, i) => (
+                      <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 text-[10px] font-medium">
+                        <Calendar className="w-2.5 h-2.5 opacity-50" />
+                        {format(new Date(t.transaction_date), 'MMM dd, yy')}
+                      </div>
+                    ))}
+                    {currentGroup.transactions.length > 6 && (
+                      <div className="px-2 py-1 rounded-md bg-muted/50 text-[10px] font-medium">
+                        +{currentGroup.transactions.length - 6} more
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -237,12 +299,12 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                   disabled={isProcessing}
                 >
                   <Briefcase className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                  Move to Work
+                  Move All to Work
                 </Button>
               </div>
 
               <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                Tip: You can always change this later in the transaction list
+                Tip: This will update all {currentGroup.transactions.length} transactions at once
               </p>
             </div>
           )}
