@@ -47,7 +47,8 @@ import {
   Loader2,
   Settings as SettingsIcon,
   Database,
-  Calendar
+  Calendar,
+  Wand2
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -99,7 +100,6 @@ const AccountantPortal = () => {
       const step = 1000;
       let hasMore = true;
 
-      // Fetch all transactions using pagination to bypass 1000 limit
       while (hasMore) {
         const { data, error } = await supabase
           .from('finance_transactions')
@@ -121,11 +121,15 @@ const AccountantPortal = () => {
       console.log(`[AccountantPortal] Fetched ${allData.length} total transactions.`);
       setTransactions(allData);
 
-      const { data: settingsData } = await supabase
+      const { data: settingsData, error: settingsError } = await supabase
         .from('accountant_settings')
         .select('*')
         .eq('owner_user_id', session?.user.id)
         .single();
+      
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.error("[AccountantPortal] Settings fetch error:", settingsError);
+      }
       
       if (settingsData) setSettings({
         business_percents: settingsData.business_percents,
@@ -150,19 +154,11 @@ const AccountantPortal = () => {
   }, [selectedYear, reportType]);
 
   const filteredTransactions = useMemo(() => {
-    console.log(`[AccountantPortal] Filtering for period: ${format(reportInterval.start, 'yyyy-MM-dd')} to ${format(reportInterval.end, 'yyyy-MM-dd')}`);
-    
     const filtered = transactions.filter(t => {
       const date = parseISO(t.transaction_date);
       if (!isValid(date)) return false;
       return isWithinInterval(date, reportInterval);
     });
-
-    console.log(`[AccountantPortal] Found ${filtered.length} transactions in range.`);
-    if (filtered.length === 0 && transactions.length > 0) {
-      console.warn(`[AccountantPortal] Range mismatch! Newest txn: ${transactions[0].transaction_date}, Oldest txn: ${transactions[transactions.length-1].transaction_date}`);
-    }
-
     return filtered;
   }, [transactions, reportInterval]);
 
@@ -332,22 +328,29 @@ const AccountantPortal = () => {
 
         {/* Detailed Breakdown Sections */}
         <div className="space-y-8">
-          {filteredTransactions.length === 0 && transactions.length > 0 && (
-            <Card className="border-2 border-dashed p-12 text-center space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                <Search className="w-8 h-8 text-muted-foreground" />
+          {/* Empty State Helper */}
+          {filteredTransactions.length > 0 && businessIncome.length === 0 && Object.values(deductionBuckets).every(b => b.items.length === 0) && (
+            <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-amber-50/30">
+              <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto text-amber-600">
+                <Wand2 className="w-10 h-10" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-bold">No data found for {selectedYear}</h3>
+                <h3 className="text-2xl font-black">Categorization Required</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  We found {transactions.length} transactions in your database, but none fall within the selected period. Try changing the "Year Ending" to **2026**.
+                  We found **{filteredTransactions.length}** transactions in this period, but none are showing up here because they aren't marked as **Work** yet.
                 </p>
               </div>
-              <div className="flex justify-center gap-3">
-                <Button onClick={() => setSelectedYear((parseInt(selectedYear) + 1).toString())} className="rounded-xl">
-                  Try Next Year
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Button asChild size="lg" className="rounded-2xl gap-2 bg-amber-600 hover:bg-amber-700">
+                  <Link to="/transactions"><Wand2 className="w-5 h-5" /> Run Work Wizard</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="rounded-2xl gap-2">
+                  <Link to="/settings?tab=accountant"><SettingsIcon className="w-5 h-5" /> Update Keywords</Link>
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Tip: Use the **Work Wizard** in the Transactions page to bulk-mark your income as work-related.
+              </p>
             </Card>
           )}
 
