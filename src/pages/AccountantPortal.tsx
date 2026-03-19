@@ -7,8 +7,8 @@ import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Table, 
@@ -99,7 +99,7 @@ const AccountantPortal = () => {
   const [settings, setSettings] = useState({
     deduction_keywords: {
       rent: ['rent', 'lease', 'storage'],
-      bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates'],
+      bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates', 'utilities'],
       phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'],
       fuel: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking']
     }
@@ -288,25 +288,41 @@ const AccountantPortal = () => {
   }, [filteredTransactions]);
 
   const fixedCostsData = useMemo(() => {
-    const categories = ['Utilities', 'Phone', 'Rent', 'Fuel'];
     const groups: Record<string, { total: number, items: Transaction[], icon: any }> = {};
-    filteredTransactions.filter(t => categories.includes(t.category_1)).forEach(t => {
-      let groupKey = t.category_1;
+    
+    filteredTransactions.forEach(t => {
+      if (t.amount > 0) return;
+      const desc = t.description.toLowerCase();
+      const cat = (t.category_1 || '').toLowerCase();
+      
+      let groupKey = '';
       let icon = Info;
-      if (t.category_1 === 'Utilities') {
-        groupKey = t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities: Other';
+
+      if (settings.deduction_keywords.rent.some(k => desc.includes(k) || cat.includes(k))) {
+        groupKey = 'Rent & Home Office';
+        icon = Home;
+      } else if (settings.deduction_keywords.bills.some(k => desc.includes(k) || cat.includes(k))) {
+        groupKey = t.category_1 === 'Utilities' && t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities & Bills';
         icon = Zap;
-        if (groupKey.toLowerCase().includes('internet')) icon = Wifi;
-        if (groupKey.toLowerCase().includes('water')) icon = Droplets;
-      } else if (t.category_1 === 'Phone') icon = Phone;
-      else if (t.category_1 === 'Rent') icon = Home;
-      else if (t.category_1 === 'Fuel') icon = Fuel;
-      if (!groups[groupKey]) groups[groupKey] = { total: 0, items: [], icon };
-      groups[groupKey].total += Math.abs(t.amount);
-      groups[groupKey].items.push(t);
+        if (desc.includes('internet') || (t.category_2 || '').toLowerCase().includes('internet')) icon = Wifi;
+        if (desc.includes('water') || (t.category_2 || '').toLowerCase().includes('water')) icon = Droplets;
+      } else if (settings.deduction_keywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
+        groupKey = 'Phone & Internet';
+        icon = Phone;
+      } else if (settings.deduction_keywords.fuel.some(k => desc.includes(k) || cat.includes(k))) {
+        groupKey = 'Fuel & Transport';
+        icon = Fuel;
+      }
+
+      if (groupKey) {
+        if (!groups[groupKey]) groups[groupKey] = { total: 0, items: [], icon };
+        groups[groupKey].total += Math.abs(t.amount);
+        groups[groupKey].items.push(t);
+      }
     });
+
     return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
-  }, [filteredTransactions]);
+  }, [filteredTransactions, settings]);
 
   const taxReadiness = useMemo(() => {
     if (workTransactions.length === 0) return 0;
