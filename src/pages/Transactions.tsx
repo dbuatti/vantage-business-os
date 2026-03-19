@@ -53,10 +53,14 @@ import {
   Activity,
   Tags,
   Calculator,
-  Wand2
+  Wand2,
+  Search,
+  LayoutGrid,
+  PieChart as PieChartIcon,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TransactionImporter from '@/components/TransactionImporter';
 import TransactionCharts from '@/components/TransactionCharts';
@@ -499,346 +503,414 @@ const Transactions = () => {
         {/* Main Content */}
         {transactions.length > 0 && (
           <Tabs defaultValue="transactions" className="space-y-4">
-            <TabsList className="rounded-xl flex-wrap h-auto gap-1 p-1">
-              <TabsTrigger value="transactions" className="rounded-lg gap-2"><FileText className="w-4 h-4" />Transactions</TabsTrigger>
-              <TabsTrigger value="analytics" className="rounded-lg gap-2"><BarChart3 className="w-4 h-4" />Analytics</TabsTrigger>
-              <TabsTrigger value="groups" className="rounded-lg gap-2"><Tags className="w-4 h-4" />Groups</TabsTrigger>
-              <TabsTrigger value="reports" className="rounded-lg gap-2"><CalendarDays className="w-4 h-4" />Reports</TabsTrigger>
-              <TabsTrigger value="categories" className="rounded-lg gap-2"><Layers className="w-4 h-4" />Categories</TabsTrigger>
-              <TabsTrigger value="stats" className="rounded-lg gap-2"><Activity className="w-4 h-4" />Stats</TabsTrigger>
-              <TabsTrigger value="monthly" className="rounded-lg gap-2"><CalendarDays className="w-4 h-4" />Monthly</TabsTrigger>
-              <TabsTrigger value="merchants" className="rounded-lg gap-2"><Store className="w-4 h-4" />Merchants</TabsTrigger>
-              <TabsTrigger value="recurring" className="rounded-lg gap-2"><Repeat className="w-4 h-4" />Recurring</TabsTrigger>
-              <TabsTrigger value="budgets" className="rounded-lg gap-2"><Target className="w-4 h-4" />Budgets</TabsTrigger>
-              <TabsTrigger value="goals" className="rounded-lg gap-2"><Flame className="w-4 h-4" />Goals</TabsTrigger>
-            </TabsList>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <TabsList className="rounded-xl flex-wrap h-auto gap-1 p-1 bg-muted/50">
+                <TabsTrigger value="transactions" className="rounded-lg gap-2"><LayoutGrid className="w-4 h-4" />Data</TabsTrigger>
+                <TabsTrigger value="analytics" className="rounded-lg gap-2"><PieChartIcon className="w-4 h-4" />Analysis</TabsTrigger>
+                <TabsTrigger value="planning" className="rounded-lg gap-2"><Target className="w-4 h-4" />Planning</TabsTrigger>
+              </TabsList>
+              
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="rounded-full px-3 py-1 bg-background">
+                  {filteredTransactions.length} items
+                </Badge>
+              </div>
+            </div>
 
             <TabsContent value="transactions" className="space-y-4">
-              {/* Search & Filter Bar */}
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-4 space-y-4">
-                  <div className="flex flex-col lg:flex-row gap-4">
-                    <div className="flex-1 relative">
-                      <Input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search description, category, notes..."
-                        className="pl-10 rounded-xl"
-                      />
-                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Select value={filterCategory} onValueChange={setFilterCategory}>
-                        <SelectTrigger className="w-40 rounded-xl"><SelectValue placeholder="Category" /></SelectTrigger>
-                        <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
-                      </Select>
-                      <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
-                        <SelectTrigger className="w-32 rounded-xl"><SelectValue placeholder="Type" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          <SelectItem value="income">Income</SelectItem>
-                          <SelectItem value="expense">Expense</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select value={filterWork} onValueChange={(v) => setFilterWork(v as any)}>
-                        <SelectTrigger className="w-32 rounded-xl"><SelectValue placeholder="Work" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="work">Work Only</SelectItem>
-                          <SelectItem value="personal">Personal Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className={cn("rounded-xl", showFilters && "bg-primary/5")}>
-                        <ChevronsUpDown className="w-4 h-4 mr-1" />More
-                      </Button>
-                      {hasActiveFilters && (
-                        <Button variant="ghost" size="sm" onClick={clearFilters} className="rounded-xl text-muted-foreground">
-                          <X className="w-4 h-4 mr-1" />Clear
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+              <Tabs defaultValue="list" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <TabsList className="h-9 p-1 bg-muted/30 rounded-lg">
+                    <TabsTrigger value="list" className="text-xs rounded-md">List View</TabsTrigger>
+                    <TabsTrigger value="groups" className="text-xs rounded-md">Category Groups</TabsTrigger>
+                    <TabsTrigger value="reports" className="text-xs rounded-md">Monthly Reports</TabsTrigger>
+                  </TabsList>
+                </div>
 
-                  {showFilters && (
-                    <div className="flex flex-wrap items-end gap-4 pt-2 border-t animate-fade-in">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Date Range</Label>
-                        <div className="flex flex-wrap gap-1">
-                          {datePresets.map(({ label, range }) => (
-                            <Button
-                              key={label}
-                              variant="ghost"
-                              size="sm"
-                              className={cn("h-7 text-xs rounded-lg", dateRange.from?.getTime() === range.from.getTime() && "bg-primary/10 text-primary")}
-                              onClick={() => setDateRange(range)}
-                            >
-                              {label}
-                            </Button>
-                          ))}
-                          {dateRange.from && (
-                            <Button variant="ghost" size="sm" className="h-7 text-xs rounded-lg text-muted-foreground" onClick={() => setDateRange({ from: undefined, to: undefined })}>
-                              <X className="w-3 h-3 mr-1" />Clear
+                <TabsContent value="list" className="space-y-4">
+                  {/* Search & Filter Bar */}
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex-1 relative">
+                          <Input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search description, category, notes..."
+                            className="pl-10 rounded-xl h-11"
+                          />
+                          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Select value={filterCategory} onValueChange={setFilterCategory}>
+                            <SelectTrigger className="w-40 rounded-xl h-11"><SelectValue placeholder="Category" /></SelectTrigger>
+                            <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                          </Select>
+                          <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+                            <SelectTrigger className="w-32 rounded-xl h-11"><SelectValue placeholder="Type" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Types</SelectItem>
+                              <SelectItem value="income">Income</SelectItem>
+                              <SelectItem value="expense">Expense</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className={cn("rounded-xl h-11 px-4", showFilters && "bg-primary/5 border-primary/20")}>
+                            <Filter className="w-4 h-4 mr-2" />Filters
+                          </Button>
+                          {hasActiveFilters && (
+                            <Button variant="ghost" size="sm" onClick={clearFilters} className="rounded-xl h-11 text-muted-foreground">
+                              <X className="w-4 h-4 mr-1" />Clear
                             </Button>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Amount:</Label>
-                        <Input type="number" placeholder="Min" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} className="w-24 h-8 rounded-lg text-sm" />
-                        <span className="text-muted-foreground text-sm">to</span>
-                        <Input type="number" placeholder="Max" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className="w-24 h-8 rounded-lg text-sm" />
-                      </div>
-                    </div>
-                  )}
 
-                  {hasActiveFilters && (
-                    <p className="text-sm text-muted-foreground">
-                      Showing <span className="font-medium text-foreground">{filteredTransactions.length}</span> of {transactions.length} transactions
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Bulk Actions Bar */}
-              {selectedIds.size > 0 && (
-                <Card className="border-0 shadow-lg bg-primary/5 border-primary/20 animate-fade-in">
-                  <CardContent className="p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <CheckSquare className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium">{selectedIds.size} selected</span>
-                      <span className="text-sm text-muted-foreground">
-                        Total: <span className="font-medium text-foreground">{formatCurrency(selectedStats.total)}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="rounded-xl">
-                        <X className="w-4 h-4 mr-1" />Deselect
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setShowBulkDelete(true)} className="rounded-xl text-rose-600 hover:bg-rose-50">
-                        <Trash2 className="w-4 h-4 mr-1" />Delete Selected
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Transactions Table */}
-              <Card className="border-0 shadow-xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead className="w-10">
-                          <Checkbox
-                            checked={paginatedTransactions.length > 0 && selectedIds.size === paginatedTransactions.length}
-                            onCheckedChange={toggleSelectAll}
-                          />
-                        </TableHead>
-                        <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('date')}>
-                          <div className="flex items-center gap-1">Date {sortField === 'date' && <ArrowUpDown className="w-3 h-3" />}</div>
-                        </TableHead>
-                        <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('description')}>
-                          <div className="flex items-center gap-1">Description {sortField === 'description' && <ArrowUpDown className="w-3 h-3" />}</div>
-                        </TableHead>
-                        <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('category')}>
-                          <div className="flex items-center gap-1">Category {sortField === 'category' && <ArrowUpDown className="w-3 h-3" />}</div>
-                        </TableHead>
-                        <TableHead className="font-semibold text-xs uppercase">Account</TableHead>
-                        <TableHead className="font-semibold text-xs uppercase text-right cursor-pointer hover:bg-muted/80" onClick={() => handleSort('amount')}>
-                          <div className="flex items-center justify-end gap-1">Amount {sortField === 'amount' && <ArrowUpDown className="w-3 h-3" />}</div>
-                        </TableHead>
-                        <TableHead className="w-20"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loading ? (
-                        [...Array(5)].map((_, i) => (
-                          <TableRow key={i}><TableCell colSpan={7} className="h-14 animate-pulse bg-muted/20" /></TableRow>
-                        ))
-                      ) : paginatedTransactions.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
-                            <div className="flex flex-col items-center gap-2">
-                              <FileText className="w-10 h-10 opacity-20" />
-                              <p className="font-medium">No transactions found</p>
-                              <p className="text-sm">Try adjusting your filters</p>
+                      {showFilters && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t animate-fade-in">
+                          <div className="space-y-2">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date Range</Label>
+                            <div className="flex flex-wrap gap-1">
+                              {datePresets.map(({ label, range }) => (
+                                <Button
+                                  key={label}
+                                  variant="ghost"
+                                  size="sm"
+                                  className={cn("h-7 text-[10px] rounded-lg px-2", dateRange.from?.getTime() === range.from.getTime() && "bg-primary/10 text-primary")}
+                                  onClick={() => setDateRange(range)}
+                                >
+                                  {label}
+                                </Button>
+                              ))}
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedTransactions.map((t) => (
-                          <React.Fragment key={t.id}>
-                            <TableRow 
-                              className={cn(
-                                "hover:bg-muted/30 transition-colors group cursor-pointer",
-                                selectedIds.has(t.id!) && "bg-primary/5",
-                                expandedId === t.id && "bg-muted/40"
-                              )}
-                              onClick={() => setExpandedId(expandedId === t.id ? null : t.id!)}
-                            >
-                              <TableCell onClick={(e) => e.stopPropagation()}>
-                                <Checkbox
-                                  checked={selectedIds.has(t.id!)}
-                                  onCheckedChange={() => toggleSelect(t.id!)}
-                                />
-                              </TableCell>
-                              <TableCell className="whitespace-nowrap text-sm font-medium">
-                                {format(new Date(t.transaction_date), 'MMM dd, yyyy')}
-                              </TableCell>
-                              <TableCell className="max-w-[250px]">
-                                <div className="truncate" title={t.description}>{t.description}</div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-wrap items-center gap-1">
-                                  <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-primary/5 text-primary border-primary/10">
-                                    {t.category_1 || 'Uncategorized'}
-                                  </Badge>
-                                  {t.is_work && (
-                                    <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-amber-50 text-amber-700 border-amber-200">Work</Badge>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Work Status</Label>
+                            <Select value={filterWork} onValueChange={(v) => setFilterWork(v as any)}>
+                              <SelectTrigger className="rounded-xl h-9"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All Transactions</SelectItem>
+                                <SelectItem value="work">Work Only</SelectItem>
+                                <SelectItem value="personal">Personal Only</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount Range</Label>
+                            <div className="flex items-center gap-2">
+                              <Input type="number" placeholder="Min" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} className="h-9 rounded-xl text-sm" />
+                              <span className="text-muted-foreground text-sm">to</span>
+                              <Input type="number" placeholder="Max" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className="h-9 rounded-xl text-sm" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Quick Filter Row */}
+                      <div className="flex items-center gap-2 pt-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mr-2">Quick:</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className={cn("h-7 text-[10px] rounded-full", isSameMonth(dateRange.from || new Date(0), new Date()) && "bg-primary/10 border-primary/20 text-primary")}
+                          onClick={() => setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) })}
+                        >
+                          This Month
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className={cn("h-7 text-[10px] rounded-full", filterWork === 'work' && "bg-amber-50 border-amber-200 text-amber-700")}
+                          onClick={() => setFilterWork(filterWork === 'work' ? 'all' : 'work')}
+                        >
+                          Work Only
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className={cn("h-7 text-[10px] rounded-full", filterType === 'income' && "bg-emerald-50 border-emerald-200 text-emerald-700")}
+                          onClick={() => setFilterType(filterType === 'income' ? 'all' : 'income')}
+                        >
+                          Income
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Bulk Actions Bar */}
+                  {selectedIds.size > 0 && (
+                    <Card className="border-0 shadow-lg bg-primary/5 border-primary/20 animate-fade-in">
+                      <CardContent className="p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CheckSquare className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+                          <span className="text-sm text-muted-foreground">
+                            Total: <span className="font-medium text-foreground">{formatCurrency(selectedStats.total)}</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="rounded-xl">
+                            <X className="w-4 h-4 mr-1" />Deselect
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setShowBulkDelete(true)} className="rounded-xl text-rose-600 hover:bg-rose-50">
+                            <Trash2 className="w-4 h-4 mr-1" />Delete Selected
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Transactions Table */}
+                  <Card className="border-0 shadow-xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/50">
+                            <TableHead className="w-10">
+                              <Checkbox
+                                checked={paginatedTransactions.length > 0 && selectedIds.size === paginatedTransactions.length}
+                                onCheckedChange={toggleSelectAll}
+                              />
+                            </TableHead>
+                            <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('date')}>
+                              <div className="flex items-center gap-1">Date {sortField === 'date' && <ArrowUpDown className="w-3 h-3" />}</div>
+                            </TableHead>
+                            <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('description')}>
+                              <div className="flex items-center gap-1">Description {sortField === 'description' && <ArrowUpDown className="w-3 h-3" />}</div>
+                            </TableHead>
+                            <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('category')}>
+                              <div className="flex items-center gap-1">Category {sortField === 'category' && <ArrowUpDown className="w-3 h-3" />}</div>
+                            </TableHead>
+                            <TableHead className="font-semibold text-xs uppercase hidden md:table-cell">Account</TableHead>
+                            <TableHead className="font-semibold text-xs uppercase text-right cursor-pointer hover:bg-muted/80" onClick={() => handleSort('amount')}>
+                              <div className="flex items-center justify-end gap-1">Amount {sortField === 'amount' && <ArrowUpDown className="w-3 h-3" />}</div>
+                            </TableHead>
+                            <TableHead className="w-20"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {loading ? (
+                            [...Array(5)].map((_, i) => (
+                              <TableRow key={i}><TableCell colSpan={7} className="h-14 animate-pulse bg-muted/20" /></TableRow>
+                            ))
+                          ) : paginatedTransactions.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center py-24 text-muted-foreground">
+                                <div className="flex flex-col items-center gap-4">
+                                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                                    <Search className="w-8 h-8 opacity-20" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <p className="font-bold text-lg text-foreground">No transactions found</p>
+                                    <p className="text-sm">Try adjusting your filters or search query</p>
+                                  </div>
+                                  {hasActiveFilters && (
+                                    <Button variant="outline" size="sm" onClick={clearFilters} className="rounded-xl">
+                                      Clear All Filters
+                                    </Button>
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-xs text-muted-foreground">{t.account_label}</TableCell>
-                              <TableCell className={cn("text-right font-bold tabular-nums", t.amount > 0 ? "text-emerald-600" : t.amount < 0 ? "text-rose-600" : "")}>
-                                {formatCurrency(t.amount)}
-                              </TableCell>
-                              <TableCell onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={() => handleEdit(t)}>
-                                    <Pencil className="h-3 w-3" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-rose-50 hover:text-rose-600" onClick={() => handleDelete(t.id!)}>
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </TableCell>
                             </TableRow>
-                            {expandedId === t.id && (
-                              <TableRow className="bg-muted/20">
-                                <TableCell colSpan={7} className="p-4">
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm animate-fade-in">
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Date</p>
-                                      <p className="font-medium">{format(new Date(t.transaction_date), 'EEEE, MMMM dd, yyyy')}</p>
+                          ) : (
+                            paginatedTransactions.map((t) => (
+                              <React.Fragment key={t.id}>
+                                <TableRow 
+                                  className={cn(
+                                    "hover:bg-muted/30 transition-colors group cursor-pointer border-b",
+                                    selectedIds.has(t.id!) && "bg-primary/5",
+                                    expandedId === t.id && "bg-muted/40"
+                                  )}
+                                  onClick={() => setExpandedId(expandedId === t.id ? null : t.id!)}
+                                >
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    <Checkbox
+                                      checked={selectedIds.has(t.id!)}
+                                      onCheckedChange={() => toggleSelect(t.id!)}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="whitespace-nowrap text-sm font-medium">
+                                    {format(new Date(t.transaction_date), 'MMM dd, yyyy')}
+                                  </TableCell>
+                                  <TableCell className="max-w-[250px]">
+                                    <div className="truncate font-medium" title={t.description}>{t.description}</div>
+                                    {t.notes && <div className="text-[10px] text-muted-foreground truncate mt-0.5">{t.notes}</div>}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex flex-wrap items-center gap-1">
+                                      <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-primary/5 text-primary border-primary/10">
+                                        {t.category_1 || 'Uncategorized'}
+                                      </Badge>
+                                      {t.is_work && (
+                                        <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-amber-50 text-amber-700 border-amber-200">Work</Badge>
+                                      )}
                                     </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Account</p>
-                                      <p className="font-medium">{t.account_label || '—'}</p>
-                                      <p className="text-xs text-muted-foreground">{t.account_identifier}</p>
+                                  </TableCell>
+                                  <TableCell className="text-xs text-muted-foreground hidden md:table-cell">{t.account_label}</TableCell>
+                                  <TableCell className={cn("text-right font-bold tabular-nums", t.amount > 0 ? "text-emerald-600" : t.amount < 0 ? "text-rose-600" : "")}>
+                                    {formatCurrency(t.amount)}
+                                  </TableCell>
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={() => handleEdit(t)}>
+                                        <Pencil className="h-3 w-3" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-rose-50 hover:text-rose-600" onClick={() => handleDelete(t.id!)}>
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
                                     </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Category</p>
-                                      <p className="font-medium">{t.category_1 || '—'}</p>
-                                      {t.category_2 && <p className="text-xs text-muted-foreground">{t.category_2}</p>}
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Amounts</p>
-                                      <div className="space-y-0.5">
-                                        {t.credit && <p className="text-emerald-600 font-medium">Credit: {formatCurrency(t.credit)}</p>}
-                                        {t.debit && <p className="text-rose-600 font-medium">Debit: {formatCurrency(t.debit)}</p>}
-                                        <p className="font-bold">Net: {formatCurrency(t.amount)}</p>
+                                  </TableCell>
+                                </TableRow>
+                                {expandedId === t.id && (
+                                  <TableRow className="bg-muted/20">
+                                    <TableCell colSpan={7} className="p-4">
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm animate-fade-in">
+                                        <div className="space-y-1">
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Full Date</p>
+                                          <p className="font-medium">{format(new Date(t.transaction_date), 'EEEE, MMMM dd, yyyy')}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Account Details</p>
+                                          <p className="font-medium">{t.account_label || '—'}</p>
+                                          <p className="text-xs text-muted-foreground">{t.account_identifier}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Categorization</p>
+                                          <p className="font-medium">{t.category_1 || '—'}</p>
+                                          {t.category_2 && <p className="text-xs text-muted-foreground">{t.category_2}</p>}
+                                        </div>
+                                        <div className="space-y-1">
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Transaction Breakdown</p>
+                                          <div className="space-y-0.5">
+                                            {t.credit && <p className="text-emerald-600 font-medium">Credit: {formatCurrency(t.credit)}</p>}
+                                            {t.debit && <p className="text-rose-600 font-medium">Debit: {formatCurrency(t.debit)}</p>}
+                                            <p className="font-bold">Net: {formatCurrency(t.amount)}</p>
+                                          </div>
+                                        </div>
+                                        {t.notes && (
+                                          <div className="col-span-2 space-y-1">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Notes</p>
+                                            <p className="text-sm bg-background p-2 rounded-lg border">{t.notes}</p>
+                                          </div>
+                                        )}
+                                        <div className="space-y-1">
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Period</p>
+                                          <p className="font-medium">Week {t.week} · {t.mmm_yyyy || t.month_name}</p>
+                                        </div>
                                       </div>
-                                    </div>
-                                    {t.notes && (
-                                      <div className="col-span-2">
-                                        <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                                        <p className="text-sm">{t.notes}</p>
-                                      </div>
-                                    )}
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-1">Week / Month</p>
-                                      <p className="font-medium">Week {t.week} · {t.mmm_yyyy || t.month_name}</p>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </React.Fragment>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/30">
-                    <p className="text-sm text-muted-foreground">
-                      Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)} of {filteredTransactions.length}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="rounded-xl">
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum;
-                          if (totalPages <= 5) pageNum = i + 1;
-                          else if (currentPage <= 3) pageNum = i + 1;
-                          else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                          else pageNum = currentPage - 2 + i;
-                          return (
-                            <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm" onClick={() => setCurrentPage(pageNum)} className="w-8 h-8 rounded-lg">
-                              {pageNum}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="rounded-xl">
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </React.Fragment>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
                     </div>
-                  </div>
-                )}
-              </Card>
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/30">
+                        <p className="text-xs text-muted-foreground">
+                          Showing <span className="font-bold text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)}</span> of {filteredTransactions.length}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="rounded-xl h-8">
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                              let pageNum;
+                              if (totalPages <= 5) pageNum = i + 1;
+                              else if (currentPage <= 3) pageNum = i + 1;
+                              else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                              else pageNum = currentPage - 2 + i;
+                              return (
+                                <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm" onClick={() => setCurrentPage(pageNum)} className="w-8 h-8 rounded-lg text-xs">
+                                  {pageNum}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="rounded-xl h-8">
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="groups" className="space-y-4">
+                  <CategoryGroupManager 
+                    transactions={transactions} 
+                    onGroupsUpdated={fetchCategoryGroups}
+                  />
+                </TabsContent>
+
+                <TabsContent value="reports" className="space-y-4">
+                  <MonthlyGroupReport 
+                    transactions={analyticsTransactions} 
+                    categoryGroups={categoryGroups}
+                  />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
-            {/* All analytics tabs use analyticsTransactions (excludes Account category) */}
-            <TabsContent value="analytics" className="space-y-4">
-              <TransactionCharts transactions={analyticsTransactions} />
-              <SpendingHeatmap transactions={analyticsTransactions} />
+            <TabsContent value="analytics" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => {}}>
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 className="w-6 h-6" /></div>
+                    <div><h3 className="font-bold">Charts</h3><p className="text-xs text-muted-foreground">Visual trends & breakdowns</p></div>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600"><Flame className="w-6 h-6" /></div>
+                    <div><h3 className="font-bold">Heatmap</h3><p className="text-xs text-muted-foreground">Daily spending intensity</p></div>
+                  </CardContent>
+                </Card>
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-violet-100 rounded-2xl text-violet-600"><Activity className="w-6 h-6" /></div>
+                    <div><h3 className="font-bold">Stats</h3><p className="text-xs text-muted-foreground">Key financial metrics</p></div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Tabs defaultValue="charts" className="space-y-4">
+                <TabsList className="h-9 p-1 bg-muted/30 rounded-lg">
+                  <TabsTrigger value="charts" className="text-xs rounded-md">Visual Trends</TabsTrigger>
+                  <TabsTrigger value="categories" className="text-xs rounded-md">Categories</TabsTrigger>
+                  <TabsTrigger value="merchants" className="text-xs rounded-md">Merchants</TabsTrigger>
+                  <TabsTrigger value="heatmap" className="text-xs rounded-md">Heatmap</TabsTrigger>
+                  <TabsTrigger value="stats" className="text-xs rounded-md">Key Stats</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="charts" className="space-y-4">
+                  <TransactionCharts transactions={analyticsTransactions} />
+                </TabsContent>
+                <TabsContent value="categories" className="space-y-4">
+                  <CategoryBreakdown transactions={analyticsTransactions} />
+                </TabsContent>
+                <TabsContent value="merchants" className="space-y-4">
+                  <MerchantAnalysis transactions={analyticsTransactions} />
+                </TabsContent>
+                <TabsContent value="heatmap" className="space-y-4">
+                  <SpendingHeatmap transactions={analyticsTransactions} />
+                </TabsContent>
+                <TabsContent value="stats" className="space-y-4">
+                  <TransactionStats transactions={analyticsTransactions} />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
-            <TabsContent value="groups" className="space-y-4">
-              <CategoryGroupManager 
-                transactions={transactions} 
-                onGroupsUpdated={fetchCategoryGroups}
-              />
-            </TabsContent>
-
-            <TabsContent value="reports" className="space-y-4">
-              <MonthlyGroupReport 
-                transactions={analyticsTransactions} 
-                categoryGroups={categoryGroups}
-              />
-            </TabsContent>
-
-            <TabsContent value="categories" className="space-y-4">
-              <CategoryBreakdown transactions={analyticsTransactions} />
-            </TabsContent>
-
-            <TabsContent value="stats" className="space-y-4">
-              <TransactionStats transactions={analyticsTransactions} />
-            </TabsContent>
-
-            <TabsContent value="monthly" className="space-y-4">
-              <MonthlyComparison transactions={analyticsTransactions} />
-            </TabsContent>
-
-            <TabsContent value="merchants" className="space-y-4">
-              <MerchantAnalysis transactions={analyticsTransactions} />
-            </TabsContent>
-
-            <TabsContent value="recurring" className="space-y-4">
+            <TabsContent value="planning" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <BudgetTracker transactions={analyticsTransactions} />
+                <SavingsGoals transactions={analyticsTransactions} />
+              </div>
               <RecurringTransactions transactions={analyticsTransactions} />
-            </TabsContent>
-
-            <TabsContent value="budgets" className="space-y-4">
-              <BudgetTracker transactions={analyticsTransactions} />
-            </TabsContent>
-
-            <TabsContent value="goals" className="space-y-4">
-              <SavingsGoals transactions={analyticsTransactions} />
             </TabsContent>
           </Tabs>
         )}

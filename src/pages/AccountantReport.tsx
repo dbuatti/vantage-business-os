@@ -46,7 +46,9 @@ import {
   Download,
   Pencil,
   ExternalLink,
-  Wand2
+  Wand2,
+  FileText,
+  PieChart
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -272,6 +274,25 @@ const AccountantReport = () => {
           </div>
         </div>
 
+        {/* Print Header (Only visible when printing) */}
+        <div className="hidden print:block border-b-2 border-primary pb-6 mb-8">
+          <div className="flex justify-between items-end">
+            <div>
+              <h1 className="text-4xl font-black tracking-tight text-primary">Financial Report</h1>
+              <p className="text-lg text-muted-foreground mt-1">
+                {reportType === 'fy' ? 'Financial Year' : 'Calendar Year'} Ending {selectedYear}
+              </p>
+              <p className="text-sm text-muted-foreground mt-4">
+                Generated on {format(new Date(), 'MMMM dd, yyyy')}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-bold text-xl">{session?.user.email}</p>
+              <p className="text-muted-foreground">Business Transaction Summary</p>
+            </div>
+          </div>
+        </div>
+
         {/* Audit Alerts */}
         {(stats.missingNotes.length > 0 || stats.unmapped.length > 0) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
@@ -377,11 +398,70 @@ const AccountantReport = () => {
           </Card>
         </div>
 
+        {/* Tax Category Summary */}
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <CardHeader className="bg-muted/30">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <PieChart className="w-5 h-5 text-primary" />
+              Tax Category Summary
+            </CardTitle>
+            <CardDescription>Grouped expenses for your tax return</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Total Amount</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                  <TableHead className="w-1/3">Percentage</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(stats.categoryBreakdown)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([cat, amount]) => (
+                    <TableRow key={cat}>
+                      <TableCell className="font-medium">{cat}</TableCell>
+                      <TableCell className="text-right font-bold text-rose-600">{formatCurrency(-amount)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {workTransactions.filter(t => t.category_1 === cat).length}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary" 
+                              style={{ width: `${(amount / stats.expenses) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground w-10 text-right">
+                            {((amount / stats.expenses) * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {Object.keys(stats.categoryBreakdown).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                      No work expenses found for this period.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
         {/* Detailed List */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-lg">Work Transactions</CardTitle>
-            <CardDescription>Detailed list for your records</CardDescription>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Detailed Transaction Log
+            </CardTitle>
+            <CardDescription>Full audit trail for the selected period</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -402,7 +482,7 @@ const AccountantReport = () => {
                       <TableCell className="whitespace-nowrap text-xs">
                         {format(parseISO(t.transaction_date), 'MMM dd, yy')}
                       </TableCell>
-                      <TableCell className="text-xs font-medium max-w-[150px] truncate">
+                      <TableCell className="text-xs font-medium max-w-[200px] truncate">
                         {t.description}
                       </TableCell>
                       <TableCell>
@@ -416,7 +496,7 @@ const AccountantReport = () => {
                       )}>
                         {formatCurrency(t.amount)}
                       </TableCell>
-                      <TableCell className="text-[10px] text-muted-foreground max-w-[150px]">
+                      <TableCell className="text-[10px] text-muted-foreground max-w-[200px]">
                         {t.notes || (Math.abs(t.amount) > 50 ? <span className="text-amber-500 flex items-center gap-1"><Info className="w-3 h-3" /> Missing</span> : '—')}
                       </TableCell>
                       <TableCell className="print:hidden">
@@ -431,6 +511,13 @@ const AccountantReport = () => {
                       </TableCell>
                     </TableRow>
                   ))}
+                  {workTransactions.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                        No work transactions found for this period.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
