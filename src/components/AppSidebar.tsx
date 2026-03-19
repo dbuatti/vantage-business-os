@@ -28,7 +28,8 @@ import {
   FileText,
   Briefcase,
   Package,
-  Brain
+  Brain,
+  ShieldCheck
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -47,6 +48,7 @@ const AppSidebar = () => {
     { title: "Clients", icon: Users, url: "/clients" },
     { title: "Invoices", icon: FileText, url: "/invoices" },
     { title: "Catalog", icon: Package, url: "/products" },
+    { title: "Accountant Portal", icon: ShieldCheck, url: "/accountant-portal" },
     { title: "Tax Report", icon: Calculator, url: "/accountant-report" },
   ];
 
