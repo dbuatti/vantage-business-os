@@ -129,14 +129,18 @@ const Insights = () => {
     }
   };
 
-  const summaryStats = useMemo(() => {
-    const income = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-    const expenses = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
-    return { totalIncome: income, totalExpenses: expenses, net: income - expenses };
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => t.category_1 !== 'Account');
   }, [transactions]);
 
+  const summaryStats = useMemo(() => {
+    const income = filteredTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+    const expenses = filteredTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+    return { totalIncome: income, totalExpenses: expenses, net: income - expenses };
+  }, [filteredTransactions]);
+
   const generateInsights = async () => {
-    if (transactions.length < 5) {
+    if (filteredTransactions.length < 5) {
       showError('Need at least 5 transactions to generate insights');
       return;
     }
@@ -145,7 +149,7 @@ const Insights = () => {
     try {
       const { data, error } = await supabase.functions.invoke('financial-insights', {
         body: {
-          transactions: transactions.slice(0, 300),
+          transactions: filteredTransactions.slice(0, 300),
           categoryGroups,
           summaryStats
         }
@@ -239,7 +243,7 @@ const Insights = () => {
           )}
           <Button 
             onClick={generateInsights} 
-            disabled={generating || transactions.length < 5}
+            disabled={generating || filteredTransactions.length < 5}
             className="rounded-xl gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg shadow-primary/25"
           >
             {generating ? (
@@ -258,14 +262,14 @@ const Insights = () => {
       </div>
 
       {/* Transaction Count Warning */}
-      {transactions.length < 5 && (
+      {filteredTransactions.length < 5 && (
         <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
           <CardContent className="p-6 flex items-center gap-4">
             <AlertTriangle className="w-8 h-8 text-amber-600 shrink-0" />
             <div>
               <p className="font-bold text-amber-800 dark:text-amber-200">Not enough data</p>
               <p className="text-sm text-amber-700 dark:text-amber-300">
-                Import at least 5 transactions to unlock AI-powered insights. You currently have {transactions.length}.
+                Import at least 5 transactions (excluding internal transfers) to unlock AI-powered insights. You currently have {filteredTransactions.length}.
               </p>
             </div>
           </CardContent>
@@ -273,7 +277,7 @@ const Insights = () => {
       )}
 
       {/* No Insights Yet */}
-      {!insights && transactions.length >= 5 && (
+      {!insights && filteredTransactions.length >= 5 && (
         <Card className="border-0 shadow-2xl overflow-hidden">
           <div className="bg-gradient-to-br from-primary/10 via-purple-500/5 to-background p-12 text-center space-y-6">
             <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-2xl shadow-primary/30">
@@ -282,7 +286,7 @@ const Insights = () => {
             <div className="space-y-2">
               <h2 className="text-2xl font-black">Unlock Your Financial Intelligence</h2>
               <p className="text-muted-foreground max-w-md mx-auto">
-                Our AI will analyze your {transactions.length} transactions to find patterns, opportunities, and personalized advice on where to invest your time.
+                Our AI will analyze your {filteredTransactions.length} transactions to find patterns, opportunities, and personalized advice on where to invest your time.
               </p>
             </div>
             <Button 

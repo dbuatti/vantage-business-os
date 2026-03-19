@@ -23,7 +23,9 @@ serve(async (req: Request) => {
       throw new Error('GEMINI_API_KEY not configured')
     }
 
-    const recentTransactions = transactions.slice(0, 200)
+    // Filter out 'Account' category transactions as they are internal transfers
+    const filteredTransactions = transactions.filter((t: any) => t.category_1 !== 'Account')
+    const recentTransactions = filteredTransactions.slice(0, 200)
     
     const categoryTotals: Record<string, { income: number; expenses: number; count: number }> = {}
     recentTransactions.forEach((t: any) => {

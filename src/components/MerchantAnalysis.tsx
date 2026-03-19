@@ -36,11 +36,14 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
   const merchants = useMemo(() => {
     const groups: Record<string, Transaction[]> = {};
 
-    transactions.forEach(t => {
-      const key = t.description.trim();
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(t);
-    });
+    // Filter out 'Account' category transactions as they are internal transfers
+    transactions
+      .filter(t => t.category_1 !== 'Account')
+      .forEach(t => {
+        const key = t.description.trim();
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
 
     const result: MerchantData[] = Object.entries(groups)
       .map(([, txns]) => {
