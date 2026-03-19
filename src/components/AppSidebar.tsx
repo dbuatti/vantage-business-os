@@ -31,8 +31,7 @@ import {
   Brain,
   ShieldCheck,
   Activity,
-  Sparkles,
-  Timer
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -45,7 +44,6 @@ const AppSidebar = () => {
   const mainItems = [
     { title: "Dashboard", icon: LayoutDashboard, url: "/" },
     { title: "AI Insights", icon: Brain, url: "/insights" },
-    { title: "BPM Master", icon: Timer, url: "/metronome" },
   ];
 
   const businessItems = [
