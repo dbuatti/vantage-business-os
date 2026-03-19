@@ -10,21 +10,19 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-  CommandShortcut,
 } from "@/components/ui/command";
 import { 
   LayoutDashboard, 
   ListFilter, 
   Calculator, 
-  Plus, 
   Moon, 
   Sun, 
-  Download,
   Search,
   Settings,
   LogOut,
   Users,
-  FileText
+  FileText,
+  Brain
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -58,6 +56,10 @@ const CommandPalette = () => {
           <CommandItem onSelect={() => runCommand(() => navigate('/'))}>
             <LayoutDashboard className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/insights'))}>
+            <Brain className="mr-2 h-4 w-4" />
+            <span>AI Insights</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/clients'))}>
             <Users className="mr-2 h-4 w-4" />

@@ -8,7 +8,7 @@ import MonthlySummary from '@/components/MonthlySummary';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase } from 'lucide-react';
+import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -232,6 +232,13 @@ const Index = () => {
                   <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 gap-2">
+                  <Button variant="outline" asChild className="justify-start h-12 rounded-xl gap-3 group">
+                    <Link to="/insights">
+                      <Brain className="w-4 h-4 text-violet-500 group-hover:scale-110 transition-transform" />
+                      AI Insights
+                      <Badge className="ml-auto rounded-full text-[9px] bg-violet-100 text-violet-700 border-violet-200">NEW</Badge>
+                    </Link>
+                  </Button>
                   <Button variant="outline" asChild className="justify-start h-12 rounded-xl gap-3">
                     <Link to="/transactions">
                       <ListFilter className="w-4 h-4 text-primary" />
