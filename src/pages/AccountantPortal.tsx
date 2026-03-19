@@ -277,21 +277,27 @@ const AccountantPortal = () => {
       const cat = group.categories[catName];
       cat.count++;
 
-      const subCatName = t.category_2 || 'Other';
-      if (!cat.subcategories[subCatName]) {
-        cat.subcategories[subCatName] = { income: 0, expenses: 0, count: 0 };
+      // Only track subcategories that aren't "Other" or empty
+      const subCatName = t.category_2;
+      if (subCatName && subCatName.toLowerCase() !== 'other') {
+        if (!cat.subcategories[subCatName]) {
+          cat.subcategories[subCatName] = { income: 0, expenses: 0, count: 0 };
+        }
+        const subcat = cat.subcategories[subCatName];
+        subcat.count++;
+        if (t.amount > 0) {
+          subcat.income += t.amount;
+        } else {
+          subcat.expenses += Math.abs(t.amount);
+        }
       }
-      const subcat = cat.subcategories[subCatName];
-      subcat.count++;
 
       if (t.amount > 0) {
         group.income += t.amount;
         cat.income += t.amount;
-        subcat.income += t.amount;
       } else {
         group.expenses += Math.abs(t.amount);
         cat.expenses += Math.abs(t.amount);
-        subcat.expenses += Math.abs(t.amount);
       }
     });
 
