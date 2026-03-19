@@ -121,6 +121,11 @@ const Transactions = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   
+  // Persistent Year Filter
+  const [selectedYear, setSelectedYear] = useState<string>(() => {
+    return localStorage.getItem('transactions-selected-year') || 'All';
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
@@ -144,6 +149,11 @@ const Transactions = () => {
       fetchCategoryGroups();
     }
   }, [session, authLoading, navigate]);
+
+  // Save year filter to localStorage
+  useEffect(() => {
+    localStorage.setItem('transactions-selected-year', selectedYear);
+  }, [selectedYear]);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -313,6 +323,11 @@ const Transactions = () => {
 
   const hasActiveFilters = searchQuery || filterCategory !== 'All' || filterType !== 'all' || filterWork !== 'all' || dateRange.from || dateRange.to || minAmount || maxAmount;
 
+  const availableYears = useMemo(() => {
+    const years = new Set(transactions.map(t => new Date(t.transaction_date).getFullYear().toString()));
+    return ['All', ...Array.from(years).sort((a, b) => b.localeCompare(a))];
+  }, [transactions]);
+
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       const matchesSearch = !searchQuery ||
@@ -326,7 +341,11 @@ const Transactions = () => {
       const matchesDateRange = (!dateRange.from || new Date(t.transaction_date) >= dateRange.from) && (!dateRange.to || new Date(t.transaction_date) <= dateRange.to);
       const matchesMinAmount = !minAmount || Math.abs(t.amount) >= parseFloat(minAmount);
       const matchesMaxAmount = !maxAmount || Math.abs(t.amount) <= parseFloat(maxAmount);
-      return matchesSearch && matchesCategory && matchesType && matchesWork && matchesDateRange && matchesMinAmount && matchesMaxAmount;
+      
+      // Year Filter
+      const matchesYear = selectedYear === 'All' || new Date(t.transaction_date).getFullYear().toString() === selectedYear;
+
+      return matchesSearch && matchesCategory && matchesType && matchesWork && matchesDateRange && matchesMinAmount && matchesMaxAmount && matchesYear;
     }).sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
@@ -337,7 +356,7 @@ const Transactions = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [transactions, searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount, sortField, sortOrder]);
+  }, [transactions, searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount, sortField, sortOrder, selectedYear]);
 
   const analyticsTransactions = useMemo(() => {
     return filteredTransactions.filter(t => t.category_1 !== 'Account');
@@ -404,7 +423,7 @@ const Transactions = () => {
     { label: 'This year', range: { from: new Date(new Date().getFullYear(), 0, 1), to: new Date() } },
   ];
 
-  useEffect(() => { setCurrentPage(1); setSelectedIds(new Set()); }, [searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount]);
+  useEffect(() => { setCurrentPage(1); setSelectedIds(new Set()); }, [searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount, selectedYear]);
 
   if (authLoading) return null;
 
@@ -425,6 +444,19 @@ const Transactions = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Year Filter Dropdown */}
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-32 rounded-xl h-9 bg-background border-primary/20 text-primary font-bold">
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Button 
               variant="outline" 
               size="sm" 
