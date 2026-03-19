@@ -22,7 +22,9 @@ import {
   Download,
   Search,
   Settings,
-  LogOut
+  LogOut,
+  Users,
+  FileText
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -57,6 +59,14 @@ const CommandPalette = () => {
             <LayoutDashboard className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/clients'))}>
+            <Users className="mr-2 h-4 w-4" />
+            <span>Clients</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/invoices'))}>
+            <FileText className="mr-2 h-4 w-4" />
+            <span>Invoices</span>
+          </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/transactions'))}>
             <ListFilter className="mr-2 h-4 w-4" />
             <span>Transactions</span>
@@ -68,6 +78,10 @@ const CommandPalette = () => {
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="Actions">
+          <CommandItem onSelect={() => runCommand(() => navigate('/settings'))}>
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </CommandItem>
           <CommandItem onSelect={() => runCommand(() => {
             const root = document.documentElement;
             root.classList.toggle('dark');
