@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { 
   Table, 
   TableBody, 
@@ -41,34 +40,26 @@ import {
   ExternalLink,
   Info,
   CheckCircle2,
-  AlertCircle,
   TrendingUp,
   TrendingDown,
-  Percent,
-  ShieldAlert,
   Loader2,
   Settings as SettingsIcon,
   Database,
-  Calendar,
-  Wand2,
   Bug,
   LayoutGrid,
   PieChart,
-  ChevronRight,
   ShieldCheck,
   Lock,
   ClipboardCheck,
   ListChecks,
   Repeat,
-  CreditCard,
   Copy,
   Check,
   Share2,
   Wifi,
-  Droplets,
-  History
+  Droplets
 } from 'lucide-react';
-import { format, parseISO, isValid, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 
@@ -106,7 +97,6 @@ const AccountantPortal = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   
   const [settings, setSettings] = useState({
-    business_percents: { rent: 25, bills: 25, phone: 50, fuel: 40 },
     deduction_keywords: {
       rent: ['rent', 'lease', 'storage'],
       bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates'],
@@ -127,7 +117,6 @@ const AccountantPortal = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    console.log("[AccountantPortal] Starting data fetch...");
     try {
       if (isPublic) {
         const { data, error } = await supabase.functions.invoke('get-portal-data', {
@@ -142,11 +131,9 @@ const AccountantPortal = () => {
         setProfile(data.profile);
         if (data.accountantSettings) {
           setSettings({
-            business_percents: data.accountantSettings.business_percents,
             deduction_keywords: data.accountantSettings.deduction_keywords
           });
         }
-        console.log(`[AccountantPortal] Public fetch complete. Loaded ${data.transactions.length} transactions.`);
       } else {
         let allData: Transaction[] = [];
         let from = 0;
@@ -162,7 +149,6 @@ const AccountantPortal = () => {
           if (error) throw error;
           if (data && data.length > 0) {
             allData = [...allData, ...data];
-            console.log(`[AccountantPortal] Fetched batch: ${from} to ${from + step}. Total: ${allData.length}`);
             if (data.length < step) hasMore = false;
             else from += step;
           } else { hasMore = false; }
@@ -179,7 +165,6 @@ const AccountantPortal = () => {
           .maybeSingle();
         
         if (settingsData) setSettings({
-          business_percents: settingsData.business_percents,
           deduction_keywords: settingsData.deduction_keywords
         });
 
@@ -189,10 +174,8 @@ const AccountantPortal = () => {
           .eq('owner_user_id', session?.user.id)
           .single();
         setProfile(profileData);
-        console.log(`[AccountantPortal] Private fetch complete. Loaded ${allData.length} transactions.`);
       }
     } catch (error: any) {
-      console.error("[AccountantPortal] Fetch error:", error);
       showError(error.message);
     } finally {
       setLoading(false);
@@ -202,58 +185,45 @@ const AccountantPortal = () => {
   const reportIntervalStrings = useMemo(() => {
     const year = parseInt(selectedYear);
     if (reportType === 'cy') {
-      return { 
-        start: `${year}-01-01`, 
-        end: `${year}-12-31` 
-      };
+      return { start: `${year}-01-01`, end: `${year}-12-31` };
     } else {
-      return { 
-        start: `${year - 1}-07-01`, 
-        end: `${year}-06-30` 
-      };
+      return { start: `${year - 1}-07-01`, end: `${year}-06-30` };
     }
   }, [selectedYear, reportType]);
 
   const filteredTransactions = useMemo(() => {
-    console.log(`[AccountantPortal] Filtering ${transactions.length} transactions for period:`, reportIntervalStrings);
-    
-    const result = transactions.filter(t => {
+    return transactions.filter(t => {
       const dateStr = t.transaction_date;
       if (!dateStr) return false;
-
-      // Always hide 'Account' category (internal transfers)
       if (t.category_1 === 'Account') return false;
-
       const inInterval = dateStr >= reportIntervalStrings.start && dateStr <= reportIntervalStrings.end;
       const matchesSearch = !searchQuery || 
         t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.category_1 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase());
-      
       return inInterval && matchesSearch;
     });
-
-    console.log(`[AccountantPortal] Filter complete. Found ${result.length} transactions in period.`);
-    return result;
   }, [transactions, reportIntervalStrings, searchQuery]);
 
   const workTransactions = useMemo(() => {
-    const result = filteredTransactions.filter(t => t.is_work);
-    console.log(`[AccountantPortal] Work filter complete. Found ${result.length} work transactions.`);
-    return result;
+    return filteredTransactions.filter(t => t.is_work);
   }, [filteredTransactions]);
 
   const businessIncome = useMemo(() => {
     return workTransactions.filter(t => t.amount > 0);
   }, [workTransactions]);
 
-  const deductionBuckets = useMemo(() => {
+  const businessExpenses = useMemo(() => {
+    return workTransactions.filter(t => t.amount < 0);
+  }, [workTransactions]);
+
+  const expenseGroups = useMemo(() => {
     const buckets = {
-      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', text: 'text-blue-900', keywords: settings.deduction_keywords.rent, items: [] as Transaction[], percent: settings.business_percents.rent },
-      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', text: 'text-amber-900', keywords: settings.deduction_keywords.bills, items: [] as Transaction[], percent: settings.business_percents.bills },
-      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', text: 'text-purple-900', keywords: settings.deduction_keywords.phone, items: [] as Transaction[], percent: settings.business_percents.phone },
-      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', text: 'text-orange-900', keywords: settings.deduction_keywords.fuel, items: [] as Transaction[], percent: settings.business_percents.fuel },
-      other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-900', keywords: [], items: [] as Transaction[], percent: 100 }
+      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', text: 'text-blue-900', keywords: settings.deduction_keywords.rent, items: [] as Transaction[] },
+      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', text: 'text-amber-900', keywords: settings.deduction_keywords.bills, items: [] as Transaction[] },
+      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', text: 'text-purple-900', keywords: settings.deduction_keywords.phone, items: [] as Transaction[] },
+      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', text: 'text-orange-900', keywords: settings.deduction_keywords.fuel, items: [] as Transaction[] },
+      other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-900', keywords: [], items: [] as Transaction[] }
     };
 
     filteredTransactions.forEach(t => {
@@ -286,18 +256,14 @@ const AccountantPortal = () => {
       if (!groups[groupName]) {
         groups[groupName] = { income: 0, expenses: 0, transactions: [], categories: {} };
       }
-      
       const group = groups[groupName];
       group.transactions.push(t);
-      
       const catName = t.category_1 || 'Uncategorized';
       if (!group.categories[catName]) {
         group.categories[catName] = { income: 0, expenses: 0, count: 0 };
       }
-      
       const cat = group.categories[catName];
       cat.count++;
-      
       if (t.amount > 0) {
         group.income += t.amount;
         cat.income += t.amount;
@@ -312,25 +278,21 @@ const AccountantPortal = () => {
 
   const subscriptionGroups = useMemo(() => {
     const groups: Record<string, { total: number, items: Transaction[] }> = {};
-    
     filteredTransactions.filter(t => t.category_1 === 'Subscription').forEach(t => {
       const subCat = t.category_2 || 'Other Subscriptions';
       if (!groups[subCat]) groups[subCat] = { total: 0, items: [] };
       groups[subCat].total += Math.abs(t.amount);
       groups[subCat].items.push(t);
     });
-
     return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
   }, [filteredTransactions]);
 
   const fixedCostsData = useMemo(() => {
     const categories = ['Utilities', 'Phone', 'Rent', 'Fuel'];
     const groups: Record<string, { total: number, items: Transaction[], icon: any }> = {};
-    
     filteredTransactions.filter(t => categories.includes(t.category_1)).forEach(t => {
       let groupKey = t.category_1;
       let icon = Info;
-
       if (t.category_1 === 'Utilities') {
         groupKey = t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities: Other';
         icon = Zap;
@@ -339,12 +301,10 @@ const AccountantPortal = () => {
       } else if (t.category_1 === 'Phone') icon = Phone;
       else if (t.category_1 === 'Rent') icon = Home;
       else if (t.category_1 === 'Fuel') icon = Fuel;
-
       if (!groups[groupKey]) groups[groupKey] = { total: 0, items: [], icon };
       groups[groupKey].total += Math.abs(t.amount);
       groups[groupKey].items.push(t);
     });
-
     return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
   }, [filteredTransactions]);
 
@@ -400,10 +360,7 @@ const AccountantPortal = () => {
   };
 
   const totalIncome = businessIncome.reduce((s, t) => s + t.amount, 0);
-  const totalDeductions = Object.values(deductionBuckets).reduce((s, b) => {
-    const bucketTotal = b.items.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    return s + (bucketTotal * (b.percent / 100));
-  }, 0);
+  const totalExpenses = businessExpenses.reduce((s, t) => s + Math.abs(t.amount), 0);
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
@@ -438,18 +395,20 @@ const AccountantPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowDebug(!showDebug)} 
-              className={cn("rounded-xl gap-2", showDebug && "bg-primary/10 text-primary")}
-            >
-              <Bug className="w-4 h-4" /> Debug
-            </Button>
             {!isPublic && (
-              <Button variant="outline" asChild className="rounded-xl gap-2">
-                <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
-              </Button>
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowDebug(!showDebug)} 
+                  className={cn("rounded-xl gap-2", showDebug && "bg-primary/10 text-primary")}
+                >
+                  <Bug className="w-4 h-4" /> Debug
+                </Button>
+                <Button variant="outline" asChild className="rounded-xl gap-2">
+                  <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
+                </Button>
+              </>
             )}
             <Button variant="outline" onClick={exportCSV} className="rounded-xl gap-2">
               <Download className="w-4 h-4" /> Export CSV
@@ -472,17 +431,14 @@ const AccountantPortal = () => {
               <div className="p-3 rounded-xl bg-background border">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase">1. Total Loaded</p>
                 <p className="text-xl font-black">{transactions.length}</p>
-                <p className="text-[10px] text-muted-foreground">From database</p>
               </div>
               <div className="p-3 rounded-xl bg-background border">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase">2. In Period</p>
                 <p className="text-xl font-black">{filteredTransactions.length}</p>
-                <p className="text-[10px] text-muted-foreground">{reportIntervalStrings.start} to {reportIntervalStrings.end}</p>
               </div>
               <div className="p-3 rounded-xl bg-background border">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase">3. Marked as Work</p>
                 <p className="text-xl font-black">{workTransactions.length}</p>
-                <p className="text-[10px] text-muted-foreground">is_work = true</p>
               </div>
               <div className="p-3 rounded-xl bg-background border">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase">4. Drop-off Rate</p>
@@ -491,7 +447,6 @@ const AccountantPortal = () => {
                     ? Math.round((1 - (workTransactions.length / filteredTransactions.length)) * 100) 
                     : 0}%
                 </p>
-                <p className="text-[10px] text-muted-foreground">Transactions not marked work</p>
               </div>
             </CardContent>
           </Card>
@@ -556,24 +511,13 @@ const AccountantPortal = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={copyShareLink}
-                  className="rounded-xl gap-2 flex-1 sm:flex-none bg-background"
-                >
+                <Button variant="outline" size="sm" onClick={copyShareLink} className="rounded-xl gap-2 flex-1 sm:flex-none bg-background">
                   {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   {linkCopied ? 'Copied' : 'Copy Link'}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  asChild
-                  className="rounded-xl gap-2 flex-1 sm:flex-none bg-background"
-                >
+                <Button variant="outline" size="sm" asChild className="rounded-xl gap-2 flex-1 sm:flex-none bg-background">
                   <a href={`/portal/${profile.accountant_share_token}`} target="_blank" rel="noreferrer">
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Open Portal
+                    <ExternalLink className="w-3.5 h-3.5" /> Open Portal
                   </a>
                 </Button>
               </div>
@@ -620,14 +564,9 @@ const AccountantPortal = () => {
                 <p className="text-xs text-muted-foreground">
                   Period: <span className="font-bold text-foreground">{format(parseISO(reportIntervalStrings.start), 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(parseISO(reportIntervalStrings.end), 'MMM dd, yyyy')}</span>
                 </p>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="rounded-lg bg-muted/50">
-                    {transactions.length} Total Loaded
-                  </Badge>
-                  <p className="text-xs text-muted-foreground">
-                    Found <span className="font-bold text-foreground">{filteredTransactions.length}</span> in this period
-                  </p>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Found <span className="font-bold text-foreground">{filteredTransactions.length}</span> transactions
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -647,10 +586,10 @@ const AccountantPortal = () => {
                 <span className={businessIncome.length > 0 ? "line-through opacity-50" : ""}>Income Categorized</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", totalDeductions > 0 ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white")}>
-                  {totalDeductions > 0 && <CheckCircle2 className="w-3 h-3" />}
+                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", businessExpenses.length > 0 ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white")}>
+                  {businessExpenses.length > 0 && <CheckCircle2 className="w-3 h-3" />}
                 </div>
-                <span className={totalDeductions > 0 ? "line-through opacity-50" : ""}>Deductions Mapped</span>
+                <span className={businessExpenses.length > 0 ? "line-through opacity-50" : ""}>Expenses Categorized</span>
               </div>
             </CardContent>
           </Card>
@@ -671,21 +610,21 @@ const AccountantPortal = () => {
           <Card className="border-0 shadow-xl bg-rose-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium opacity-80">Estimated Deductions</p>
+                <p className="text-sm font-medium opacity-80">Business Expenses</p>
                 <TrendingDown className="w-5 h-5 opacity-50" />
               </div>
-              <p className="text-3xl font-black">{formatCurrency(totalDeductions)}</p>
-              <p className="text-xs opacity-70 mt-1">Adjusted for business use %</p>
+              <p className="text-3xl font-black">{formatCurrency(totalExpenses)}</p>
+              <p className="text-xs opacity-70 mt-1">{businessExpenses.length} work transactions</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-xl bg-primary text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium opacity-80">Net Business Position</p>
+                <p className="text-sm font-medium opacity-80">Net Position</p>
                 <Calculator className="w-5 h-5 opacity-50" />
               </div>
-              <p className="text-3xl font-black">{formatCurrency(totalIncome - totalDeductions)}</p>
-              <p className="text-xs opacity-70 mt-1">Estimated taxable profit</p>
+              <p className="text-3xl font-black">{formatCurrency(totalIncome - totalExpenses)}</p>
+              <p className="text-xs opacity-70 mt-1">Raw income minus expenses</p>
             </CardContent>
           </Card>
         </div>
@@ -717,15 +656,14 @@ const AccountantPortal = () => {
                 <div className="space-y-2">
                   <h3 className="text-2xl font-black">No Transactions Found</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    We couldn't find any transactions for the period starting {format(parseISO(reportIntervalStrings.start), 'MMM dd, yyyy')}. 
-                    Try selecting a different year or importing more data.
+                    We couldn't find any transactions for the period starting {format(parseISO(reportIntervalStrings.start), 'MMM dd, yyyy')}.
                   </p>
                 </div>
               </Card>
             ) : workTransactions.length === 0 && (
               <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-amber-50/30">
                 <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto text-amber-600">
-                  <Wand2 className="w-10 h-10" />
+                  <Calculator className="w-10 h-10" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-2xl font-black">Categorization Required</h3>
@@ -733,13 +671,6 @@ const AccountantPortal = () => {
                     We found {filteredTransactions.length} transactions in this period, but none are showing up here because they aren't marked as Work yet.
                   </p>
                 </div>
-                {!isPublic && (
-                  <div className="flex flex-col sm:flex-row justify-center gap-3">
-                    <Button asChild size="lg" className="rounded-2xl gap-2 bg-amber-600 hover:bg-amber-700">
-                      <Link to="/transactions"><Wand2 className="w-5 h-5" /> Run Work Wizard</Link>
-                    </Button>
-                  </div>
-                )}
               </Card>
             )}
 
@@ -774,11 +705,10 @@ const AccountantPortal = () => {
               </Card>
             )}
 
-            {/* Deduction Buckets */}
-            {Object.entries(deductionBuckets).map(([key, bucket]) => {
+            {/* Expense Groups */}
+            {Object.entries(expenseGroups).map(([key, bucket]) => {
               if (bucket.items.length === 0) return null;
               const rawTotal = bucket.items.reduce((s, t) => s + Math.abs(t.amount), 0);
-              const adjustedTotal = rawTotal * (bucket.percent / 100);
 
               return (
                 <Card key={key} className="border-0 shadow-xl overflow-hidden break-inside-avoid">
@@ -791,10 +721,7 @@ const AccountantPortal = () => {
                         <div>
                           <CardTitle className={cn("text-xl", bucket.text, "dark:text-foreground")}>{bucket.label}</CardTitle>
                           <CardDescription className={cn(bucket.text, "opacity-80 dark:text-muted-foreground")}>
-                            Raw Total: <span className="font-bold">{formatCurrency(rawTotal)}</span> 
-                            {bucket.percent < 100 && (
-                              <> · Claiming <span className="font-bold">{bucket.percent}%</span> → <span className="font-bold">{formatCurrency(adjustedTotal)}</span></>
-                            )}
+                            Total: <span className="font-bold">{formatCurrency(rawTotal)}</span>
                           </CardDescription>
                         </div>
                       </div>
@@ -937,7 +864,6 @@ const AccountantPortal = () => {
           </TabsContent>
 
           <TabsContent value="fixed-costs" className="space-y-6 animate-fade-in">
-            {/* Summary Table */}
             <Card className="border-0 shadow-xl overflow-hidden">
               <CardHeader className="bg-muted/30 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -979,7 +905,6 @@ const AccountantPortal = () => {
               </CardContent>
             </Card>
 
-            {/* Detailed Grouped Lists */}
             <div className="space-y-6">
               {fixedCostsData.map(([groupName, data]) => (
                 <Card key={groupName} className="border-0 shadow-lg overflow-hidden">
@@ -1018,7 +943,6 @@ const AccountantPortal = () => {
           </TabsContent>
 
           <TabsContent value="subscriptions" className="space-y-6 animate-fade-in">
-            {/* Category Summary Table */}
             <Card className="border-0 shadow-xl overflow-hidden">
               <CardHeader className="bg-muted/30 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -1057,7 +981,6 @@ const AccountantPortal = () => {
               </CardContent>
             </Card>
 
-            {/* Detailed Grouped Lists */}
             <div className="space-y-6">
               {subscriptionGroups.map(([catName, data]) => (
                 <Card key={catName} className="border-0 shadow-lg overflow-hidden">
