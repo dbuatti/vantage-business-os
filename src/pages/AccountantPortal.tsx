@@ -59,7 +59,9 @@ import {
   ClipboardCheck,
   ListChecks,
   Repeat,
-  CreditCard
+  CreditCard,
+  Copy,
+  Check
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, isValid, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -104,6 +106,8 @@ const AccountantPortal = () => {
   const [showDebug, setShowDebug] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   
   const [settings, setSettings] = useState({
     business_percents: { rent: 25, bills: 25, phone: 50, fuel: 40 },
@@ -207,9 +211,15 @@ const AccountantPortal = () => {
     return transactions.filter(t => {
       const date = parseISO(t.transaction_date);
       if (!isValid(date)) return false;
-      return isWithinInterval(date, reportInterval);
+      const inInterval = isWithinInterval(date, reportInterval);
+      const matchesSearch = !searchQuery || 
+        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.category_1 || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return inInterval && matchesSearch;
     });
-  }, [transactions, reportInterval]);
+  }, [transactions, reportInterval, searchQuery]);
 
   const workTransactions = useMemo(() => {
     return filteredTransactions.filter(t => t.is_work);
@@ -285,7 +295,6 @@ const AccountantPortal = () => {
   const subscriptionData = useMemo(() => {
     const groups: Record<string, Transaction[]> = {};
     
-    // Normalize and group
     filteredTransactions.filter(t => t.amount < 0).forEach(t => {
       const normalized = t.description.toLowerCase()
         .replace(/\d+/g, '')
@@ -305,7 +314,6 @@ const AccountantPortal = () => {
         const amounts = sorted.map(t => Math.abs(t.amount));
         const avgAmount = amounts.reduce((s, a) => s + a, 0) / amounts.length;
         
-        // Detect frequency
         let frequency = 'Irregular';
         if (sorted.length >= 2) {
           const gaps = [];
@@ -327,7 +335,7 @@ const AccountantPortal = () => {
         else if (frequency === 'Bi-weekly') monthlyCost = avgAmount * 2.16;
         else if (frequency === 'Quarterly') monthlyCost = avgAmount / 3;
         else if (frequency === 'Yearly') monthlyCost = avgAmount / 12;
-        else monthlyCost = (avgAmount * sorted.length) / 12; // Fallback estimate
+        else monthlyCost = (avgAmount * sorted.length) / 12;
 
         return {
           name: sorted[sorted.length - 1].description,
@@ -347,6 +355,29 @@ const AccountantPortal = () => {
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(val));
+  };
+
+  const copyToClipboard = (text: string, id: string) => {
+    const cleanText = text.replace(/[$,]/g, '');
+    navigator.clipboard.writeText(cleanText);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+    showSuccess('Amount copied');
+  };
+
+  const exportCSV = () => {
+    if (workTransactions.length === 0) return;
+    const headers = ['Date', 'Description', 'Category', 'Amount', 'Notes', 'Account'];
+    const rows = workTransactions.map(t => [
+      t.transaction_date, t.description, t.category_1, t.amount.toString(), t.notes || '', t.account_label
+    ]);
+    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Tax_Report_${profile?.company_name || 'Business'}_${selectedYear}.csv`;
+    link.click();
+    showSuccess('CSV Exported');
   };
 
   const totalIncome = businessIncome.reduce((s, t) => s + t.amount, 0);
@@ -405,6 +436,9 @@ const AccountantPortal = () => {
                 </Button>
               </>
             )}
+            <Button variant="outline" onClick={exportCSV} className="rounded-xl gap-2">
+              <Download className="w-4 h-4" /> Export CSV
+            </Button>
             <Button variant="outline" onClick={() => window.print()} className="rounded-xl gap-2">
               <Printer className="w-4 h-4" /> Print Report
             </Button>
@@ -432,30 +466,47 @@ const AccountantPortal = () => {
           </Card>
         )}
 
-        {/* Controls */}
+        {/* Controls & Search */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
           <Card className="lg:col-span-2 border-0 shadow-lg">
-            <CardContent className="p-6 flex flex-wrap items-end gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
-                <Select value={reportType} onValueChange={(v: any) => setReportType(v)}>
-                  <SelectTrigger className="w-48 rounded-xl"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fy">Financial Year (Jul-Jun)</SelectItem>
-                    <SelectItem value="cy">Calendar Year (Jan-Dec)</SelectItem>
-                  </SelectContent>
-                </Select>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex flex-wrap items-end gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
+                  <Select value={reportType} onValueChange={(v: any) => setReportType(v)}>
+                    <SelectTrigger className="w-48 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fy">Financial Year (Jul-Jun)</SelectItem>
+                      <SelectItem value="cy">Calendar Year (Jan-Dec)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Year Ending</label>
+                  <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger className="w-32 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 relative">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Search Transactions</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Search merchant, category, notes..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 rounded-xl h-10"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Year Ending</label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-32 rounded-xl"><SelectValue /></SelectTrigger>
-                  <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1 text-right">
-                <p className="text-sm text-muted-foreground">
+              <div className="pt-2 border-t flex justify-between items-center">
+                <p className="text-xs text-muted-foreground">
                   Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Showing <span className="font-bold text-foreground">{filteredTransactions.length}</span> transactions
                 </p>
               </div>
             </CardContent>
@@ -639,9 +690,16 @@ const AccountantPortal = () => {
                       </TableHeader>
                       <TableBody>
                         {bucket.items.map((t) => (
-                          <TableRow key={t.id} className="hover:bg-muted/20">
+                          <TableRow key={t.id} className="hover:bg-muted/20 group">
                             <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell className="text-sm font-bold">{t.description}</TableCell>
+                            <TableCell className="text-sm font-bold">
+                              <div className="flex items-center gap-2">
+                                {t.description}
+                                {Math.abs(t.amount) > 500 && (
+                                  <Badge variant="outline" className="text-[8px] h-4 bg-rose-50 text-rose-600 border-rose-200">High Value</Badge>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">
                                 {t.category_1 || 'Uncategorized'}
@@ -668,7 +726,7 @@ const AccountantPortal = () => {
                   <ListChecks className="w-5 h-5 text-primary" />
                   Financial Totals by Category
                 </CardTitle>
-                <CardDescription>Consolidated totals for each business category group.</CardDescription>
+                <CardDescription>Consolidated totals for each business category group. Click amounts to copy.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -695,11 +753,31 @@ const AccountantPortal = () => {
                             <TableCell className="pl-6 font-black uppercase tracking-wider text-xs text-primary">
                               {groupName}
                             </TableCell>
-                            <TableCell className="text-right font-bold text-emerald-600">
-                              {data.income > 0 ? formatCurrency(data.income) : '—'}
+                            <TableCell className="text-right">
+                              {data.income > 0 ? (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 font-bold text-emerald-600 hover:bg-emerald-50 gap-2"
+                                  onClick={() => copyToClipboard(data.income.toString(), `${groupName}-inc`)}
+                                >
+                                  {formatCurrency(data.income)}
+                                  {copiedId === `${groupName}-inc` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
+                                </Button>
+                              ) : '—'}
                             </TableCell>
-                            <TableCell className="text-right font-bold text-rose-600">
-                              {data.expenses > 0 ? formatCurrency(data.expenses) : '—'}
+                            <TableCell className="text-right">
+                              {data.expenses > 0 ? (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 font-bold text-rose-600 hover:bg-rose-50 gap-2"
+                                  onClick={() => copyToClipboard(data.expenses.toString(), `${groupName}-exp`)}
+                                >
+                                  {formatCurrency(data.expenses)}
+                                  {copiedId === `${groupName}-exp` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
+                                </Button>
+                              ) : '—'}
                             </TableCell>
                             <TableCell className={cn("text-right font-black pr-6", (data.income - data.expenses) >= 0 ? "text-emerald-700" : "text-rose-700")}>
                               {formatCurrency(data.income - data.expenses)}
@@ -709,16 +787,36 @@ const AccountantPortal = () => {
                           {Object.entries(data.categories)
                             .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
                             .map(([catName, catData]) => (
-                              <TableRow key={catName} className="hover:bg-muted/5 border-b last:border-0">
+                              <TableRow key={catName} className="hover:bg-muted/5 border-b last:border-0 group">
                                 <TableCell className="pl-10 text-sm font-medium">
                                   {catName}
                                   <span className="ml-2 text-[10px] text-muted-foreground font-normal">({catData.count} txns)</span>
                                 </TableCell>
-                                <TableCell className="text-right text-sm text-emerald-600/80 tabular-nums">
-                                  {catData.income > 0 ? formatCurrency(catData.income) : '—'}
+                                <TableCell className="text-right">
+                                  {catData.income > 0 ? (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-7 text-xs text-emerald-600/80 hover:bg-emerald-50 gap-1.5"
+                                      onClick={() => copyToClipboard(catData.income.toString(), `${catName}-inc`)}
+                                    >
+                                      {formatCurrency(catData.income)}
+                                      {copiedId === `${catName}-inc` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
+                                    </Button>
+                                  ) : '—'}
                                 </TableCell>
-                                <TableCell className="text-right text-sm text-rose-600/80 tabular-nums">
-                                  {catData.expenses > 0 ? formatCurrency(catData.expenses) : '—'}
+                                <TableCell className="text-right">
+                                  {catData.expenses > 0 ? (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-7 text-xs text-rose-600/80 hover:bg-rose-50 gap-1.5"
+                                      onClick={() => copyToClipboard(catData.expenses.toString(), `${catName}-exp`)}
+                                    >
+                                      {formatCurrency(catData.expenses)}
+                                      {copiedId === `${catName}-exp` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
+                                    </Button>
+                                  ) : '—'}
                                 </TableCell>
                                 <TableCell className={cn("text-right text-sm font-bold pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
                                   {formatCurrency(catData.income - catData.expenses)}
@@ -803,9 +901,16 @@ const AccountantPortal = () => {
                         </TableHeader>
                         <TableBody>
                           {data.transactions.map((t) => (
-                            <TableRow key={t.id} className="hover:bg-muted/10">
+                            <TableRow key={t.id} className="hover:bg-muted/10 group">
                               <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                              <TableCell className="text-sm font-medium">{t.description}</TableCell>
+                              <TableCell className="text-sm font-medium">
+                                <div className="flex items-center gap-2">
+                                  {t.description}
+                                  {Math.abs(t.amount) > 500 && (
+                                    <Badge variant="outline" className="text-[8px] h-4 bg-rose-50 text-rose-600 border-rose-200">High Value</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
                               <TableCell><Badge variant="outline" className="text-[10px] rounded-lg">{t.category_1}</Badge></TableCell>
                               <TableCell className={cn("text-right font-bold tabular-nums", t.amount > 0 ? "text-emerald-600" : "text-rose-600")}>
                                 {formatCurrency(t.amount)}
