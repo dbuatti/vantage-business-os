@@ -8,10 +8,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +28,6 @@ import {
 } from "@/components/ui/select";
 import { 
   ArrowLeft, 
-  FileText, 
   Trash2,
   Pencil,
   TrendingUp,
@@ -38,27 +36,21 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
   BarChart3,
   X,
   Filter,
-  ChevronsUpDown,
   CheckSquare,
-  CalendarDays,
-  Repeat,
   Target,
-  Store,
-  Flame,
-  Layers,
   Activity,
-  Tags,
   Calculator,
   Wand2,
   Search,
   LayoutGrid,
   PieChart as PieChartIcon,
   Calendar as CalendarIcon,
-  Loader2
+  Loader2,
+  Plus,
+  FileText
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns';
@@ -77,6 +69,8 @@ import TransactionStats from '@/components/TransactionStats';
 import CategoryGroupManager from '@/components/CategoryGroupManager';
 import MonthlyGroupReport from '@/components/MonthlyGroupReport';
 import WorkWizard from '@/components/WorkWizard';
+import ManualTransactionDialog from '@/components/ManualTransactionDialog';
+import TransactionTable from '@/components/TransactionTable';
 
 interface Transaction {
   id?: string;
@@ -121,8 +115,8 @@ const Transactions = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
   
-  // Supabase-backed Year Filter
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [isSavingYear, setIsSavingYear] = useState(false);
 
@@ -376,8 +370,6 @@ const Transactions = () => {
       const matchesDateRange = (!dateRange.from || new Date(t.transaction_date) >= dateRange.from) && (!dateRange.to || new Date(t.transaction_date) <= dateRange.to);
       const matchesMinAmount = !minAmount || Math.abs(t.amount) >= parseFloat(minAmount);
       const matchesMaxAmount = !maxAmount || Math.abs(t.amount) <= parseFloat(maxAmount);
-      
-      // Year Filter
       const matchesYear = selectedYear === 'All' || new Date(t.transaction_date).getFullYear().toString() === selectedYear;
 
       return matchesSearch && matchesCategory && matchesType && matchesWork && matchesDateRange && matchesMinAmount && matchesMaxAmount && matchesYear;
@@ -479,7 +471,6 @@ const Transactions = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Year Filter Dropdown - Now synced with Supabase */}
             <div className="relative">
               <Select value={selectedYear} onValueChange={handleYearChange}>
                 <SelectTrigger className="w-32 rounded-xl h-9 bg-background border-primary/20 text-primary font-bold">
@@ -494,6 +485,15 @@ const Transactions = () => {
               </Select>
             </div>
 
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowManualEntry(true)}
+              className="rounded-xl gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Entry</span>
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
@@ -512,11 +512,6 @@ const Transactions = () => {
             <Button variant="outline" size="sm" onClick={exportToCSV} className="rounded-xl gap-2" disabled={filteredTransactions.length === 0}>
               <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
             </Button>
-            {transactions.length > 0 && (
-              <Button variant="outline" size="sm" onClick={deleteAllTransactions} className="rounded-xl gap-2 text-rose-500 hover:bg-rose-50 hover:text-rose-600">
-                <Trash2 className="w-4 h-4" /><span className="hidden sm:inline">Clear All</span>
-              </Button>
-            )}
           </div>
         </div>
 
@@ -674,35 +669,6 @@ const Transactions = () => {
                           </div>
                         </div>
                       )}
-
-                      {/* Quick Filter Row */}
-                      <div className="flex items-center gap-2 pt-2">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mr-2">Quick:</span>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className={cn("h-7 text-[10px] rounded-full", isSameMonth(dateRange.from || new Date(0), new Date()) && "bg-primary/10 border-primary/20 text-primary")}
-                          onClick={() => setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) })}
-                        >
-                          This Month
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className={cn("h-7 text-[10px] rounded-full", filterWork === 'work' && "bg-amber-50 border-amber-200 text-amber-700")}
-                          onClick={() => setFilterWork(filterWork === 'work' ? 'all' : 'work')}
-                        >
-                          Work Only
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className={cn("h-7 text-[10px] rounded-full", filterType === 'income' && "bg-emerald-50 border-emerald-200 text-emerald-700")}
-                          onClick={() => setFilterType(filterType === 'income' ? 'all' : 'income')}
-                        >
-                          Income
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
 
@@ -731,151 +697,20 @@ const Transactions = () => {
 
                   {/* Transactions Table */}
                   <Card className="border-0 shadow-xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/50">
-                            <TableHead className="w-10">
-                              <Checkbox
-                                checked={paginatedTransactions.length > 0 && selectedIds.size === paginatedTransactions.length}
-                                onCheckedChange={toggleSelectAll}
-                              />
-                            </TableHead>
-                            <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('date')}>
-                              <div className="flex items-center gap-1">Date {sortField === 'date' && <ArrowUpDown className="w-3 h-3" />}</div>
-                            </TableHead>
-                            <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('description')}>
-                              <div className="flex items-center gap-1">Description {sortField === 'description' && <ArrowUpDown className="w-3 h-3" />}</div>
-                            </TableHead>
-                            <TableHead className="font-semibold text-xs uppercase cursor-pointer hover:bg-muted/80" onClick={() => handleSort('category')}>
-                              <div className="flex items-center gap-1">Category {sortField === 'category' && <ArrowUpDown className="w-3 h-3" />}</div>
-                            </TableHead>
-                            <TableHead className="font-semibold text-xs uppercase hidden md:table-cell">Account</TableHead>
-                            <TableHead className="font-semibold text-xs uppercase text-right cursor-pointer hover:bg-muted/80" onClick={() => handleSort('amount')}>
-                              <div className="flex items-center justify-end gap-1">Amount {sortField === 'amount' && <ArrowUpDown className="w-3 h-3" />}</div>
-                            </TableHead>
-                            <TableHead className="w-20"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {loading ? (
-                            [...Array(5)].map((_, i) => (
-                              <TableRow key={i}><TableCell colSpan={7} className="h-14 animate-pulse bg-muted/20" /></TableRow>
-                            ))
-                          ) : paginatedTransactions.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={7} className="text-center py-24 text-muted-foreground">
-                                <div className="flex flex-col items-center gap-4">
-                                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                                    <Search className="w-8 h-8 opacity-20" />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <p className="font-bold text-lg text-foreground">No transactions found</p>
-                                    <p className="text-sm">Try adjusting your filters or search query</p>
-                                  </div>
-                                  {hasActiveFilters && (
-                                    <Button variant="outline" size="sm" onClick={clearFilters} className="rounded-xl">
-                                      Clear All Filters
-                                    </Button>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            paginatedTransactions.map((t) => (
-                              <React.Fragment key={t.id}>
-                                <TableRow 
-                                  className={cn(
-                                    "hover:bg-muted/30 transition-colors group cursor-pointer border-b",
-                                    selectedIds.has(t.id!) && "bg-primary/5",
-                                    expandedId === t.id && "bg-muted/40"
-                                  )}
-                                  onClick={() => setExpandedId(expandedId === t.id ? null : t.id!)}
-                                >
-                                  <TableCell onClick={(e) => e.stopPropagation()}>
-                                    <Checkbox
-                                      checked={selectedIds.has(t.id!)}
-                                      onCheckedChange={() => toggleSelect(t.id!)}
-                                    />
-                                  </TableCell>
-                                  <TableCell className="whitespace-nowrap text-sm font-medium">
-                                    {format(new Date(t.transaction_date), 'MMM dd, yyyy')}
-                                  </TableCell>
-                                  <TableCell className="max-w-[250px]">
-                                    <div className="truncate font-medium" title={t.description}>{t.description}</div>
-                                    {t.notes && <div className="text-[10px] text-muted-foreground truncate mt-0.5">{t.notes}</div>}
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex flex-wrap items-center gap-1">
-                                      <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-primary/5 text-primary border-primary/10">
-                                        {t.category_1 || 'Uncategorized'}
-                                      </Badge>
-                                      {t.is_work && (
-                                        <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-amber-50 text-amber-700 border-amber-200">Work</Badge>
-                                      )}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="text-xs text-muted-foreground hidden md:table-cell">{t.account_label}</TableCell>
-                                  <TableCell className={cn("text-right font-bold tabular-nums", t.amount > 0 ? "text-emerald-600" : t.amount < 0 ? "text-rose-600" : "")}>
-                                    {formatCurrency(t.amount)}
-                                  </TableCell>
-                                  <TableCell onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={() => handleEdit(t)}>
-                                        <Pencil className="h-3 w-3" />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-rose-50 hover:text-rose-600" onClick={() => handleDelete(t.id!)}>
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                                {expandedId === t.id && (
-                                  <TableRow className="bg-muted/20">
-                                    <TableCell colSpan={7} className="p-4">
-                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm animate-fade-in">
-                                        <div className="space-y-1">
-                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Full Date</p>
-                                          <p className="font-medium">{format(new Date(t.transaction_date), 'EEEE, MMMM dd, yyyy')}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Account Details</p>
-                                          <p className="font-medium">{t.account_label || '—'}</p>
-                                          <p className="text-xs text-muted-foreground">{t.account_identifier}</p>
-                                        </div>
-                                        <div className="space-y-1">
-                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Categorization</p>
-                                          <p className="font-medium">{t.category_1 || '—'}</p>
-                                          {t.category_2 && <p className="text-xs text-muted-foreground">{t.category_2}</p>}
-                                        </div>
-                                        <div className="space-y-1">
-                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Transaction Breakdown</p>
-                                          <div className="space-y-0.5">
-                                            {t.credit && <p className="text-emerald-600 font-medium">Credit: {formatCurrency(t.credit)}</p>}
-                                            {t.debit && <p className="text-rose-600 font-medium">Debit: {formatCurrency(t.debit)}</p>}
-                                            <p className="font-bold">Net: {formatCurrency(t.amount)}</p>
-                                          </div>
-                                        </div>
-                                        {t.notes && (
-                                          <div className="col-span-2 space-y-1">
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Notes</p>
-                                            <p className="text-sm bg-background p-2 rounded-lg border">{t.notes}</p>
-                                          </div>
-                                        )}
-                                        <div className="space-y-1">
-                                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Period</p>
-                                          <p className="font-medium">Week {t.week} · {t.mmm_yyyy || t.month_name}</p>
-                                        </div>
-                                      </div>
-                                    </TableCell>
-                                  </TableRow>
-                                )}
-                              </React.Fragment>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                    <TransactionTable 
+                      transactions={paginatedTransactions}
+                      loading={loading}
+                      selectedIds={selectedIds}
+                      onToggleSelect={toggleSelect}
+                      onToggleSelectAll={toggleSelectAll}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      expandedId={expandedId}
+                      onToggleExpand={(id) => setExpandedId(expandedId === id ? null : id)}
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                    />
 
                     {totalPages > 1 && (
                       <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/30">
@@ -927,7 +762,7 @@ const Transactions = () => {
 
             <TabsContent value="analytics" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer" onClick={() => {}}>
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 className="w-6 h-6" /></div>
                     <div><h3 className="font-bold">Charts</h3><p className="text-xs text-muted-foreground">Visual trends & breakdowns</p></div>
@@ -935,13 +770,7 @@ const Transactions = () => {
                 </Card>
                 <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                   <CardContent className="p-6 flex items-center gap-4">
-                    <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600"><Flame className="w-6 h-6" /></div>
-                    <div><h3 className="font-bold">Heatmap</h3><p className="text-xs text-muted-foreground">Daily spending intensity</p></div>
-                  </CardContent>
-                </Card>
-                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className="p-3 bg-violet-100 rounded-2xl text-violet-600"><Activity className="w-6 h-6" /></div>
+                    <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600"><Activity className="w-6 h-6" /></div>
                     <div><h3 className="font-bold">Stats</h3><p className="text-xs text-muted-foreground">Key financial metrics</p></div>
                   </CardContent>
                 </Card>
@@ -984,7 +813,14 @@ const Transactions = () => {
           </Tabs>
         )}
 
-        {/* Edit Dialog */}
+        {/* Dialogs */}
+        <ManualTransactionDialog 
+          open={showManualEntry} 
+          onOpenChange={setShowManualEntry} 
+          onSuccess={fetchTransactions}
+          categories={categories}
+        />
+
         <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader><DialogTitle>Edit Transaction</DialogTitle></DialogHeader>
@@ -1026,7 +862,6 @@ const Transactions = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Bulk Delete Dialog */}
         <Dialog open={showBulkDelete} onOpenChange={setShowBulkDelete}>
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader>
@@ -1044,7 +879,6 @@ const Transactions = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Work Wizard */}
         <WorkWizard 
           transactions={transactions} 
           open={showWizard} 
