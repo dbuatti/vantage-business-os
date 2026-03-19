@@ -12,3 +12,23 @@ export interface FinanceEntry {
 export interface CalculatedEntry extends FinanceEntry {
   difference: number;
 }
+
+export interface Transaction {
+  id?: string;
+  week: number;
+  month_code: string;
+  month_name: string;
+  transaction_date: string;
+  account_identifier: string;
+  description: string;
+  credit: number | null;
+  debit: number | null;
+  account_label: string;
+  category_1: string;
+  category_2: string;
+  is_work: boolean;
+  amount: number;
+  notes: string;
+  mmm_yyyy: string;
+  invoice_id?: string; // Link to an invoice
+}

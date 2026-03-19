@@ -5,27 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ArrowUpDown } from 'lucide-react';
+import { Pencil, Trash2, ArrowUpDown, Link as LinkIcon, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-interface Transaction {
-  id?: string;
-  transaction_date: string;
-  description: string;
-  category_1: string;
-  category_2: string;
-  account_label: string;
-  amount: number;
-  is_work: boolean;
-  notes: string;
-  credit: number | null;
-  debit: number | null;
-  week: number;
-  mmm_yyyy: string;
-  month_name: string;
-  account_identifier: string;
-}
+import { Transaction } from '@/types/finance';
+import { Link } from 'react-router-dom';
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -133,6 +117,12 @@ const TransactionTable = ({
                     {t.is_work && (
                       <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-amber-50 text-amber-700 border-amber-200">Work</Badge>
                     )}
+                    {t.invoice_id && (
+                      <Badge variant="outline" className="rounded-lg text-[10px] font-medium bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1">
+                        <FileText className="w-2.5 h-2.5" />
+                        Invoiced
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground hidden md:table-cell">{t.account_label}</TableCell>
@@ -176,6 +166,17 @@ const TransactionTable = ({
                           <p className="font-bold">Net: {formatCurrency(t.amount)}</p>
                         </div>
                       </div>
+                      {t.invoice_id && (
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Linked Invoice</p>
+                          <Button variant="link" asChild className="p-0 h-auto text-primary">
+                            <Link to={`/invoices/${t.invoice_id}`} className="flex items-center gap-1">
+                              <FileText className="w-3 h-3" />
+                              View Invoice
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
                       {t.notes && (
                         <div className="col-span-2 space-y-1">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Notes</p>

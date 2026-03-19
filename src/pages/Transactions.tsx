@@ -50,7 +50,8 @@ import {
   Calendar as CalendarIcon,
   Loader2,
   Plus,
-  FileText
+  FileText,
+  Link as LinkIcon
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns';
@@ -71,30 +72,19 @@ import MonthlyGroupReport from '@/components/MonthlyGroupReport';
 import WorkWizard from '@/components/WorkWizard';
 import ManualTransactionDialog from '@/components/ManualTransactionDialog';
 import TransactionTable from '@/components/TransactionTable';
-
-interface Transaction {
-  id?: string;
-  week: number;
-  month_code: string;
-  month_name: string;
-  transaction_date: string;
-  account_identifier: string;
-  description: string;
-  credit: number | null;
-  debit: number | null;
-  account_label: string;
-  category_1: string;
-  category_2: string;
-  is_work: boolean;
-  amount: number;
-  notes: string;
-  mmm_yyyy: string;
-}
+import { Transaction } from '@/types/finance';
 
 interface CategoryGroup {
   id: string;
   category_name: string;
   group_name: string;
+}
+
+interface Invoice {
+  id: string;
+  number: string;
+  client_display_name: string;
+  total_amount: number;
 }
 
 type SortField = 'date' | 'amount' | 'description' | 'category';
@@ -107,6 +97,7 @@ const Transactions = () => {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>('date');
@@ -130,7 +121,7 @@ const Transactions = () => {
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editForm, setEditForm] = useState({
-    description: '', amount: '', category_1: '', category_2: '', is_work: false, notes: ''
+    description: '', amount: '', category_1: '', category_2: '', is_work: false, notes: '', invoice_id: ''
   });
 
   const [showBulkDelete, setShowBulkDelete] = useState(false);
@@ -142,6 +133,7 @@ const Transactions = () => {
       fetchTransactions();
       fetchCategoryGroups();
       fetchUserSettings();
+      fetchInvoices();
     }
   }, [session, authLoading, navigate]);
 
@@ -233,6 +225,20 @@ const Transactions = () => {
     }
   };
 
+  const fetchInvoices = async () => {
+    if (!session) return;
+    try {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('id, number, client_display_name, total_amount')
+        .order('invoice_date', { ascending: false });
+      if (error) throw error;
+      setInvoices(data || []);
+    } catch (error: any) {
+      console.error("Error fetching invoices:", error);
+    }
+  };
+
   const handleImport = async (parsedData: any[]) => {
     if (!session) return { total: 0, imported: 0, duplicates: 0, errors: 1 };
     try {
@@ -259,7 +265,8 @@ const Transactions = () => {
       category_1: transaction.category_1,
       category_2: transaction.category_2,
       is_work: transaction.is_work,
-      notes: transaction.notes || ''
+      notes: transaction.notes || '',
+      invoice_id: transaction.invoice_id || ''
     });
   };
 
@@ -272,7 +279,8 @@ const Transactions = () => {
         category_1: editForm.category_1,
         category_2: editForm.category_2,
         is_work: editForm.is_work,
-        notes: editForm.notes
+        notes: editForm.notes,
+        invoice_id: editForm.invoice_id || null
       }).eq('id', editingTransaction.id);
       if (error) throw error;
       showSuccess('Transaction updated');
@@ -304,19 +312,6 @@ const Transactions = () => {
       showSuccess(`${ids.length} transactions deleted`);
       setSelectedIds(new Set());
       setShowBulkDelete(false);
-    } catch (error: any) {
-      showError(error.message);
-    }
-  };
-
-  const deleteAllTransactions = async () => {
-    if (!confirm('Delete ALL transactions? This cannot be undone.')) return;
-    try {
-      const { error } = await supabase.from('finance_transactions').delete().eq('user_id', session?.user.id);
-      if (error) throw error;
-      setTransactions([]);
-      setSelectedIds(new Set());
-      showSuccess('All transactions deleted');
     } catch (error: any) {
       showError(error.message);
     }
@@ -845,6 +840,22 @@ const Transactions = () => {
                   <Label>Subcategory</Label>
                   <Input value={editForm.category_2} onChange={(e) => setEditForm(prev => ({ ...prev, category_2: e.target.value }))} className="rounded-xl" />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Link Invoice</Label>
+                <Select value={editForm.invoice_id} onValueChange={(v) => setEditForm(prev => ({ ...prev, invoice_id: v }))}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Select an invoice (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {invoices.map(inv => (
+                      <SelectItem key={inv.id} value={inv.id}>
+                        {inv.number} - {inv.client_display_name} ({formatCurrency(inv.total_amount)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox id="is_work" checked={editForm.is_work} onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_work: !!checked }))} />
