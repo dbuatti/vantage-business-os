@@ -124,6 +124,25 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
 
   if (transactions.length < 2) return null;
 
+  const tooltipContentStyle = {
+    backgroundColor: 'hsl(var(--card))',
+    border: '1px solid hsl(var(--border))',
+    borderRadius: '12px',
+    fontSize: '13px',
+    color: 'hsl(var(--foreground))',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+  };
+
+  const tooltipItemStyle = {
+    color: 'hsl(var(--foreground))',
+  };
+
+  const tooltipLabelStyle = {
+    color: 'hsl(var(--muted-foreground))',
+    fontWeight: 'bold',
+    marginBottom: '4px',
+  };
+
   return (
     <div className="space-y-6">
       {/* Monthly Trend - Full Width */}
@@ -151,7 +170,12 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', fontSize: '13px' }} />
+                <Tooltip 
+                  formatter={(value: number) => formatCurrency(value)} 
+                  contentStyle={tooltipContentStyle}
+                  itemStyle={tooltipItemStyle}
+                  labelStyle={tooltipLabelStyle}
+                />
                 <Legend wrapperStyle={{ paddingTop: '16px', fontSize: '12px' }} />
                 <Area type="monotone" dataKey="income" name="Income" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorIncome)" />
                 <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#colorExpenses)" />
@@ -180,7 +204,11 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', fontSize: '13px' }} />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)} 
+                    contentStyle={tooltipContentStyle}
+                    itemStyle={tooltipItemStyle}
+                  />
                 </RechartsPie>
               </ResponsiveContainer>
             </div>
@@ -213,7 +241,12 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', fontSize: '13px' }} />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)} 
+                    contentStyle={tooltipContentStyle}
+                    itemStyle={tooltipItemStyle}
+                    labelStyle={tooltipLabelStyle}
+                  />
                   <Bar dataKey="total" name="Spending" fill="#6366f1" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -243,7 +276,11 @@ const TransactionCharts = ({ transactions }: TransactionChartsProps) => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} width={70} />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', fontSize: '13px' }} />
+                  <Tooltip 
+                    formatter={(value: number) => formatCurrency(value)} 
+                    contentStyle={tooltipContentStyle}
+                    itemStyle={tooltipItemStyle}
+                  />
                   <Bar dataKey="value" radius={[0, 8, 8, 0]}>
                     {workPersonalData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
