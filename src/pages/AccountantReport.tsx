@@ -7,6 +7,9 @@ import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Table, 
   TableBody, 
@@ -22,6 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { 
   ArrowLeft, 
   Printer, 
@@ -33,7 +43,9 @@ import {
   Calculator,
   Search,
   Info,
-  Download
+  Download,
+  Pencil,
+  ExternalLink
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -57,7 +69,13 @@ const AccountantReport = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [reportType, setReportType] = useState<'fy' | 'cy'>('fy'); // Financial Year vs Calendar Year
+  const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
+  
+  // Edit state
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editForm, setEditForm] = useState({
+    description: '', amount: '', category_1: '', category_2: '', is_work: false, notes: ''
+  });
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -80,18 +98,15 @@ const AccountantReport = () => {
           .from('finance_transactions')
           .select('*')
           .order('transaction_date', { ascending: false })
-          .order('id', { ascending: false }) // Deterministic sort
+          .order('id', { ascending: false })
           .range(from, from + step - 1);
 
         if (error) throw error;
         
         if (data && data.length > 0) {
           allData = [...allData, ...data];
-          if (data.length < step) {
-            hasMore = false;
-          } else {
-            from += step;
-          }
+          if (data.length < step) hasMore = false;
+          else from += step;
         } else {
           hasMore = false;
         }
@@ -102,6 +117,38 @@ const AccountantReport = () => {
       showError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setEditForm({
+      description: transaction.description,
+      amount: Math.abs(transaction.amount).toString(),
+      category_1: transaction.category_1 || '',
+      category_2: transaction.category_2 || '',
+      is_work: transaction.is_work,
+      notes: transaction.notes || ''
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingTransaction?.id) return;
+    try {
+      const { error } = await supabase.from('finance_transactions').update({
+        description: editForm.description,
+        category_1: editForm.category_1,
+        category_2: editForm.category_2,
+        is_work: editForm.is_work,
+        notes: editForm.notes
+      }).eq('id', editingTransaction.id);
+      
+      if (error) throw error;
+      showSuccess('Transaction updated');
+      setEditingTransaction(null);
+      fetchTransactions();
+    } catch (error: any) {
+      showError(error.message);
     }
   };
 
@@ -118,7 +165,6 @@ const AccountantReport = () => {
         end: new Date(year, 11, 31)
       };
     } else {
-      // Australian Financial Year: July 1st (Year-1) to June 30th (Year)
       return {
         start: new Date(year - 1, 6, 1),
         end: new Date(year, 5, 30)
@@ -147,8 +193,8 @@ const AccountantReport = () => {
       categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + Math.abs(t.amount);
     });
 
-    const missingNotes = workTransactions.filter(t => !t.notes && Math.abs(t.amount) > 50).length;
-    const unmapped = filteredTransactions.filter(t => !t.category_1 && Math.abs(t.amount) > 0).length;
+    const missingNotes = workTransactions.filter(t => !t.notes && Math.abs(t.amount) > 50);
+    const unmapped = filteredTransactions.filter(t => !t.category_1 && Math.abs(t.amount) > 0);
 
     return { income, expenses, net: income - expenses, categoryBreakdown, missingNotes, unmapped };
   }, [workTransactions, filteredTransactions]);
@@ -162,31 +208,17 @@ const AccountantReport = () => {
 
   const exportReport = () => {
     if (workTransactions.length === 0) return;
-    
     const headers = ['Date', 'Description', 'Category', 'Amount', 'Notes', 'Account'];
     const rows = workTransactions.map(t => [
-      t.transaction_date,
-      t.description,
-      t.category_1,
-      t.amount.toString(),
-      t.notes || '',
-      t.account_label
+      t.transaction_date, t.description, t.category_1, t.amount.toString(), t.notes || '', t.account_label
     ]);
-
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
+    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `Accountant_Report_${selectedYear}_${reportType.toUpperCase()}.csv`;
     link.click();
     showSuccess('Report exported successfully');
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   if (authLoading || loading) {
@@ -217,7 +249,7 @@ const AccountantReport = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handlePrint} className="rounded-xl gap-2">
+            <Button variant="outline" onClick={() => window.print()} className="rounded-xl gap-2">
               <Printer className="w-4 h-4" />
               Print PDF
             </Button>
@@ -228,12 +260,51 @@ const AccountantReport = () => {
           </div>
         </div>
 
-        {/* Print Header (Only visible when printing) */}
-        <div className="hidden print:block border-b pb-6 mb-8">
-          <h1 className="text-2xl font-bold">Financial Report: {reportType === 'fy' ? `FY ${parseInt(selectedYear)-1}-${selectedYear}` : `CY ${selectedYear}`}</h1>
-          <p className="text-sm text-gray-500">Generated on {format(new Date(), 'MMMM dd, yyyy')}</p>
-          <p className="text-sm text-gray-500">User: {session?.user.email}</p>
-        </div>
+        {/* Audit Alerts */}
+        {(stats.missingNotes.length > 0 || stats.unmapped.length > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
+            {stats.missingNotes.length > 0 && (
+              <div className="flex items-start justify-between gap-3 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800">
+                <div className="flex gap-3">
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-bold">{stats.missingNotes.length} work transactions missing notes</p>
+                    <p className="opacity-80">Accountants often need descriptions for large expenses.</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-amber-700 hover:bg-amber-100 rounded-lg h-8"
+                  onClick={() => handleEdit(stats.missingNotes[0])}
+                >
+                  Fix First
+                </Button>
+              </div>
+            )}
+            {stats.unmapped.length > 0 && (
+              <div className="flex items-start justify-between gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl text-blue-800">
+                <div className="flex gap-3">
+                  <Search className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-bold">{stats.unmapped.length} unmapped categories</p>
+                    <p className="opacity-80">Ensure all transactions are categorized for accurate reporting.</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  asChild
+                  className="text-blue-700 hover:bg-blue-100 rounded-lg h-8"
+                >
+                  <Link to="/transactions">
+                    Map Groups <ExternalLink className="w-3 h-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Controls */}
         <Card className="border-0 shadow-lg print:hidden">
@@ -241,9 +312,7 @@ const AccountantReport = () => {
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
               <Select value={reportType} onValueChange={(v: any) => setReportType(v)}>
-                <SelectTrigger className="w-48 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="w-48 rounded-xl"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="fy">Financial Year (Jul-Jun)</SelectItem>
                   <SelectItem value="cy">Calendar Year (Jan-Dec)</SelectItem>
@@ -253,12 +322,8 @@ const AccountantReport = () => {
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Year Ending</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-32 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                </SelectContent>
+                <SelectTrigger className="w-32 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="flex-1 text-right">
@@ -268,30 +333,6 @@ const AccountantReport = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Audit Alerts */}
-        {(stats.missingNotes > 0 || stats.unmapped > 0) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
-            {stats.missingNotes > 0 && (
-              <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800">
-                <AlertCircle className="w-5 h-5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-bold">{stats.missingNotes} work transactions missing notes</p>
-                  <p className="opacity-80">Accountants often need descriptions for large expenses.</p>
-                </div>
-              </div>
-            )}
-            {stats.unmapped > 0 && (
-              <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-100 rounded-2xl text-blue-800">
-                <Search className="w-5 h-5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-bold">{stats.unmapped} unmapped categories</p>
-                  <p className="opacity-80">Ensure all transactions are categorized for accurate reporting.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -324,105 +365,109 @@ const AccountantReport = () => {
           </Card>
         </div>
 
-        {/* Expense Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Card className="lg:col-span-1 border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg">Expense Breakdown</CardTitle>
-              <CardDescription>By tax category</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries(stats.categoryBreakdown)
-                .sort((a, b) => b[1] - a[1])
-                .map(([cat, amount]) => (
-                  <div key={cat} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{cat}</span>
-                      <span className="font-bold">{formatCurrency(amount)}</span>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary rounded-full" 
-                        style={{ width: `${(amount / stats.expenses) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              {Object.keys(stats.categoryBreakdown).length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">No work expenses found for this period.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-2 border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg">Work Transactions</CardTitle>
-              <CardDescription>Detailed list for your records</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="print:table-cell">Notes</TableHead>
+        {/* Detailed List */}
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-lg">Work Transactions</CardTitle>
+            <CardDescription>Detailed list for your records</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead className="w-12 print:hidden"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {workTransactions.map((t) => (
+                    <TableRow key={t.id} className="group">
+                      <TableCell className="whitespace-nowrap text-xs">
+                        {format(parseISO(t.transaction_date), 'MMM dd, yy')}
+                      </TableCell>
+                      <TableCell className="text-xs font-medium max-w-[150px] truncate">
+                        {t.description}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px] rounded-lg">
+                          {t.category_1 || 'Unmapped'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className={cn(
+                        "text-right text-xs font-bold",
+                        t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                      )}>
+                        {formatCurrency(t.amount)}
+                      </TableCell>
+                      <TableCell className="text-[10px] text-muted-foreground max-w-[150px]">
+                        {t.notes || (Math.abs(t.amount) > 50 ? <span className="text-amber-500 flex items-center gap-1"><Info className="w-3 h-3" /> Missing</span> : '—')}
+                      </TableCell>
+                      <TableCell className="print:hidden">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleEdit(t)}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {workTransactions.map((t) => (
-                      <TableRow key={t.id}>
-                        <TableCell className="whitespace-nowrap text-xs">
-                          {format(parseISO(t.transaction_date), 'MMM dd, yy')}
-                        </TableCell>
-                        <TableCell className="text-xs font-medium max-w-[150px] truncate">
-                          {t.description}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-[10px] rounded-lg">
-                            {t.category_1}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className={cn(
-                          "text-right text-xs font-bold",
-                          t.amount > 0 ? "text-emerald-600" : "text-rose-600"
-                        )}>
-                          {formatCurrency(t.amount)}
-                        </TableCell>
-                        <TableCell className="text-[10px] text-muted-foreground max-w-[150px]">
-                          {t.notes || (Math.abs(t.amount) > 50 ? <span className="text-amber-500 flex items-center gap-1"><Info className="w-3 h-3" /> Missing</span> : '—')}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {workTransactions.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                          No work transactions found in this period.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Footer Info */}
-        <div className="p-6 bg-muted/30 rounded-2xl border border-dashed print:hidden">
-          <h3 className="font-bold text-sm mb-2 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            Accountant Checklist
-          </h3>
-          <ul className="text-xs text-muted-foreground space-y-2">
-            <li>• Ensure all business-related income is marked as "Work".</li>
-            <li>• Check that large expenses (over $50) have descriptive notes.</li>
-            <li>• Verify that your category groups match your tax return labels.</li>
-            <li>• Use the "Print PDF" button to save a clean copy for your accountant.</li>
-          </ul>
-        </div>
+        {/* Edit Dialog */}
+        <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader><DialogTitle>Edit Transaction</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-xl">
+                📅 {editingTransaction && format(parseISO(editingTransaction.transaction_date), 'MMMM dd, yyyy')}
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input value={editForm.description} onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))} className="rounded-xl" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Input value={editForm.category_1} onChange={(e) => setEditForm(prev => ({ ...prev, category_1: e.target.value }))} className="rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Subcategory</Label>
+                  <Input value={editForm.category_2} onChange={(e) => setEditForm(prev => ({ ...prev, category_2: e.target.value }))} className="rounded-xl" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="is_work" checked={editForm.is_work} onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_work: !!checked }))} />
+                <Label htmlFor="is_work" className="font-normal">Work-related expense</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Notes (Accountant Info)</Label>
+                <Input 
+                  value={editForm.notes} 
+                  onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))} 
+                  className="rounded-xl" 
+                  placeholder="e.g., Rehearsal travel, Sheet music for gig..." 
+                  autoFocus
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setEditingTransaction(null)} className="rounded-xl">Cancel</Button>
+              <Button onClick={handleSaveEdit} className="rounded-xl">Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
