@@ -214,6 +214,9 @@ const AccountantPortal = () => {
       const dateStr = t.transaction_date;
       if (!dateStr) return false;
 
+      // Always hide 'Account' category (internal transfers)
+      if (t.category_1 === 'Account') return false;
+
       const inInterval = dateStr >= reportIntervalStrings.start && dateStr <= reportIntervalStrings.end;
       const matchesSearch = !searchQuery || 
         t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
