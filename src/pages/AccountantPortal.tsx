@@ -213,6 +213,10 @@ const AccountantPortal = () => {
     return transactions.filter(t => {
       const date = parseISO(t.transaction_date);
       if (!isValid(date)) return false;
+      
+      // Filter out 'Account' category
+      if (t.category_1 === 'Account') return false;
+
       const inInterval = isWithinInterval(date, reportInterval);
       const matchesSearch = !searchQuery || 
         t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||

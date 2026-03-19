@@ -181,6 +181,10 @@ const AccountantReport = () => {
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       const date = parseISO(t.transaction_date);
+      
+      // Filter out 'Account' category
+      if (t.category_1 === 'Account') return false;
+
       return isWithinInterval(date, reportInterval);
     });
   }, [transactions, reportInterval]);
