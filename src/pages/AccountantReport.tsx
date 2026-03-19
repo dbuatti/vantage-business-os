@@ -127,7 +127,7 @@ const AccountantReport = () => {
     setEditingTransaction(transaction);
     setEditForm({
       description: transaction.description,
-      amount: Math.abs(transaction.amount).toString(),
+      amount: transaction.amount.toString(),
       category_1: transaction.category_1 || '',
       category_2: transaction.category_2 || '',
       is_work: transaction.is_work,
@@ -140,6 +140,7 @@ const AccountantReport = () => {
     try {
       const { error } = await supabase.from('finance_transactions').update({
         description: editForm.description,
+        amount: parseFloat(editForm.amount) || 0,
         category_1: editForm.category_1,
         category_2: editForm.category_2,
         is_work: editForm.is_work,
@@ -447,6 +448,16 @@ const AccountantReport = () => {
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Input value={editForm.description} onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label>Amount ($)</Label>
+                <Input 
+                  type="number" 
+                  step="0.01" 
+                  value={editForm.amount} 
+                  onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))} 
+                  className="rounded-xl text-lg font-semibold" 
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
