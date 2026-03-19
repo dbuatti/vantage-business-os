@@ -62,7 +62,9 @@ import {
   CreditCard,
   Copy,
   Check,
-  Share2
+  Share2,
+  Wifi,
+  Droplets
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, isValid, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -74,6 +76,7 @@ interface Transaction {
   description: string;
   amount: number;
   category_1: string;
+  category_2: string;
   is_work: boolean;
   notes: string;
   account_label: string;
@@ -82,17 +85,6 @@ interface Transaction {
 interface CategoryGroup {
   category_name: string;
   group_name: string;
-}
-
-interface SubscriptionGroup {
-  name: string;
-  normalizedName: string;
-  transactions: Transaction[];
-  avgAmount: number;
-  frequency: string;
-  monthlyCost: number;
-  annualCost: number;
-  lastDate: string;
 }
 
 const AccountantPortal = () => {
@@ -298,66 +290,42 @@ const AccountantPortal = () => {
     return Object.entries(groups).sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses));
   }, [workTransactions, categoryGroups]);
 
-  const subscriptionData = useMemo(() => {
-    const groups: Record<string, Transaction[]> = {};
+  const subscriptionGroups = useMemo(() => {
+    const groups: Record<string, { total: number, items: Transaction[] }> = {};
     
-    // Only include transactions categorized as 'Subscription'
-    filteredTransactions.filter(t => t.amount < 0 && t.category_1 === 'Subscription').forEach(t => {
-      const normalized = t.description.toLowerCase()
-        .replace(/\d+/g, '')
-        .replace(/receipt/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      if (normalized.length < 3) return;
-      if (!groups[normalized]) groups[normalized] = [];
-      groups[normalized].push(t);
+    filteredTransactions.filter(t => t.category_1 === 'Subscription').forEach(t => {
+      const subCat = t.category_2 || 'Other Subscriptions';
+      if (!groups[subCat]) groups[subCat] = { total: 0, items: [] };
+      groups[subCat].total += Math.abs(t.amount);
+      groups[subCat].items.push(t);
     });
 
-    const result: SubscriptionGroup[] = Object.entries(groups)
-      .filter(([, txns]) => txns.length >= 1) // Show even single occurrences if categorized as subscription
-      .map(([normalizedName, txns]) => {
-        const sorted = [...txns].sort((a, b) => parseISO(a.transaction_date).getTime() - parseISO(b.transaction_date).getTime());
-        const amounts = sorted.map(t => Math.abs(t.amount));
-        const avgAmount = amounts.reduce((s, a) => s + a, 0) / amounts.length;
-        
-        let frequency = 'Irregular';
-        if (sorted.length >= 2) {
-          const gaps = [];
-          for (let i = 1; i < sorted.length; i++) {
-            gaps.push(differenceInDays(parseISO(sorted[i].transaction_date), parseISO(sorted[i-1].transaction_date)));
-          }
-          const avgGap = gaps.reduce((s, g) => s + g, 0) / gaps.length;
-          
-          if (avgGap >= 25 && avgGap <= 35) frequency = 'Monthly';
-          else if (avgGap >= 5 && avgGap <= 9) frequency = 'Weekly';
-          else if (avgGap >= 12 && avgGap <= 16) frequency = 'Bi-weekly';
-          else if (avgGap >= 80 && avgGap <= 100) frequency = 'Quarterly';
-          else if (avgGap >= 350 && avgGap <= 380) frequency = 'Yearly';
-        }
+    return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
+  }, [filteredTransactions]);
 
-        let monthlyCost = 0;
-        if (frequency === 'Monthly') monthlyCost = avgAmount;
-        else if (frequency === 'Weekly') monthlyCost = avgAmount * 4.33;
-        else if (frequency === 'Bi-weekly') monthlyCost = avgAmount * 2.16;
-        else if (frequency === 'Quarterly') monthlyCost = avgAmount / 3;
-        else if (frequency === 'Yearly') monthlyCost = avgAmount / 12;
-        else monthlyCost = (avgAmount * sorted.length) / 12;
+  const fixedCostsData = useMemo(() => {
+    const categories = ['Utilities', 'Phone', 'Rent', 'Fuel'];
+    const groups: Record<string, { total: number, items: Transaction[], icon: any }> = {};
+    
+    filteredTransactions.filter(t => categories.includes(t.category_1)).forEach(t => {
+      let groupKey = t.category_1;
+      let icon = Info;
 
-        return {
-          name: sorted[sorted.length - 1].description,
-          normalizedName,
-          transactions: sorted.reverse(),
-          avgAmount,
-          frequency,
-          monthlyCost,
-          annualCost: monthlyCost * 12,
-          lastDate: sorted[0].transaction_date
-        };
-      })
-      .sort((a, b) => b.monthlyCost - a.monthlyCost);
+      if (t.category_1 === 'Utilities') {
+        groupKey = t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities: Other';
+        icon = Zap;
+        if (groupKey.toLowerCase().includes('internet')) icon = Wifi;
+        if (groupKey.toLowerCase().includes('water')) icon = Droplets;
+      } else if (t.category_1 === 'Phone') icon = Phone;
+      else if (t.category_1 === 'Rent') icon = Home;
+      else if (t.category_1 === 'Fuel') icon = Fuel;
 
-    return result;
+      if (!groups[groupKey]) groups[groupKey] = { total: 0, items: [], icon };
+      groups[groupKey].total += Math.abs(t.amount);
+      groups[groupKey].items.push(t);
+    });
+
+    return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
   }, [filteredTransactions]);
 
   const formatCurrency = (val: number) => {
@@ -401,8 +369,6 @@ const AccountantPortal = () => {
     const bucketTotal = b.items.reduce((sum, t) => sum + Math.abs(t.amount), 0);
     return s + (bucketTotal * (b.percent / 100));
   }, 0);
-
-  const totalMonthlySubs = subscriptionData.reduce((s, sub) => s + sub.monthlyCost, 0);
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
@@ -500,27 +466,6 @@ const AccountantPortal = () => {
           </Card>
         )}
 
-        {/* Public Welcome Card */}
-        {isPublic && (
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-purple-700 text-white overflow-hidden relative print:hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-            <CardContent className="p-8 relative">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-black">Welcome, Accountant</h2>
-                  <p className="text-white/80 max-w-xl">
-                    This portal provides a consolidated view of {profile?.company_name}'s business finances. 
-                    You can review income, categorized deductions, and download reports for tax preparation.
-                  </p>
-                </div>
-                <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md">
-                  <ShieldCheck className="w-10 h-10" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Controls & Search */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
           <Card className="lg:col-span-2 border-0 shadow-lg">
@@ -555,14 +500,6 @@ const AccountantPortal = () => {
                     />
                   </div>
                 </div>
-              </div>
-              <div className="pt-2 border-t flex justify-between items-center">
-                <p className="text-xs text-muted-foreground">
-                  Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Showing <span className="font-bold text-foreground">{filteredTransactions.length}</span> transactions
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -600,7 +537,6 @@ const AccountantPortal = () => {
                 <TrendingUp className="w-5 h-5 opacity-50" />
               </div>
               <p className="text-3xl font-black">{formatCurrency(totalIncome)}</p>
-              <p className="text-xs opacity-70 mt-1">{businessIncome.length} transactions</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-xl bg-rose-600 text-white">
@@ -610,7 +546,6 @@ const AccountantPortal = () => {
                 <TrendingDown className="w-5 h-5 opacity-50" />
               </div>
               <p className="text-3xl font-black">{formatCurrency(totalDeductions)}</p>
-              <p className="text-xs opacity-70 mt-1">Adjusted for business use %</p>
             </CardContent>
           </Card>
           <Card className="border-0 shadow-xl bg-primary text-white">
@@ -620,7 +555,6 @@ const AccountantPortal = () => {
                 <Calculator className="w-5 h-5 opacity-50" />
               </div>
               <p className="text-3xl font-black">{formatCurrency(totalIncome - totalDeductions)}</p>
-              <p className="text-xs opacity-70 mt-1">Estimated taxable profit</p>
             </CardContent>
           </Card>
         </div>
@@ -634,8 +568,8 @@ const AccountantPortal = () => {
             <TabsTrigger value="totals" className="rounded-lg gap-2 py-2 px-4">
               <ListChecks className="w-4 h-4" /> Totals Only
             </TabsTrigger>
-            <TabsTrigger value="groups" className="rounded-lg gap-2 py-2 px-4">
-              <PieChart className="w-4 h-4" /> Detailed View
+            <TabsTrigger value="fixed-costs" className="rounded-lg gap-2 py-2 px-4">
+              <Home className="w-4 h-4" /> Fixed & Mixed
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="rounded-lg gap-2 py-2 px-4">
               <Repeat className="w-4 h-4" /> Subscriptions
@@ -643,43 +577,11 @@ const AccountantPortal = () => {
           </TabsList>
 
           <TabsContent value="summary" className="space-y-8 animate-fade-in">
-            {/* Empty State Helper */}
-            {filteredTransactions.length > 0 && workTransactions.length === 0 && (
-              <Card className="border-2 border-dashed p-12 text-center space-y-6 bg-amber-50/30">
-                <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto text-amber-600">
-                  <Wand2 className="w-10 h-10" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black">Categorization Required</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    We found {filteredTransactions.length} transactions in this period, but none are showing up here because they aren't marked as Work yet.
-                  </p>
-                </div>
-                {!isPublic && (
-                  <div className="flex flex-col sm:flex-row justify-center gap-3">
-                    <Button asChild size="lg" className="rounded-2xl gap-2 bg-amber-600 hover:bg-amber-700">
-                      <Link to="/transactions"><Wand2 className="w-5 h-5" /> Run Work Wizard</Link>
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            )}
-
             {/* Income Section */}
             {businessIncome.length > 0 && (
               <Card className="border-0 shadow-xl overflow-hidden">
                 <CardHeader className="bg-emerald-50 dark:bg-emerald-950/30 border-b">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white dark:bg-card shadow-sm text-emerald-600">
-                      <TrendingUp className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
-                      <CardDescription className="text-emerald-800/80 dark:text-emerald-200/80">
-                        Total gross income for this period: <span className="font-bold text-emerald-950 dark:text-emerald-50">{formatCurrency(totalIncome)}</span>
-                      </CardDescription>
-                    </div>
-                  </div>
+                  <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <Table>
@@ -740,30 +642,17 @@ const AccountantPortal = () => {
                           <TableHead>Description</TableHead>
                           <TableHead>Category</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
-                          <TableHead className="w-1/4">Notes / Accountant Info</TableHead>
+                          <TableHead className="w-1/4">Notes</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {bucket.items.map((t) => (
                           <TableRow key={t.id} className="hover:bg-muted/20 group">
                             <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell className="text-sm font-bold">
-                              <div className="flex items-center gap-2">
-                                {t.description}
-                                {Math.abs(t.amount) > 500 && (
-                                  <Badge variant="outline" className="text-[8px] h-4 bg-rose-50 text-rose-600 border-rose-200">High Value</Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">
-                                {t.category_1 || 'Uncategorized'}
-                              </Badge>
-                            </TableCell>
+                            <TableCell className="text-sm font-bold">{t.description}</TableCell>
+                            <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
                             <TableCell className="text-right font-black text-rose-600">{formatCurrency(t.amount)}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground italic">
-                              {t.notes || (Math.abs(t.amount) > 100 ? <span className="text-amber-500 flex items-center gap-1"><Info className="w-3 h-3" /> Needs description</span> : '—')}
-                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground italic">{t.notes || '—'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -781,7 +670,6 @@ const AccountantPortal = () => {
                   <ListChecks className="w-5 h-5 text-primary" />
                   Financial Totals by Category
                 </CardTitle>
-                <CardDescription>Consolidated totals for each business category group. Click amounts to copy.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -794,69 +682,62 @@ const AccountantPortal = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {groupedWorkData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
-                          No work transactions found for this period.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      groupedWorkData.map(([groupName, data]) => (
-                        <React.Fragment key={groupName}>
-                          <TableRow className="bg-muted/20 hover:bg-muted/20">
-                            <TableCell className="pl-6 font-black uppercase tracking-wider text-xs text-primary">
-                              {groupName}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {data.income > 0 ? (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-8 font-bold text-emerald-600 hover:bg-emerald-50 gap-2"
-                                  onClick={() => copyToClipboard(data.income.toString(), `${groupName}-inc`)}
-                                >
-                                  {formatCurrency(data.income)}
-                                  {copiedId === `${groupName}-inc` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
-                                </Button>
-                              ) : '—'}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {data.expenses > 0 ? (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-8 font-bold text-rose-600 hover:bg-rose-50 gap-2"
-                                  onClick={() => copyToClipboard(data.expenses.toString(), `${groupName}-exp`)}
-                                >
-                                  {formatCurrency(data.expenses)}
-                                  {copiedId === `${groupName}-exp` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
-                                </Button>
-                              ) : '—'}
-                            </TableCell>
-                            <TableCell className={cn("text-right font-black pr-6", (data.income - data.expenses) >= 0 ? "text-emerald-700" : "text-rose-700")}>
-                              {formatCurrency(data.income - data.expenses)}
-                            </TableCell>
-                          </TableRow>
-                          {Object.entries(data.categories)
-                            .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
-                            .map(([catName, catData]) => (
-                              <TableRow key={catName} className="hover:bg-muted/5 border-b last:border-0 group">
-                                <TableCell className="pl-10 text-sm font-medium">
-                                  {catName}
-                                  <span className="ml-2 text-[10px] text-muted-foreground font-normal">({catData.count} txns)</span>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {catData.income > 0 ? (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-7 text-xs text-emerald-600/80 hover:bg-emerald-50 gap-1.5"
-                                      onClick={() => copyToClipboard(catData.income.toString(), `${catName}-inc`)}
-                                    >
-                                      {formatCurrency(catData.income)}
-                                      {copiedId === `${catName}-inc` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
-                                    </Button>
-                                  ) : '—'}
+                    {groupedWorkData.map(([groupName, data]) => (
+                      <React.Fragment key={groupName}>
+                        <TableRow className="bg-muted/20 hover:bg-muted/20">
+                          <TableCell className="pl-6 font-black uppercase tracking-wider text-xs text-primary">
+                            {groupName}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {data.income > 0 ? (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 font-bold text-emerald-600 hover:bg-emerald-50 gap-2"
+                                onClick={() => copyToClipboard(data.income.toString(), `${groupName}-inc`)}
+                              >
+                                {formatCurrency(data.income)}
+                                {copiedId === `${groupName}-inc` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
+                              </Button>
+                            ) : '—'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {data.expenses > 0 ? (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 font-bold text-rose-600 hover:bg-rose-50 gap-2"
+                                onClick={() => copyToClipboard(data.expenses.toString(), `${groupName}-exp`)}
+                              >
+                                {formatCurrency(data.expenses)}
+                                {copiedId === `${groupName}-exp` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
+                              </Button>
+                            ) : '—'}
+                          </TableCell>
+                          <TableCell className={cn("text-right font-black pr-6", (data.income - data.expenses) >= 0 ? "text-emerald-700" : "text-rose-700")}>
+                            {formatCurrency(data.income - data.expenses)}
+                          </TableCell>
+                        </TableRow>
+                        {Object.entries(data.categories)
+                          .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
+                          .map(([catName, catData]) => (
+                            <TableRow key={catName} className="hover:bg-muted/5 border-b last:border-0 group">
+                              <TableCell className="pl-10 text-sm font-medium">
+                                {catName}
+                                <span className="ml-2 text-[10px] text-muted-foreground font-normal">({catData.count} txns)</span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {catData.income > 0 ? (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 text-xs text-emerald-600/80 hover:bg-emerald-50 gap-1.5"
+                                    onClick={() => copyToClipboard(catData.income.toString(), `${catName}-inc`)}
+                                  >
+                                    {formatCurrency(catData.income)}
+                                    {copiedId === `${catName}-inc` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
+                                  </Button>
+                                ) : '—'}
                                 </TableCell>
                                 <TableCell className="text-right">
                                   {catData.expenses > 0 ? (
@@ -874,197 +755,170 @@ const AccountantPortal = () => {
                                 <TableCell className={cn("text-right text-sm font-bold pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
                                   {formatCurrency(catData.income - catData.expenses)}
                                 </TableCell>
-                              </TableRow>
-                            ))}
-                        </React.Fragment>
-                      ))
-                    )}
-                    {groupedWorkData.length > 0 && (
-                      <TableRow className="bg-primary text-white hover:bg-primary">
-                        <TableCell className="pl-6 font-black uppercase">Grand Total</TableCell>
-                        <TableCell className="text-right font-black">{formatCurrency(totalIncome)}</TableCell>
-                        <TableCell className="text-right font-black">{formatCurrency(workTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0))}</TableCell>
-                        <TableCell className="text-right font-black pr-6">
-                          {formatCurrency(totalIncome - workTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0))}
-                        </TableCell>
-                      </TableRow>
-                    )}
+                            </TableRow>
+                          ))}
+                      </React.Fragment>
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="groups" className="space-y-6 animate-fade-in">
-            <div className="grid grid-cols-1 gap-6">
-              {groupedWorkData.length === 0 ? (
-                <Card className="border-2 border-dashed p-12 text-center text-muted-foreground">
-                  <PieChart className="w-12 h-12 mx-auto opacity-20 mb-4" />
-                  <p className="font-bold text-lg text-foreground">No grouped data found</p>
-                  <p>Ensure your categories are mapped to groups in the Transactions page.</p>
-                </Card>
-              ) : (
-                groupedWorkData.map(([groupName, data]) => (
-                  <Card key={groupName} className="border-0 shadow-lg overflow-hidden">
-                    <CardHeader className="bg-muted/30 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                            <LayoutGrid className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg">{groupName}</CardTitle>
-                            <CardDescription>{data.transactions.length} transactions in this group</CardDescription>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-4">
-                            {data.income > 0 && (
-                              <div>
-                                <p className="text-[10px] font-bold uppercase text-muted-foreground">Income</p>
-                                <p className="text-lg font-black text-emerald-600">{formatCurrency(data.income)}</p>
-                              </div>
-                            )}
-                            {data.expenses > 0 && (
-                              <div>
-                                <p className="text-[10px] font-bold uppercase text-muted-foreground">Expenses</p>
-                                <p className="text-lg font-black text-rose-600">{formatCurrency(data.expenses)}</p>
-                              </div>
-                            )}
-                            <div className="pl-4 border-l">
-                              <p className="text-[10px] font-bold uppercase text-muted-foreground">Net</p>
-                              <p className={cn("text-lg font-black", (data.income - data.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                                {formatCurrency(data.income - data.expenses)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/10">
-                            <TableHead className="w-32">Date</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {data.transactions.map((t) => (
-                            <TableRow key={t.id} className="hover:bg-muted/10 group">
-                              <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                              <TableCell className="text-sm font-medium">
-                                <div className="flex items-center gap-2">
-                                  {t.description}
-                                  {Math.abs(t.amount) > 500 && (
-                                    <Badge variant="outline" className="text-[8px] h-4 bg-rose-50 text-rose-600 border-rose-200">High Value</Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell><Badge variant="outline" className="text-[10px] rounded-lg">{t.category_1}</Badge></TableCell>
-                              <TableCell className={cn("text-right font-bold tabular-nums", t.amount > 0 ? "text-emerald-600" : "text-rose-600")}>
-                                {formatCurrency(t.amount)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="subscriptions" className="space-y-6 animate-fade-in">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-indigo-600 to-blue-700 text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 rounded-2xl">
-                      <Repeat className="w-6 h-6" />
-                    </div>
-                    <Badge className="bg-white/20 text-white border-0">Monthly Impact</Badge>
-                  </div>
-                  <p className="text-sm font-medium opacity-80">Total Subscription Spend</p>
-                  <p className="text-4xl font-black">{formatCurrency(totalMonthlySubs)}<span className="text-lg font-normal opacity-60">/mo</span></p>
-                  <p className="text-xs opacity-70 mt-2">Estimated {formatCurrency(totalMonthlySubs * 12)} per year</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-bold flex items-center gap-2">
-                    <Info className="w-4 h-4 text-primary" />
-                    Accountant Note
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    This view automatically identifies recurring payments. These are often fixed business costs (SaaS, utilities, insurance) that can be treated as regular operational expenses.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
+          <TabsContent value="fixed-costs" className="space-y-6 animate-fade-in">
+            {/* Summary Table */}
             <Card className="border-0 shadow-xl overflow-hidden">
               <CardHeader className="bg-muted/30 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-primary" />
-                  Detected Recurring Payments
+                  <Home className="w-5 h-5 text-primary" />
+                  Fixed & Mixed Costs Summary
                 </CardTitle>
-                <CardDescription>Merchant breakdown with frequency and cost analysis.</CardDescription>
+                <CardDescription>Consolidated totals for Rent, Fuel, Phone, and Utilities.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead className="pl-6">Merchant / Service</TableHead>
-                      <TableHead>Frequency</TableHead>
-                      <TableHead className="text-right">Avg. Amount</TableHead>
-                      <TableHead className="text-right">Monthly Cost</TableHead>
-                      <TableHead className="text-right pr-6">Annual Cost</TableHead>
+                      <TableHead className="pl-6">Cost Group</TableHead>
+                      <TableHead className="text-right pr-6">Total Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {subscriptionData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                          No recurring patterns detected in this period.
+                    {fixedCostsData.map(([groupName, data]) => (
+                      <TableRow key={groupName}>
+                        <TableCell className="pl-6 font-bold flex items-center gap-2">
+                          <data.icon className="w-4 h-4 text-muted-foreground" />
+                          {groupName}
+                        </TableCell>
+                        <TableCell className="text-right pr-6 font-black text-rose-600">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 font-bold text-rose-600 hover:bg-rose-50 gap-2"
+                            onClick={() => copyToClipboard(data.total.toString(), `${groupName}-fixed`)}
+                          >
+                            {formatCurrency(data.total)}
+                            {copiedId === `${groupName}-fixed` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
+                          </Button>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      subscriptionData.map((sub) => (
-                        <TableRow key={sub.normalizedName} className="hover:bg-muted/5">
-                          <TableCell className="pl-6">
-                            <div className="space-y-0.5">
-                              <p className="font-bold text-sm">{sub.name}</p>
-                              <p className="text-[10px] text-muted-foreground uppercase font-medium">Last seen: {format(parseISO(sub.lastDate), 'MMM dd, yyyy')}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="rounded-lg text-[10px] font-bold uppercase">
-                              {sub.frequency}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium tabular-nums">
-                            {formatCurrency(sub.avgAmount)}
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-primary tabular-nums">
-                            {formatCurrency(sub.monthlyCost)}
-                          </TableCell>
-                          <TableCell className="text-right font-black pr-6 tabular-nums">
-                            {formatCurrency(sub.annualCost)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
+
+            {/* Detailed Grouped Lists */}
+            <div className="space-y-6">
+              {fixedCostsData.map(([groupName, data]) => (
+                <Card key={groupName} className="border-0 shadow-lg overflow-hidden">
+                  <CardHeader className="bg-muted/10 border-b py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <data.icon className="w-4 h-4 text-primary" />
+                        <CardTitle className="text-sm font-bold uppercase tracking-wider">{groupName}</CardTitle>
+                      </div>
+                      <Badge variant="secondary" className="rounded-lg">{data.items.length} items</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/5">
+                          <TableHead className="w-32 text-[10px] uppercase font-bold">Date</TableHead>
+                          <TableHead className="text-[10px] uppercase font-bold">Description</TableHead>
+                          <TableHead className="text-right pr-6 text-[10px] uppercase font-bold">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.items.map((t) => (
+                          <TableRow key={t.id}>
+                            <TableCell className="text-xs">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="text-xs font-medium">{t.description}</TableCell>
+                            <TableCell className="text-right pr-6 text-xs font-bold tabular-nums">{formatCurrency(t.amount)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="subscriptions" className="space-y-6 animate-fade-in">
+            {/* Category Summary Table */}
+            <Card className="border-0 shadow-xl overflow-hidden">
+              <CardHeader className="bg-muted/30 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <PieChart className="w-5 h-5 text-primary" />
+                  Subscription Category Summary
+                </CardTitle>
+                <CardDescription>Total spend grouped by secondary category.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="pl-6">Category</TableHead>
+                      <TableHead className="text-right pr-6">Total Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {subscriptionGroups.map(([catName, data]) => (
+                      <TableRow key={catName}>
+                        <TableCell className="pl-6 font-bold">{catName}</TableCell>
+                        <TableCell className="text-right pr-6 font-black text-primary">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 font-bold text-primary hover:bg-primary/5 gap-2"
+                            onClick={() => copyToClipboard(data.total.toString(), `${catName}-sub`)}
+                          >
+                            {formatCurrency(data.total)}
+                            {copiedId === `${catName}-sub` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Detailed Grouped Lists */}
+            <div className="space-y-6">
+              {subscriptionGroups.map(([catName, data]) => (
+                <Card key={catName} className="border-0 shadow-lg overflow-hidden">
+                  <CardHeader className="bg-muted/10 border-b py-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">{catName}</CardTitle>
+                      <Badge variant="outline" className="rounded-lg">{data.items.length} transactions</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/5">
+                          <TableHead className="w-32 text-[10px] uppercase font-bold">Date</TableHead>
+                          <TableHead className="text-[10px] uppercase font-bold">Merchant</TableHead>
+                          <TableHead className="text-right pr-6 text-[10px] uppercase font-bold">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.items.map((t) => (
+                          <TableRow key={t.id}>
+                            <TableCell className="text-xs">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="text-xs font-medium">{t.description}</TableCell>
+                            <TableCell className="text-right pr-6 text-xs font-bold tabular-nums">{formatCurrency(t.amount)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
