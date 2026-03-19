@@ -232,7 +232,8 @@ const AccountantPortal = () => {
       other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-900', keywords: [], items: [] as Transaction[] }
     };
 
-    filteredTransactions.forEach(t => {
+    // Strictly filter by workTransactions to respect the work attribute
+    workTransactions.forEach(t => {
       if (t.amount > 0) return;
       const desc = t.description.toLowerCase();
       const cat = (t.category_1 || '').toLowerCase();
@@ -240,11 +241,11 @@ const AccountantPortal = () => {
       else if (buckets.bills.keywords.some(k => desc.includes(k) || cat.includes(k))) buckets.bills.items.push(t);
       else if (buckets.phone.keywords.some(k => desc.includes(k) || cat.includes(k))) buckets.phone.items.push(t);
       else if (buckets.fuel.keywords.some(k => desc.includes(k) || cat.includes(k))) buckets.fuel.items.push(t);
-      else if (t.is_work) buckets.other.items.push(t);
+      else buckets.other.items.push(t);
     });
 
     return buckets;
-  }, [filteredTransactions, settings]);
+  }, [workTransactions, settings]);
 
   const groupedWorkData = useMemo(() => {
     const groups: Record<string, { 
@@ -296,7 +297,8 @@ const AccountantPortal = () => {
   const fixedCostsData = useMemo(() => {
     const groups: Record<string, { total: number, items: Transaction[], icon: any, color: string, bg: string }> = {};
     
-    filteredTransactions.forEach(t => {
+    // Strictly filter by workTransactions to respect the work attribute
+    workTransactions.forEach(t => {
       if (t.amount > 0) return;
       const desc = t.description.toLowerCase();
       const cat = (t.category_1 || '').toLowerCase();
@@ -333,11 +335,6 @@ const AccountantPortal = () => {
           icon = Droplets;
           color = 'text-cyan-600';
           bg = 'bg-cyan-50';
-        } else {
-          groupKey = t.category_1 === 'Utilities' && t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities & Bills';
-          icon = Zap;
-          color = 'text-amber-600';
-          bg = 'bg-amber-50';
         }
       } else if (settings.deduction_keywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Phone & Internet';
@@ -359,7 +356,7 @@ const AccountantPortal = () => {
     });
 
     return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
-  }, [filteredTransactions, settings]);
+  }, [workTransactions, settings]);
 
   const taxReadiness = useMemo(() => {
     if (workTransactions.length === 0) return 0;
