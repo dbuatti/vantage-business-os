@@ -333,12 +333,8 @@ const AccountantPortal = () => {
           icon = Droplets;
           color = 'text-cyan-600';
           bg = 'bg-cyan-50';
-        } else {
-          groupKey = t.category_1 === 'Utilities' && t.category_2 ? `Utilities: ${t.category_2}` : 'Utilities & Bills';
-          icon = Zap;
-          color = 'text-amber-600';
-          bg = 'bg-amber-50';
         }
+        // Generic "Utilities & Bills" removed as per user request
       } else if (settings.deduction_keywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Phone & Internet';
         icon = Phone;
