@@ -45,7 +45,9 @@ import {
   Percent,
   ShieldAlert,
   Loader2,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Database,
+  Calendar
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -302,6 +304,24 @@ const AccountantPortal = () => {
           </Card>
         </div>
 
+        {/* Data Status Debugger (Helpful for user) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 print:hidden">
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border">
+            <div className="p-2 rounded-xl bg-background shadow-sm"><Database className="w-4 h-4 text-primary" /></div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total in Database</p>
+              <p className="text-lg font-black">{transactions.length} transactions</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border">
+            <div className="p-2 rounded-xl bg-background shadow-sm"><Calendar className="w-4 h-4 text-primary" /></div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">In Selected Period</p>
+              <p className="text-lg font-black">{filteredTransactions.length} transactions</p>
+            </div>
+          </div>
+        </div>
+
         {/* High Level P&L Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="border-0 shadow-xl bg-emerald-600 text-white">
@@ -338,44 +358,69 @@ const AccountantPortal = () => {
 
         {/* Detailed Breakdown Sections */}
         <div className="space-y-8">
-          {/* Income Section */}
-          <Card className="border-0 shadow-xl overflow-hidden">
-            <CardHeader className="bg-emerald-50 dark:bg-emerald-950/30 border-b">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-white dark:bg-card shadow-sm text-emerald-600">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
-                  <CardDescription className="text-emerald-800/80 dark:text-emerald-200/80">
-                    Total gross income for this period: <span className="font-bold text-emerald-950 dark:text-emerald-50">{formatCurrency(totalIncome)}</span>
-                  </CardDescription>
-                </div>
+          {/* Empty State Helper */}
+          {filteredTransactions.length > 0 && businessIncome.length === 0 && Object.values(deductionBuckets).every(b => b.items.length === 0) && (
+            <Card className="border-2 border-dashed p-12 text-center space-y-4">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                <Search className="w-8 h-8 text-muted-foreground" />
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="w-32">Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {businessIncome.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                      <TableCell className="text-sm font-bold">{t.description}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
-                      <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold">No business data found in this period</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  We found {filteredTransactions.length} transactions between {format(reportInterval.start, 'MMM yyyy')} and {format(reportInterval.end, 'MMM yyyy')}, but none are marked as **Work** or match your **Deduction Keywords**.
+                </p>
+              </div>
+              <div className="flex justify-center gap-3">
+                <Button asChild variant="outline" className="rounded-xl">
+                  <Link to="/transactions">Go to Transactions</Link>
+                </Button>
+                <Button asChild className="rounded-xl">
+                  <Link to="/settings?tab=accountant">Update Keywords</Link>
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Income Section */}
+          {businessIncome.length > 0 && (
+            <Card className="border-0 shadow-xl overflow-hidden">
+              <CardHeader className="bg-emerald-50 dark:bg-emerald-950/30 border-b">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-white dark:bg-card shadow-sm text-emerald-600">
+                    <TrendingUp className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
+                    <CardDescription className="text-emerald-800/80 dark:text-emerald-200/80">
+                      Total gross income for this period: <span className="font-bold text-emerald-950 dark:text-emerald-50">{formatCurrency(totalIncome)}</span>
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30">
+                      <TableHead className="w-32">Date</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {businessIncome.map((t) => (
+                      <TableRow key={t.id}>
+                        <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                        <TableCell className="text-sm font-bold">{t.description}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
+                        <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Deduction Buckets */}
           {Object.entries(deductionBuckets).map(([key, bucket]) => {
