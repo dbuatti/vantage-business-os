@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { PiggyBank, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { Sparkles, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import { showError, showSuccess } from '@/utils/toast';
@@ -67,15 +67,15 @@ const Login = () => {
         <CardHeader className="text-center space-y-4 pb-6">
           <div className="flex justify-center">
             <div className="p-4 bg-gradient-to-br from-primary to-purple-600 rounded-2xl text-white shadow-lg shadow-primary/25">
-              <PiggyBank className="w-10 h-10" />
+              <Sparkles className="w-10 h-10" />
             </div>
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-2xl font-black tracking-tight">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            <CardTitle className="text-3xl font-black tracking-tighter">
+              Vantage
             </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              {isSignUp ? 'Start tracking your finances today' : 'Sign in to track your weekly progress'}
+            <CardDescription className="text-muted-foreground font-medium">
+              {isSignUp ? 'Create your intelligent business OS' : 'Sign in to your business command center'}
             </CardDescription>
           </div>
         </CardHeader>

@@ -40,7 +40,7 @@ const Settings = () => {
     company_phone: '',
     company_website: '',
     company_abn: '',
-    application_name: 'Invoicify',
+    application_name: 'Vantage',
     primary_brand_color: '#6366f1',
     accountant_share_token: ''
   });

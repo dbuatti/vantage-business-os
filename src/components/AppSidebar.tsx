@@ -30,7 +30,8 @@ import {
   Package,
   Brain,
   ShieldCheck,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -68,13 +69,13 @@ const AppSidebar = () => {
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3 px-2">
           <div className="p-2.5 bg-gradient-to-br from-primary to-indigo-600 rounded-2xl text-white shadow-xl shadow-primary/20">
-            <Briefcase className="w-6 h-6" />
+            <Sparkles className="w-6 h-6" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-black tracking-tighter text-xl leading-none">
-              Invoicify
+            <span className="font-black tracking-tighter text-2xl leading-none">
+              Vantage
             </span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Business OS</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Intelligent OS</span>
           </div>
         </div>
       </SidebarHeader>
