@@ -29,7 +29,8 @@ import {
   Briefcase,
   Package,
   Brain,
-  ShieldCheck
+  ShieldCheck,
+  Activity
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -63,21 +64,24 @@ const AppSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="p-4">
+    <Sidebar collapsible="icon" className="border-r bg-sidebar">
+      <SidebarHeader className="p-6">
         <div className="flex items-center gap-3 px-2">
-          <div className="p-2 bg-primary rounded-xl text-white shadow-lg shadow-primary/20">
-            <Briefcase className="w-5 h-5" />
+          <div className="p-2.5 bg-gradient-to-br from-primary to-indigo-600 rounded-2xl text-white shadow-xl shadow-primary/20">
+            <Briefcase className="w-6 h-6" />
           </div>
-          <span className="font-black tracking-tight text-lg group-data-[collapsible=icon]:hidden">
-            Invoicify
-          </span>
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <span className="font-black tracking-tighter text-xl leading-none">
+              Invoicify
+            </span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Business OS</span>
+          </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
@@ -86,10 +90,11 @@ const AppSidebar = () => {
                     asChild 
                     isActive={location.pathname === item.url}
                     tooltip={item.title}
+                    className="h-11 rounded-xl px-4"
                   >
                     <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
+                      <item.icon className={cn("w-4 h-4", location.pathname === item.url ? "text-primary" : "text-muted-foreground")} />
+                      <span className="font-bold text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -99,7 +104,7 @@ const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Business</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Business</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {businessItems.map((item) => (
@@ -108,10 +113,11 @@ const AppSidebar = () => {
                     asChild 
                     isActive={location.pathname === item.url}
                     tooltip={item.title}
+                    className="h-11 rounded-xl px-4"
                   >
                     <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
+                      <item.icon className={cn("w-4 h-4", location.pathname === item.url ? "text-primary" : "text-muted-foreground")} />
+                      <span className="font-bold text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -121,7 +127,7 @@ const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Finance</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Finance</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {financeItems.map((item) => (
@@ -130,10 +136,11 @@ const AppSidebar = () => {
                     asChild 
                     isActive={location.pathname === item.url}
                     tooltip={item.title}
+                    className="h-11 rounded-xl px-4"
                   >
                     <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
+                      <item.icon className={cn("w-4 h-4", location.pathname === item.url ? "text-primary" : "text-muted-foreground")} />
+                      <span className="font-bold text-sm">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -143,31 +150,39 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 space-y-4">
+        <div className="px-4 py-3 rounded-2xl bg-muted/50 border group-data-[collapsible=icon]:hidden">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">System Status</span>
+          </div>
+          <p className="text-[11px] font-medium leading-tight">All systems operational. Data synced 1m ago.</p>
+        </div>
+
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === '/settings'} tooltip="Settings">
+            <SidebarMenuButton asChild isActive={location.pathname === '/settings'} tooltip="Settings" className="h-11 rounded-xl px-4">
               <Link to="/settings" className="flex items-center gap-3">
-                <Settings className="w-4 h-4" />
-                <span>Settings</span>
+                <Settings className="w-4 h-4 text-muted-foreground" />
+                <span className="font-bold text-sm">Settings</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <div className="flex items-center gap-3 px-2 py-2 mb-2 group-data-[collapsible=icon]:hidden">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+            <div className="flex items-center gap-3 px-4 py-3 mb-2 group-data-[collapsible=icon]:hidden bg-primary/5 rounded-2xl border border-primary/10">
+              <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center text-sm font-black shadow-lg shadow-primary/20">
                 {session?.user.email?.[0].toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{session?.user.email}</p>
-                <p className="text-[10px] text-muted-foreground">Pro Plan</p>
+                <p className="text-xs font-black truncate">{session?.user.email?.split('@')[0]}</p>
+                <p className="text-[9px] font-black text-primary uppercase tracking-widest">Pro Member</p>
               </div>
             </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+            <SidebarMenuButton onClick={handleSignOut} className="h-11 rounded-xl px-4 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
               <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
+              <span className="font-bold text-sm">Sign Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

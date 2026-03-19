@@ -51,7 +51,11 @@ import {
   Loader2,
   Plus,
   FileText,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Briefcase,
+  Repeat,
+  ArrowUpRight,
+  Tags
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns';
@@ -107,6 +111,8 @@ const Transactions = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [showBulkCategorize, setShowBulkCategorize] = useState(false);
+  const [bulkCategory, setBulkCategory] = useState('');
   
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [isSavingYear, setIsSavingYear] = useState(false);
@@ -291,6 +297,24 @@ const Transactions = () => {
     }
   };
 
+  const handleBulkCategorize = async () => {
+    if (selectedIds.size === 0 || !bulkCategory) return;
+    try {
+      const { error } = await supabase
+        .from('finance_transactions')
+        .update({ category_1: bulkCategory })
+        .in('id', Array.from(selectedIds));
+      
+      if (error) throw error;
+      showSuccess(`Updated ${selectedIds.size} transactions`);
+      setSelectedIds(new Set());
+      setShowBulkCategorize(false);
+      fetchTransactions();
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       const { error } = await supabase.from('finance_transactions').delete().eq('id', id);
@@ -459,7 +483,7 @@ const Transactions = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-black tracking-tight">Transaction History</h1>
+              <h1 className="text-3xl font-black tracking-tight">Transaction History</h1>
               <p className="text-sm text-muted-foreground">
                 {transactions.length > 0 ? `${transactions.length} transactions imported` : 'Import your bank transactions to get started'}
               </p>
@@ -508,6 +532,42 @@ const Transactions = () => {
               <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
             </Button>
           </div>
+        </div>
+
+        {/* Quick Filters Bar */}
+        <div className="flex flex-wrap items-center gap-2 animate-fade-in">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { clearFilters(); setFilterWork('work'); }}
+            className={cn("rounded-full px-4 h-8 gap-2", filterWork === 'work' ? "bg-amber-100 text-amber-700" : "bg-muted/50")}
+          >
+            <Briefcase className="w-3.5 h-3.5" /> Work Only
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { clearFilters(); setFilterCategory('Subscription'); }}
+            className={cn("rounded-full px-4 h-8 gap-2", filterCategory === 'Subscription' ? "bg-indigo-100 text-indigo-700" : "bg-muted/50")}
+          >
+            <Repeat className="w-3.5 h-3.5" /> Subscriptions
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { clearFilters(); setFilterType('income'); }}
+            className={cn("rounded-full px-4 h-8 gap-2", filterType === 'income' ? "bg-emerald-100 text-emerald-700" : "bg-muted/50")}
+          >
+            <ArrowUpRight className="w-3.5 h-3.5" /> Income
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { clearFilters(); setFilterType('expense'); }}
+            className={cn("rounded-full px-4 h-8 gap-2", filterType === 'expense' ? "bg-rose-100 text-rose-700" : "bg-muted/50")}
+          >
+            <TrendingDown className="w-3.5 h-3.5" /> Expenses
+          </Button>
         </div>
 
         {/* Summary Cards */}
@@ -679,11 +739,14 @@ const Transactions = () => {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setShowBulkCategorize(true)} className="rounded-xl gap-2 bg-background">
+                            <Tags className="w-4 h-4" /> Categorize
+                          </Button>
                           <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="rounded-xl">
                             <X className="w-4 h-4 mr-1" />Deselect
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => setShowBulkDelete(true)} className="rounded-xl text-rose-600 hover:bg-rose-50">
-                            <Trash2 className="w-4 h-4 mr-1" />Delete Selected
+                            <Trash2 className="w-4 h-4 mr-1" />Delete
                           </Button>
                         </div>
                       </CardContent>
@@ -815,6 +878,34 @@ const Transactions = () => {
           onSuccess={fetchTransactions}
           categories={categories}
         />
+
+        <Dialog open={showBulkCategorize} onOpenChange={setShowBulkCategorize}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>Bulk Categorize</DialogTitle>
+              <DialogDescription>Update {selectedIds.size} transactions at once.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Select Category</Label>
+                <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Choose category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.filter(c => c !== 'All').map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowBulkCategorize(false)} className="rounded-xl">Cancel</Button>
+              <Button onClick={handleBulkCategorize} className="rounded-xl" disabled={!bulkCategory}>Update All</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
           <DialogContent className="sm:max-w-md rounded-2xl">

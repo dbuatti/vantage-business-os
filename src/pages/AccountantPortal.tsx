@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { 
   Table, 
   TableBody, 
@@ -328,6 +329,13 @@ const AccountantPortal = () => {
     return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
   }, [filteredTransactions]);
 
+  const taxReadiness = useMemo(() => {
+    if (workTransactions.length === 0) return 0;
+    const withNotes = workTransactions.filter(t => t.notes).length;
+    const withCategory = workTransactions.filter(t => t.category_1).length;
+    return Math.round(((withNotes / workTransactions.length) * 50) + ((withCategory / workTransactions.length) * 50));
+  }, [workTransactions]);
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(val));
   };
@@ -338,6 +346,14 @@ const AccountantPortal = () => {
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
     showSuccess('Amount copied');
+  };
+
+  const copyAllTotals = () => {
+    const text = groupedWorkData.map(([group, data]) => {
+      return `${group}: Income ${formatCurrency(data.income)}, Expenses ${formatCurrency(data.expenses)}`;
+    }).join('\n');
+    navigator.clipboard.writeText(text);
+    showSuccess('All totals copied to clipboard');
   };
 
   const copyShareLink = () => {
@@ -426,6 +442,51 @@ const AccountantPortal = () => {
             </Button>
           </div>
         </div>
+
+        {/* Tax Readiness Score */}
+        <Card className="border-0 shadow-xl bg-gradient-to-r from-primary/5 to-background print:hidden">
+          <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-6">
+              <div className="relative w-24 h-24">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+                  <circle 
+                    cx="50" cy="50" r="45" fill="none" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth="8" 
+                    strokeLinecap="round"
+                    strokeDasharray={`${(taxReadiness / 100) * 283} 283`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-black">{taxReadiness}%</span>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-black">Tax Readiness Score</h3>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  {taxReadiness === 100 
+                    ? "Your data is perfectly prepared for your accountant." 
+                    : "Complete missing notes and categories to reach 100% readiness."}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              <div className="text-center">
+                <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Work Items</p>
+                <Badge variant="secondary" className="rounded-lg">{workTransactions.length}</Badge>
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Missing Notes</p>
+                <Badge variant="outline" className="rounded-lg text-rose-600 border-rose-200">{workTransactions.filter(t => !t.notes).length}</Badge>
+              </div>
+              <div className="text-center">
+                <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Unmapped</p>
+                <Badge variant="outline" className="rounded-lg text-amber-600 border-amber-200">{workTransactions.filter(t => !t.category_1).length}</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Share Link Quick Access (Only for owner) */}
         {!isPublic && profile?.accountant_share_token && (
@@ -664,6 +725,11 @@ const AccountantPortal = () => {
           </TabsContent>
 
           <TabsContent value="totals" className="space-y-6 animate-fade-in">
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={copyAllTotals} className="rounded-xl gap-2">
+                <Copy className="w-4 h-4" /> Copy All Totals
+              </Button>
+            </div>
             <Card className="border-0 shadow-xl overflow-hidden">
               <CardHeader className="bg-muted/30 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">

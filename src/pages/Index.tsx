@@ -8,15 +8,17 @@ import MonthlySummary from '@/components/MonthlySummary';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain } from 'lucide-react';
+import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface TransactionSummary {
   totalTransactions: number;
@@ -36,6 +38,7 @@ interface BusinessStats {
   totalClients: number;
   outstandingAmount: number;
   recentInvoices: any[];
+  taxReadiness: number;
 }
 
 const Index = () => {
@@ -115,11 +118,22 @@ const Index = () => {
         .select('*')
         .order('invoice_date', { ascending: false })
         .limit(3);
+      
+      const { data: txns } = await supabase.from('finance_transactions').select('is_work, notes, category_1');
+      
+      // Calculate tax readiness
+      const workTxns = txns?.filter(t => t.is_work) || [];
+      const withNotes = workTxns.filter(t => t.notes).length;
+      const withCategory = workTxns.filter(t => t.category_1).length;
+      const readiness = workTxns.length > 0 
+        ? Math.round(((withNotes / workTxns.length) * 50) + ((withCategory / workTxns.length) * 50))
+        : 0;
 
       setBusinessStats({
         totalClients: clients?.length || 0,
         outstandingAmount: clients?.reduce((s, c) => s + (c.total_receivable || 0), 0) || 0,
-        recentInvoices: invoices || []
+        recentInvoices: invoices || [],
+        taxReadiness: readiness
       });
     } catch (error) {
       // Silently fail
@@ -174,9 +188,16 @@ const Index = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <header className="space-y-1 animate-fade-in">
-        <h1 className="text-3xl font-black tracking-tight">Financial Overview</h1>
-        <p className="text-muted-foreground">Welcome back. Here's what's happening with your money.</p>
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-fade-in">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black tracking-tight">Financial Overview</h1>
+          <p className="text-muted-foreground text-lg">Welcome back. Here's your financial pulse.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 rounded-full font-bold">
+            <ShieldCheck className="w-3 h-3 mr-1.5" /> PRO ACCOUNT
+          </Badge>
+        </div>
       </header>
 
       {loading ? (
@@ -191,30 +212,41 @@ const Index = () => {
         <>
           <FinanceSummary entries={calculatedEntries} />
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
               {/* Business Health Widget */}
               {businessStats && (
-                <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-purple-700 text-white overflow-hidden relative">
+                <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-700 text-white overflow-hidden relative group">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-                  <CardContent className="p-6 relative">
+                  <CardContent className="p-8 relative">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
-                        <p className="text-sm font-bold uppercase tracking-widest opacity-80">Business Health</p>
-                        <p className="text-4xl font-black">{formatCurrency(businessStats.outstandingAmount)}</p>
-                        <p className="text-sm opacity-80">Total Outstanding Receivables</p>
+                        <p className="text-xs font-black uppercase tracking-widest opacity-70">Business Health</p>
+                        <p className="text-5xl font-black tracking-tighter">{formatCurrency(businessStats.outstandingAmount)}</p>
+                        <p className="text-sm font-medium opacity-80">Total Outstanding Receivables</p>
                       </div>
-                      <div className="p-3 bg-white/20 rounded-2xl">
-                        <Briefcase className="w-8 h-8" />
+                      <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
+                        <Briefcase className="w-10 h-10" />
                       </div>
                     </div>
-                    <div className="mt-8 grid grid-cols-2 gap-4">
-                      <Button variant="secondary" asChild className="rounded-xl font-bold">
-                        <Link to="/invoices">Manage Invoices</Link>
-                      </Button>
-                      <Button variant="outline" asChild className="rounded-xl bg-white/10 border-white/20 hover:bg-white/20 text-white">
-                        <Link to="/clients">View {businessStats.totalClients} Clients</Link>
-                      </Button>
+                    
+                    <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                          <span className="opacity-70">Tax Readiness</span>
+                          <span>{businessStats.taxReadiness}%</span>
+                        </div>
+                        <Progress value={businessStats.taxReadiness} className="h-2 bg-white/20 [&>div]:bg-white" />
+                        <p className="text-[10px] opacity-60 italic">Based on categorized work transactions and notes</p>
+                      </div>
+                      <div className="flex gap-3 justify-end">
+                        <Button variant="secondary" asChild className="rounded-2xl font-bold px-6 h-12 shadow-xl">
+                          <Link to="/invoices">Invoices</Link>
+                        </Button>
+                        <Button variant="outline" asChild className="rounded-2xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold px-6 h-12">
+                          <Link to="/clients">Clients</Link>
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -223,38 +255,48 @@ const Index = () => {
               <FinanceChart entries={calculatedEntries} />
               <MonthlySummary entries={calculatedEntries} />
             </div>
-            <div className="space-y-6">
+            
+            <div className="space-y-8">
               <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
               
               {/* Quick Actions Widget */}
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-primary/5 to-background">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Quick Actions</CardTitle>
+              <Card className="border-0 shadow-xl bg-card overflow-hidden">
+                <CardHeader className="pb-3 border-b bg-muted/30">
+                  <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Actions</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 gap-2">
-                  <Button variant="outline" asChild className="justify-start h-12 rounded-xl gap-3 group">
+                <CardContent className="p-2 grid grid-cols-1 gap-1">
+                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
                     <Link to="/insights">
-                      <Brain className="w-4 h-4 text-violet-500 group-hover:scale-110 transition-transform" />
-                      AI Insights
+                      <div className="p-2 rounded-lg bg-violet-100 text-violet-600 group-hover:scale-110 transition-transform">
+                        <Brain className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold">AI Insights</p>
+                        <p className="text-[10px] text-muted-foreground">Smart financial analysis</p>
+                      </div>
                       <Badge className="ml-auto rounded-full text-[9px] bg-violet-100 text-violet-700 border-violet-200">NEW</Badge>
                     </Link>
                   </Button>
-                  <Button variant="outline" asChild className="justify-start h-12 rounded-xl gap-3">
+                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
                     <Link to="/transactions">
-                      <ListFilter className="w-4 h-4 text-primary" />
-                      Detailed History
+                      <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
+                        <ListFilter className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold">History</p>
+                        <p className="text-[10px] text-muted-foreground">Manage all transactions</p>
+                      </div>
                     </Link>
                   </Button>
-                  <Button variant="outline" asChild className="justify-start h-12 rounded-xl gap-3">
+                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
                     <Link to="/accountant-report">
-                      <Calculator className="w-4 h-4 text-emerald-500" />
-                      Tax Report
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild className="justify-start h-12 rounded-xl gap-3">
-                    <Link to="/transactions?tab=planning">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      Financial Planning
+                      <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
+                        <Calculator className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Tax Report</p>
+                        <p className="text-[10px] text-muted-foreground">Accountant-ready data</p>
+                      </div>
                     </Link>
                   </Button>
                 </CardContent>
@@ -263,19 +305,22 @@ const Index = () => {
               {/* Recent Invoices Widget */}
               {businessStats && businessStats.recentInvoices.length > 0 && (
                 <Card className="border-0 shadow-xl">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Recent Invoices</CardTitle>
+                  <CardHeader className="pb-3 border-b bg-muted/30">
+                    <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Invoices</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="p-3 space-y-2">
                     {businessStats.recentInvoices.map((inv) => (
-                      <Link key={inv.id} to={`/invoices/${inv.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors border">
+                      <Link key={inv.id} to={`/invoices/${inv.id}`} className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/50 transition-all border border-transparent hover:border-border group">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold truncate">{inv.client_display_name}</p>
+                          <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{inv.client_display_name}</p>
                           <p className="text-[10px] text-muted-foreground uppercase font-bold">{inv.number}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-black">{formatCurrency(inv.total_amount)}</p>
-                          <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md">{inv.status}</Badge>
+                          <Badge variant="outline" className={cn(
+                            "text-[8px] h-4 px-1.5 rounded-md uppercase font-black",
+                            inv.status === 'Paid' ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
+                          )}>{inv.status}</Badge>
                         </div>
                       </Link>
                     ))}
@@ -287,61 +332,61 @@ const Index = () => {
 
           {/* Transaction Summary Card */}
           {transactionSummary && transactionSummary.totalTransactions > 0 && (
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-card to-muted/20 animate-slide-up">
-              <CardHeader className="pb-3">
+            <Card className="border-0 shadow-2xl bg-card animate-slide-up overflow-hidden">
+              <CardHeader className="pb-4 border-b bg-muted/20">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-xl bg-primary/10">
-                      <CreditCard className="w-5 h-5 text-primary" />
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                      <CreditCard className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">Transaction Overview</h3>
-                      <p className="text-xs text-muted-foreground">From your imported bank transactions</p>
+                      <h3 className="font-black text-xl tracking-tight">Transaction Pulse</h3>
+                      <p className="text-xs text-muted-foreground">Real-time activity from your linked accounts</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" asChild className="rounded-xl">
-                    <Link to="/transactions">View All</Link>
+                  <Button variant="outline" size="sm" asChild className="rounded-xl font-bold">
+                    <Link to="/transactions">View Full History</Link>
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wider">Income</span>
+              <CardContent className="p-8 space-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-6 rounded-3xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 group hover:shadow-lg transition-all">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-600"><ArrowUpRight className="w-4 h-4" /></div>
+                      <span className="text-xs text-emerald-700 dark:text-emerald-300 font-black uppercase tracking-widest">Income</span>
                     </div>
-                    <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
+                    <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300">
                       {formatCurrency(transactionSummary.totalIncome)}
                     </p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <ArrowDownRight className="w-4 h-4 text-rose-600" />
-                      <span className="text-xs text-rose-700 dark:text-rose-300 font-bold uppercase tracking-wider">Expenses</span>
+                  <div className="p-6 rounded-3xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 group hover:shadow-lg transition-all">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-rose-100 rounded-lg text-rose-600"><ArrowDownRight className="w-4 h-4" /></div>
+                      <span className="text-xs text-rose-700 dark:text-rose-300 font-black uppercase tracking-widest">Expenses</span>
                     </div>
-                    <p className="text-2xl font-black text-rose-700 dark:text-rose-300">
+                    <p className="text-3xl font-black text-rose-700 dark:text-rose-300">
                       {formatCurrency(-transactionSummary.totalExpenses)}
                     </p>
                   </div>
                   <div className={cn(
-                    "p-4 rounded-2xl border",
+                    "p-6 rounded-3xl border group hover:shadow-lg transition-all",
                     transactionSummary.net >= 0 
                       ? "bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/50" 
                       : "bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50"
                   )}>
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <TrendingUp className={cn(
-                        "w-4 h-4",
-                        transactionSummary.net >= 0 ? "text-blue-600" : "text-amber-600"
-                      )} />
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={cn(
+                        "p-1.5 rounded-lg",
+                        transactionSummary.net >= 0 ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600"
+                      )}><TrendingUp className="w-4 h-4" /></div>
                       <span className={cn(
-                        "text-xs font-bold uppercase tracking-wider",
+                        "text-xs font-black uppercase tracking-widest",
                         transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
-                      )}>Net</span>
+                      )}>Net Position</span>
                     </div>
                     <p className={cn(
-                      "text-2xl font-black",
+                      "text-3xl font-black",
                       transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
                     )}>
                       {formatCurrency(transactionSummary.net)}
@@ -350,27 +395,33 @@ const Index = () => {
                 </div>
 
                 {/* Recent Transactions */}
-                <div className="space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Recent Activity</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Activity</p>
+                    <div className="h-[1px] flex-1 bg-muted mx-4" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {transactionSummary.recentTransactions.map((t) => (
-                      <div key={t.id} className="flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border hover:bg-background transition-colors">
-                        <div className="flex items-center gap-3 min-w-0">
+                      <div key={t.id} className="flex items-center justify-between py-4 px-5 rounded-2xl bg-background border hover:border-primary/30 hover:shadow-md transition-all group">
+                        <div className="flex items-center gap-4 min-w-0">
                           <div className={cn(
-                            "w-2 h-2 rounded-full shrink-0",
+                            "w-3 h-3 rounded-full shrink-0 shadow-sm",
                             t.amount > 0 ? "bg-emerald-500" : "bg-rose-500"
                           )} />
                           <div className="min-w-0">
-                            <p className="text-sm font-bold truncate">{t.description}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase font-medium">{t.category_1}</p>
+                            <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{t.description}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">{t.category_1}</p>
                           </div>
                         </div>
-                        <span className={cn(
-                          "text-sm font-black tabular-nums shrink-0",
-                          t.amount > 0 ? "text-emerald-600" : "text-rose-600"
-                        )}>
-                          {formatCurrency(t.amount)}
-                        </span>
+                        <div className="text-right shrink-0">
+                          <span className={cn(
+                            "text-base font-black tabular-nums",
+                            t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                          )}>
+                            {formatCurrency(t.amount)}
+                          </span>
+                          <p className="text-[9px] text-muted-foreground font-bold">{format(new Date(t.transaction_date), 'MMM dd')}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -381,7 +432,7 @@ const Index = () => {
         </>
       )}
 
-      <footer className="pt-8 pb-4">
+      <footer className="pt-12 pb-6">
         <MadeWithDyad />
       </footer>
     </div>
