@@ -43,7 +43,9 @@ import {
   TrendingUp,
   TrendingDown,
   Percent,
-  ShieldAlert
+  ShieldAlert,
+  Loader2,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -68,32 +70,50 @@ const AccountantPortal = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   
-  // Business Use Percentages (State for estimation)
-  const [businessPercents, setBusinessPercents] = useState({
-    rent: 25,
-    bills: 25,
-    phone: 50,
-    fuel: 40
+  // Dynamic Settings from DB
+  const [settings, setSettings] = useState({
+    business_percents: { rent: 25, bills: 25, phone: 50, fuel: 40 },
+    deduction_keywords: {
+      rent: ['rent', 'lease', 'storage'],
+      bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates'],
+      phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'],
+      fuel: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking']
+    }
   });
 
   useEffect(() => {
     if (!authLoading && !session) {
       navigate('/login');
     } else if (session) {
-      fetchTransactions();
+      fetchData();
     }
   }, [session, authLoading, navigate]);
 
-  const fetchTransactions = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch Transactions
+      const { data: txnData, error: txnError } = await supabase
         .from('finance_transactions')
         .select('*')
         .order('transaction_date', { ascending: false });
 
-      if (error) throw error;
-      setTransactions(data || []);
+      if (txnError) throw txnError;
+      setTransactions(txnData || []);
+
+      // Fetch Accountant Settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('accountant_settings')
+        .select('*')
+        .eq('owner_user_id', session?.user.id)
+        .single();
+      
+      if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
+      if (settingsData) setSettings({
+        business_percents: settingsData.business_percents,
+        deduction_keywords: settingsData.deduction_keywords
+      });
+
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -123,15 +143,15 @@ const AccountantPortal = () => {
 
   const deductionBuckets = useMemo(() => {
     const buckets = {
-      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', keywords: ['rent', 'lease', 'storage'], items: [] as Transaction[], percent: businessPercents.rent },
-      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', keywords: ['bill', 'electricity', 'water', 'gas', 'power', 'rates'], items: [] as Transaction[], percent: businessPercents.bills },
-      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', keywords: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'], items: [] as Transaction[], percent: businessPercents.phone },
-      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', keywords: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking'], items: [] as Transaction[], percent: businessPercents.fuel },
+      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', keywords: settings.deduction_keywords.rent, items: [] as Transaction[], percent: settings.business_percents.rent },
+      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', keywords: settings.deduction_keywords.bills, items: [] as Transaction[], percent: settings.business_percents.bills },
+      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', keywords: settings.deduction_keywords.phone, items: [] as Transaction[], percent: settings.business_percents.phone },
+      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', keywords: settings.deduction_keywords.fuel, items: [] as Transaction[], percent: settings.business_percents.fuel },
       other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', keywords: [], items: [] as Transaction[], percent: 100 }
     };
 
     filteredTransactions.forEach(t => {
-      if (t.amount > 0) return; // Skip income
+      if (t.amount > 0) return;
       
       const desc = t.description.toLowerCase();
       const cat = (t.category_1 || '').toLowerCase();
@@ -150,7 +170,7 @@ const AccountantPortal = () => {
     });
 
     return buckets;
-  }, [filteredTransactions, businessPercents]);
+  }, [filteredTransactions, settings]);
 
   const auditAlerts = useMemo(() => {
     const alerts = [];
@@ -181,7 +201,7 @@ const AccountantPortal = () => {
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Calculator className="w-8 h-8 animate-pulse text-primary" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
     <div className="min-h-screen bg-background pb-20 print:bg-white print:pb-0">
@@ -201,6 +221,9 @@ const AccountantPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" asChild className="rounded-xl gap-2">
+              <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
+            </Button>
             <Button variant="outline" onClick={() => window.print()} className="rounded-xl gap-2">
               <Printer className="w-4 h-4" /> Print Report
             </Button>
@@ -312,35 +335,6 @@ const AccountantPortal = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Deduction Estimator (Mixed Use) */}
-        <Card className="border-0 shadow-lg print:hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Percent className="w-5 h-5 text-primary" />
-              Business Use Estimator
-            </CardTitle>
-            <CardDescription>Adjust the percentage of mixed-use expenses that are business-related.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {Object.entries(deductionBuckets).filter(([k]) => k !== 'other').map(([key, bucket]) => (
-                <div key={key} className="space-y-2">
-                  <Label className="text-xs font-bold uppercase text-muted-foreground">{bucket.label}</Label>
-                  <div className="flex items-center gap-2">
-                    <Input 
-                      type="number" 
-                      value={businessPercents[key as keyof typeof businessPercents]} 
-                      onChange={(e) => setBusinessPercents(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
-                      className="h-9 rounded-xl font-bold"
-                    />
-                    <span className="text-muted-foreground font-bold">%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Detailed Breakdown Sections */}
         <div className="space-y-8">
