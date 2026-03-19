@@ -278,14 +278,15 @@ const AccountantPortal = () => {
 
   const subscriptionGroups = useMemo(() => {
     const groups: Record<string, { total: number, items: Transaction[] }> = {};
-    filteredTransactions.filter(t => t.category_1 === 'Subscription').forEach(t => {
+    // Only include subscriptions that are explicitly marked as work
+    workTransactions.filter(t => t.category_1 === 'Subscription').forEach(t => {
       const subCat = t.category_2 || 'Other Subscriptions';
       if (!groups[subCat]) groups[subCat] = { total: 0, items: [] };
       groups[subCat].total += Math.abs(t.amount);
       groups[subCat].items.push(t);
     });
     return Object.entries(groups).sort((a, b) => b[1].total - a[1].total);
-  }, [filteredTransactions]);
+  }, [workTransactions]);
 
   const fixedCostsData = useMemo(() => {
     const groups: Record<string, { total: number, items: Transaction[], icon: any }> = {};
