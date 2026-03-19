@@ -57,9 +57,11 @@ import {
   ShieldCheck,
   Lock,
   ClipboardCheck,
-  ListChecks
+  ListChecks,
+  Repeat,
+  CreditCard
 } from 'lucide-react';
-import { format, isWithinInterval, parseISO, isValid } from 'date-fns';
+import { format, isWithinInterval, parseISO, isValid, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 
@@ -77,6 +79,17 @@ interface Transaction {
 interface CategoryGroup {
   category_name: string;
   group_name: string;
+}
+
+interface SubscriptionGroup {
+  name: string;
+  normalizedName: string;
+  transactions: Transaction[];
+  avgAmount: number;
+  frequency: string;
+  monthlyCost: number;
+  annualCost: number;
+  lastDate: string;
 }
 
 const AccountantPortal = () => {
@@ -269,6 +282,69 @@ const AccountantPortal = () => {
     return Object.entries(groups).sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses));
   }, [workTransactions, categoryGroups]);
 
+  const subscriptionData = useMemo(() => {
+    const groups: Record<string, Transaction[]> = {};
+    
+    // Normalize and group
+    filteredTransactions.filter(t => t.amount < 0).forEach(t => {
+      const normalized = t.description.toLowerCase()
+        .replace(/\d+/g, '')
+        .replace(/receipt/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      if (normalized.length < 3) return;
+      if (!groups[normalized]) groups[normalized] = [];
+      groups[normalized].push(t);
+    });
+
+    const result: SubscriptionGroup[] = Object.entries(groups)
+      .filter(([, txns]) => txns.length >= 2)
+      .map(([normalizedName, txns]) => {
+        const sorted = [...txns].sort((a, b) => parseISO(a.transaction_date).getTime() - parseISO(b.transaction_date).getTime());
+        const amounts = sorted.map(t => Math.abs(t.amount));
+        const avgAmount = amounts.reduce((s, a) => s + a, 0) / amounts.length;
+        
+        // Detect frequency
+        let frequency = 'Irregular';
+        if (sorted.length >= 2) {
+          const gaps = [];
+          for (let i = 1; i < sorted.length; i++) {
+            gaps.push(differenceInDays(parseISO(sorted[i].transaction_date), parseISO(sorted[i-1].transaction_date)));
+          }
+          const avgGap = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+          
+          if (avgGap >= 25 && avgGap <= 35) frequency = 'Monthly';
+          else if (avgGap >= 5 && avgGap <= 9) frequency = 'Weekly';
+          else if (avgGap >= 12 && avgGap <= 16) frequency = 'Bi-weekly';
+          else if (avgGap >= 80 && avgGap <= 100) frequency = 'Quarterly';
+          else if (avgGap >= 350 && avgGap <= 380) frequency = 'Yearly';
+        }
+
+        let monthlyCost = 0;
+        if (frequency === 'Monthly') monthlyCost = avgAmount;
+        else if (frequency === 'Weekly') monthlyCost = avgAmount * 4.33;
+        else if (frequency === 'Bi-weekly') monthlyCost = avgAmount * 2.16;
+        else if (frequency === 'Quarterly') monthlyCost = avgAmount / 3;
+        else if (frequency === 'Yearly') monthlyCost = avgAmount / 12;
+        else monthlyCost = (avgAmount * sorted.length) / 12; // Fallback estimate
+
+        return {
+          name: sorted[sorted.length - 1].description,
+          normalizedName,
+          transactions: sorted.reverse(),
+          avgAmount,
+          frequency,
+          monthlyCost,
+          annualCost: monthlyCost * 12,
+          lastDate: sorted[0].transaction_date
+        };
+      })
+      .sort((a, b) => b.monthlyCost - a.monthlyCost);
+
+    return result;
+  }, [filteredTransactions]);
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(val));
   };
@@ -278,6 +354,8 @@ const AccountantPortal = () => {
     const bucketTotal = b.items.reduce((sum, t) => sum + Math.abs(t.amount), 0);
     return s + (bucketTotal * (b.percent / 100));
   }, 0);
+
+  const totalMonthlySubs = subscriptionData.reduce((s, sub) => s + sub.monthlyCost, 0);
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
@@ -452,6 +530,9 @@ const AccountantPortal = () => {
             </TabsTrigger>
             <TabsTrigger value="groups" className="rounded-lg gap-2 py-2 px-4">
               <PieChart className="w-4 h-4" /> Detailed View
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="rounded-lg gap-2 py-2 px-4">
+              <Repeat className="w-4 h-4" /> Subscriptions
             </TabsTrigger>
           </TabsList>
 
@@ -738,6 +819,95 @@ const AccountantPortal = () => {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="subscriptions" className="space-y-6 animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-indigo-600 to-blue-700 text-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-white/20 rounded-2xl">
+                      <Repeat className="w-6 h-6" />
+                    </div>
+                    <Badge className="bg-white/20 text-white border-0">Monthly Impact</Badge>
+                  </div>
+                  <p className="text-sm font-medium opacity-80">Total Subscription Spend</p>
+                  <p className="text-4xl font-black">{formatCurrency(totalMonthlySubs)}<span className="text-lg font-normal opacity-60">/mo</span></p>
+                  <p className="text-xs opacity-70 mt-2">Estimated {formatCurrency(totalMonthlySubs * 12)} per year</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-xl">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2">
+                    <Info className="w-4 h-4 text-primary" />
+                    Accountant Note
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    This view automatically identifies recurring payments. These are often fixed business costs (SaaS, utilities, insurance) that can be treated as regular operational expenses.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="border-0 shadow-xl overflow-hidden">
+              <CardHeader className="bg-muted/30 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  Detected Recurring Payments
+                </CardTitle>
+                <CardDescription>Merchant breakdown with frequency and cost analysis.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="pl-6">Merchant / Service</TableHead>
+                      <TableHead>Frequency</TableHead>
+                      <TableHead className="text-right">Avg. Amount</TableHead>
+                      <TableHead className="text-right">Monthly Cost</TableHead>
+                      <TableHead className="text-right pr-6">Annual Cost</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {subscriptionData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                          No recurring patterns detected in this period.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      subscriptionData.map((sub) => (
+                        <TableRow key={sub.normalizedName} className="hover:bg-muted/5">
+                          <TableCell className="pl-6">
+                            <div className="space-y-0.5">
+                              <p className="font-bold text-sm">{sub.name}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-medium">Last seen: {format(parseISO(sub.lastDate), 'MMM dd, yyyy')}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="rounded-lg text-[10px] font-bold uppercase">
+                              {sub.frequency}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">
+                            {formatCurrency(sub.avgAmount)}
+                          </TableCell>
+                          <TableCell className="text-right font-bold text-primary tabular-nums">
+                            {formatCurrency(sub.monthlyCost)}
+                          </TableCell>
+                          <TableCell className="text-right font-black pr-6 tabular-nums">
+                            {formatCurrency(sub.annualCost)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
