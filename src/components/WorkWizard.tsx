@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Wand2, 
   Briefcase, 
@@ -20,7 +21,9 @@ import {
   AlertCircle,
   Sparkles,
   Layers,
-  Calendar
+  Calendar,
+  ChevronRight,
+  List
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -88,6 +91,7 @@ const WORK_KEYWORDS = [
 const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizardProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   // Helper to strip unique IDs, dates, and card numbers from descriptions
   const normalizeDescription = (desc: string) => {
@@ -153,6 +157,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
       
       if (currentIndex < suggestionGroups.length - 1) {
         setCurrentIndex(prev => prev + 1);
+        setShowAllTransactions(false);
       } else {
         showSuccess('Wizard complete!');
         onComplete();
@@ -168,6 +173,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
   const handleSkip = () => {
     if (currentIndex < suggestionGroups.length - 1) {
       setCurrentIndex(prev => prev + 1);
+      setShowAllTransactions(false);
     } else {
       onComplete();
       onOpenChange(false);
@@ -236,10 +242,14 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
               <div className="bg-card border rounded-2xl p-5 shadow-sm space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <button 
+                      onClick={() => setShowAllTransactions(!showAllTransactions)}
+                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                    >
                       <Layers className="w-3 h-3" />
                       {currentGroup.transactions.length} Similar Transactions
-                    </div>
+                      <ChevronRight className={cn("w-3 h-3 transition-transform", showAllTransactions && "rotate-90")} />
+                    </button>
                     <h3 className="font-bold text-lg leading-tight">{currentGroup.displayDescription}</h3>
                   </div>
                   <div className="text-right">
@@ -263,23 +273,57 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                   </div>
                 </div>
 
-                {/* Mini Timeline */}
-                <div className="pt-2 space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Recent occurrences:</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentGroup.transactions.slice(0, 6).map((t, i) => (
-                      <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 text-[10px] font-medium">
-                        <Calendar className="w-2.5 h-2.5 opacity-50" />
-                        {format(new Date(t.transaction_date), 'MMM dd, yy')}
+                {/* Transaction List View */}
+                {showAllTransactions ? (
+                  <div className="pt-2 space-y-2 animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Full Transaction List:</p>
+                      <Button variant="ghost" size="sm" onClick={() => setShowAllTransactions(false)} className="h-6 text-[10px] rounded-md">
+                        Hide List
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-48 rounded-xl border bg-muted/30 p-2">
+                      <div className="space-y-1.5">
+                        {currentGroup.transactions.map((t, i) => (
+                          <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-background border text-[11px]">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Calendar className="w-3 h-3 text-muted-foreground shrink-0" />
+                              <span className="text-muted-foreground whitespace-nowrap">{format(new Date(t.transaction_date), 'MMM dd, yy')}</span>
+                              <span className="font-medium truncate" title={t.description}>{t.description}</span>
+                            </div>
+                            <span className={cn(
+                              "font-bold tabular-nums ml-2",
+                              t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                            )}>
+                              {formatCurrency(t.amount)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    {currentGroup.transactions.length > 6 && (
-                      <div className="px-2 py-1 rounded-md bg-muted/50 text-[10px] font-medium">
-                        +{currentGroup.transactions.length - 6} more
-                      </div>
-                    )}
+                    </ScrollArea>
                   </div>
-                </div>
+                ) : (
+                  /* Mini Timeline (Default View) */
+                  <div className="pt-2 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Recent occurrences:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentGroup.transactions.slice(0, 6).map((t, i) => (
+                        <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 text-[10px] font-medium">
+                          <Calendar className="w-2.5 h-2.5 opacity-50" />
+                          {format(new Date(t.transaction_date), 'MMM dd, yy')}
+                        </div>
+                      ))}
+                      {currentGroup.transactions.length > 6 && (
+                        <button 
+                          onClick={() => setShowAllTransactions(true)}
+                          className="px-2 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-bold hover:bg-primary/20 transition-colors"
+                        >
+                          +{currentGroup.transactions.length - 6} more
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Area */}
