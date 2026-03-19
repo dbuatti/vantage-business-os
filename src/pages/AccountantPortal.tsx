@@ -48,7 +48,10 @@ import {
   Settings as SettingsIcon,
   Database,
   Calendar,
-  Wand2
+  Wand2,
+  Bug,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -70,6 +73,7 @@ const AccountantPortal = () => {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   
@@ -221,6 +225,14 @@ const AccountantPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowDebug(!showDebug)} 
+              className={cn("rounded-xl gap-2", showDebug && "bg-primary/10 text-primary")}
+            >
+              <Bug className="w-4 h-4" /> Debug
+            </Button>
             <Button variant="outline" asChild className="rounded-xl gap-2">
               <Link to="/settings?tab=accountant"><SettingsIcon className="w-4 h-4" /> Configure</Link>
             </Button>
@@ -229,6 +241,61 @@ const AccountantPortal = () => {
             </Button>
           </div>
         </div>
+
+        {/* Debug View */}
+        {showDebug && (
+          <Card className="border-2 border-primary/20 bg-primary/5 animate-fade-in print:hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2">
+                <Bug className="w-4 h-4" /> Data Debugger
+              </CardTitle>
+              <CardDescription>Checking why transactions might be missing from the report</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-3 rounded-xl bg-background border">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Total Transactions</p>
+                  <p className="text-xl font-black">{transactions.length}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-background border">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">In Date Range</p>
+                  <p className="text-xl font-black">{filteredTransactions.length}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-background border">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Marked as "Work"</p>
+                  <p className="text-xl font-black text-primary">{filteredTransactions.filter(t => t.is_work).length}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase text-muted-foreground">Sample Transactions in Range (First 5):</p>
+                <div className="rounded-lg border bg-background overflow-hidden">
+                  <Table>
+                    <TableBody>
+                      {filteredTransactions.slice(0, 5).map(t => (
+                        <TableRow key={t.id} className="text-[11px]">
+                          <TableCell className="py-1">{t.transaction_date}</TableCell>
+                          <TableCell className="py-1 font-medium">{t.description}</TableCell>
+                          <TableCell className="py-1">{formatCurrency(t.amount)}</TableCell>
+                          <TableCell className="py-1">
+                            {t.is_work ? (
+                              <Badge className="bg-emerald-100 text-emerald-700 text-[9px]">Work</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[9px]">Personal</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <p className="text-[10px] text-muted-foreground italic">
+                  Note: Only transactions marked as "Work" (or matching keywords) appear in the tax report.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Controls */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
@@ -272,24 +339,6 @@ const AccountantPortal = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Data Status Debugger */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 print:hidden">
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border">
-            <div className="p-2 rounded-xl bg-background shadow-sm"><Database className="w-4 h-4 text-primary" /></div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total in Database</p>
-              <p className="text-lg font-black">{transactions.length} transactions</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/50 border">
-            <div className="p-2 rounded-xl bg-background shadow-sm"><Calendar className="w-4 h-4 text-primary" /></div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">In Selected Period</p>
-              <p className="text-lg font-black">{filteredTransactions.length} transactions</p>
-            </div>
-          </div>
         </div>
 
         {/* High Level P&L Summary */}
