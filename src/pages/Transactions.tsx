@@ -57,7 +57,8 @@ import {
   Search,
   LayoutGrid,
   PieChart as PieChartIcon,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Loader2
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns';
@@ -121,10 +122,9 @@ const Transactions = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   
-  // Persistent Year Filter
-  const [selectedYear, setSelectedYear] = useState<string>(() => {
-    return localStorage.getItem('transactions-selected-year') || 'All';
-  });
+  // Supabase-backed Year Filter
+  const [selectedYear, setSelectedYear] = useState<string>('All');
+  const [isSavingYear, setIsSavingYear] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
@@ -147,13 +147,48 @@ const Transactions = () => {
     } else if (session) {
       fetchTransactions();
       fetchCategoryGroups();
+      fetchUserSettings();
     }
   }, [session, authLoading, navigate]);
 
-  // Save year filter to localStorage
-  useEffect(() => {
-    localStorage.setItem('transactions-selected-year', selectedYear);
-  }, [selectedYear]);
+  const fetchUserSettings = async () => {
+    if (!session) return;
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('selected_transaction_year')
+        .eq('owner_user_id', session.user.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      if (data?.selected_transaction_year) {
+        setSelectedYear(data.selected_transaction_year);
+      }
+    } catch (error) {
+      console.error("Error fetching user settings:", error);
+    }
+  };
+
+  const handleYearChange = async (year: string) => {
+    setSelectedYear(year);
+    if (!session) return;
+
+    setIsSavingYear(true);
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ 
+          owner_user_id: session.user.id, 
+          selected_transaction_year: year,
+          updated_at: new Date().toISOString()
+        });
+      if (error) throw error;
+    } catch (error: any) {
+      showError("Failed to save year preference");
+    } finally {
+      setIsSavingYear(false);
+    }
+  };
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -444,18 +479,20 @@ const Transactions = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Year Filter Dropdown */}
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-32 rounded-xl h-9 bg-background border-primary/20 text-primary font-bold">
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableYears.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Year Filter Dropdown - Now synced with Supabase */}
+            <div className="relative">
+              <Select value={selectedYear} onValueChange={handleYearChange}>
+                <SelectTrigger className="w-32 rounded-xl h-9 bg-background border-primary/20 text-primary font-bold">
+                  {isSavingYear ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <CalendarIcon className="w-4 h-4 mr-2" />}
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map(year => (
+                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <Button 
               variant="outline" 
