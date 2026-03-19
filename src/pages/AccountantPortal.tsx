@@ -143,11 +143,11 @@ const AccountantPortal = () => {
 
   const deductionBuckets = useMemo(() => {
     const buckets = {
-      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', keywords: settings.deduction_keywords.rent, items: [] as Transaction[], percent: settings.business_percents.rent },
-      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', keywords: settings.deduction_keywords.bills, items: [] as Transaction[], percent: settings.business_percents.bills },
-      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', keywords: settings.deduction_keywords.phone, items: [] as Transaction[], percent: settings.business_percents.phone },
-      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', keywords: settings.deduction_keywords.fuel, items: [] as Transaction[], percent: settings.business_percents.fuel },
-      other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', keywords: [], items: [] as Transaction[], percent: 100 }
+      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', text: 'text-blue-900', keywords: settings.deduction_keywords.rent, items: [] as Transaction[], percent: settings.business_percents.rent },
+      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', text: 'text-amber-900', keywords: settings.deduction_keywords.bills, items: [] as Transaction[], percent: settings.business_percents.bills },
+      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', text: 'text-purple-900', keywords: settings.deduction_keywords.phone, items: [] as Transaction[], percent: settings.business_percents.phone },
+      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', text: 'text-orange-900', keywords: settings.deduction_keywords.fuel, items: [] as Transaction[], percent: settings.business_percents.fuel },
+      other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-900', keywords: [], items: [] as Transaction[], percent: 100 }
     };
 
     filteredTransactions.forEach(t => {
@@ -346,8 +346,10 @@ const AccountantPortal = () => {
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">Business Income</CardTitle>
-                  <CardDescription>Total gross income for this period: <span className="font-bold text-foreground">{formatCurrency(totalIncome)}</span></CardDescription>
+                  <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
+                  <CardDescription className="text-emerald-800/80 dark:text-emerald-200/80">
+                    Total gross income for this period: <span className="font-bold text-emerald-950 dark:text-emerald-50">{formatCurrency(totalIncome)}</span>
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -390,11 +392,11 @@ const AccountantPortal = () => {
                         <bucket.icon className="w-6 h-6" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl">{bucket.label}</CardTitle>
-                        <CardDescription>
+                        <CardTitle className={cn("text-xl", bucket.text, "dark:text-foreground")}>{bucket.label}</CardTitle>
+                        <CardDescription className={cn(bucket.text, "opacity-80 dark:text-muted-foreground")}>
                           Raw Total: <span className="font-bold">{formatCurrency(rawTotal)}</span> 
                           {bucket.percent < 100 && (
-                            <> · Claiming <span className="font-bold text-primary">{bucket.percent}%</span> → <span className="font-bold text-foreground">{formatCurrency(adjustedTotal)}</span></>
+                            <> · Claiming <span className="font-bold">{bucket.percent}%</span> → <span className="font-bold">{formatCurrency(adjustedTotal)}</span></>
                           )}
                         </CardDescription>
                       </div>
