@@ -56,7 +56,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Lock,
-  ClipboardCheck
+  ClipboardCheck,
+  ListChecks
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -115,7 +116,6 @@ const AccountantPortal = () => {
     setLoading(true);
     try {
       if (isPublic) {
-        // Fetch via Edge Function for public access
         const { data, error } = await supabase.functions.invoke('get-portal-data', {
           body: { token }
         });
@@ -133,7 +133,6 @@ const AccountantPortal = () => {
           });
         }
       } else {
-        // Standard authenticated fetch
         let allData: Transaction[] = [];
         let from = 0;
         const step = 1000;
@@ -231,17 +230,40 @@ const AccountantPortal = () => {
   }, [filteredTransactions, settings]);
 
   const groupedWorkData = useMemo(() => {
-    const groups: Record<string, { income: number; expenses: number; transactions: Transaction[] }> = {};
+    const groups: Record<string, { 
+      income: number; 
+      expenses: number; 
+      transactions: Transaction[];
+      categories: Record<string, { income: number; expenses: number; count: number }>
+    }> = {};
+    
     const catToGroup: Record<string, string> = {};
     categoryGroups.forEach(cg => { catToGroup[cg.category_name] = cg.group_name; });
 
     workTransactions.forEach(t => {
       const groupName = catToGroup[t.category_1] || 'Unmapped / Other';
-      if (!groups[groupName]) groups[groupName] = { income: 0, expenses: 0, transactions: [] };
+      if (!groups[groupName]) {
+        groups[groupName] = { income: 0, expenses: 0, transactions: [], categories: {} };
+      }
       
-      groups[groupName].transactions.push(t);
-      if (t.amount > 0) groups[groupName].income += t.amount;
-      else groups[groupName].expenses += Math.abs(t.amount);
+      const group = groups[groupName];
+      group.transactions.push(t);
+      
+      const catName = t.category_1 || 'Uncategorized';
+      if (!group.categories[catName]) {
+        group.categories[catName] = { income: 0, expenses: 0, count: 0 };
+      }
+      
+      const cat = group.categories[catName];
+      cat.count++;
+      
+      if (t.amount > 0) {
+        group.income += t.amount;
+        cat.income += t.amount;
+      } else {
+        group.expenses += Math.abs(t.amount);
+        cat.expenses += Math.abs(t.amount);
+      }
     });
 
     return Object.entries(groups).sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses));
@@ -425,8 +447,11 @@ const AccountantPortal = () => {
             <TabsTrigger value="summary" className="rounded-lg gap-2 py-2 px-4">
               <LayoutGrid className="w-4 h-4" /> Tax Summary
             </TabsTrigger>
+            <TabsTrigger value="totals" className="rounded-lg gap-2 py-2 px-4">
+              <ListChecks className="w-4 h-4" /> Totals Only
+            </TabsTrigger>
             <TabsTrigger value="groups" className="rounded-lg gap-2 py-2 px-4">
-              <PieChart className="w-4 h-4" /> Grouped View
+              <PieChart className="w-4 h-4" /> Detailed View
             </TabsTrigger>
           </TabsList>
 
@@ -553,6 +578,90 @@ const AccountantPortal = () => {
                 </Card>
               );
             })}
+          </TabsContent>
+
+          <TabsContent value="totals" className="space-y-6 animate-fade-in">
+            <Card className="border-0 shadow-xl overflow-hidden">
+              <CardHeader className="bg-muted/30 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ListChecks className="w-5 h-5 text-primary" />
+                  Financial Totals by Category
+                </CardTitle>
+                <CardDescription>Consolidated totals for each business category group.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="pl-6">Group / Category</TableHead>
+                      <TableHead className="text-right">Income</TableHead>
+                      <TableHead className="text-right">Expenses</TableHead>
+                      <TableHead className="text-right pr-6">Net Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {groupedWorkData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
+                          No work transactions found for this period.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      groupedWorkData.map(([groupName, data]) => (
+                        <React.Fragment key={groupName}>
+                          {/* Group Header Row */}
+                          <TableRow className="bg-muted/20 hover:bg-muted/20">
+                            <TableCell className="pl-6 font-black uppercase tracking-wider text-xs text-primary">
+                              {groupName}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-emerald-600">
+                              {data.income > 0 ? formatCurrency(data.income) : '—'}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-rose-600">
+                              {data.expenses > 0 ? formatCurrency(data.expenses) : '—'}
+                            </TableCell>
+                            <TableCell className={cn("text-right font-black pr-6", (data.income - data.expenses) >= 0 ? "text-emerald-700" : "text-rose-700")}>
+                              {formatCurrency(data.income - data.expenses)}
+                            </TableCell>
+                          </TableRow>
+                          {/* Category Rows */}
+                          {Object.entries(data.categories)
+                            .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
+                            .map(([catName, catData]) => (
+                              <TableRow key={catName} className="hover:bg-muted/5 border-b last:border-0">
+                                <TableCell className="pl-10 text-sm font-medium">
+                                  {catName}
+                                  <span className="ml-2 text-[10px] text-muted-foreground font-normal">({catData.count} txns)</span>
+                                </TableCell>
+                                <TableCell className="text-right text-sm text-emerald-600/80 tabular-nums">
+                                  {catData.income > 0 ? formatCurrency(catData.income) : '—'}
+                                </TableCell>
+                                <TableCell className="text-right text-sm text-rose-600/80 tabular-nums">
+                                  {catData.expenses > 0 ? formatCurrency(catData.expenses) : '—'}
+                                </TableCell>
+                                <TableCell className={cn("text-right text-sm font-bold pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                                  {formatCurrency(catData.income - catData.expenses)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </React.Fragment>
+                      ))
+                    )}
+                    {/* Grand Total Row */}
+                    {groupedWorkData.length > 0 && (
+                      <TableRow className="bg-primary text-white hover:bg-primary">
+                        <TableCell className="pl-6 font-black uppercase">Grand Total</TableCell>
+                        <TableCell className="text-right font-black">{formatCurrency(totalIncome)}</TableCell>
+                        <TableCell className="text-right font-black">{formatCurrency(workTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0))}</TableCell>
+                        <TableCell className="text-right font-black pr-6">
+                          {formatCurrency(totalIncome - workTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0))}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-6 animate-fade-in">
