@@ -232,7 +232,6 @@ const AccountantPortal = () => {
       other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-900', keywords: [], items: [] as Transaction[] }
     };
 
-    // Strictly filter by workTransactions to respect the work attribute
     workTransactions.forEach(t => {
       if (t.amount > 0) return;
       const desc = t.description.toLowerCase();
@@ -252,7 +251,12 @@ const AccountantPortal = () => {
       income: number; 
       expenses: number; 
       transactions: Transaction[];
-      categories: Record<string, { income: number; expenses: number; count: number }>
+      categories: Record<string, { 
+        income: number; 
+        expenses: number; 
+        count: number;
+        subcategories: Record<string, { income: number; expenses: number; count: number }>
+      }>
     }> = {};
     
     const catToGroup: Record<string, string> = {};
@@ -265,18 +269,29 @@ const AccountantPortal = () => {
       }
       const group = groups[groupName];
       group.transactions.push(t);
+      
       const catName = t.category_1 || 'Uncategorized';
       if (!group.categories[catName]) {
-        group.categories[catName] = { income: 0, expenses: 0, count: 0 };
+        group.categories[catName] = { income: 0, expenses: 0, count: 0, subcategories: {} };
       }
       const cat = group.categories[catName];
       cat.count++;
+
+      const subCatName = t.category_2 || 'Other';
+      if (!cat.subcategories[subCatName]) {
+        cat.subcategories[subCatName] = { income: 0, expenses: 0, count: 0 };
+      }
+      const subcat = cat.subcategories[subCatName];
+      subcat.count++;
+
       if (t.amount > 0) {
         group.income += t.amount;
         cat.income += t.amount;
+        subcat.income += t.amount;
       } else {
         group.expenses += Math.abs(t.amount);
         cat.expenses += Math.abs(t.amount);
+        subcat.expenses += Math.abs(t.amount);
       }
     });
 
@@ -297,7 +312,6 @@ const AccountantPortal = () => {
   const fixedCostsData = useMemo(() => {
     const groups: Record<string, { total: number, items: Transaction[], icon: any, color: string, bg: string }> = {};
     
-    // Strictly filter by workTransactions to respect the work attribute
     workTransactions.forEach(t => {
       if (t.amount > 0) return;
       const desc = t.description.toLowerCase();
@@ -788,14 +802,14 @@ const AccountantPortal = () => {
               <CardHeader className="bg-muted/30 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <ListChecks className="w-5 h-5 text-primary" />
-                  Financial Totals by Category
+                  Financial Totals by Category & Subcategory
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead className="pl-6">Group / Category</TableHead>
+                      <TableHead className="pl-6">Group / Category / Subcategory</TableHead>
                       <TableHead className="text-right">Income</TableHead>
                       <TableHead className="text-right">Expenses</TableHead>
                       <TableHead className="text-right pr-6">Net Total</TableHead>
@@ -841,23 +855,24 @@ const AccountantPortal = () => {
                         {Object.entries(data.categories)
                           .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
                           .map(([catName, catData]) => (
-                            <TableRow key={catName} className="hover:bg-muted/5 border-b last:border-0 group">
-                              <TableCell className="pl-10 text-sm font-medium">
-                                {catName}
-                                <span className="ml-2 text-[10px] text-muted-foreground font-normal">({catData.count} txns)</span>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {catData.income > 0 ? (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-7 text-xs text-emerald-600/80 hover:bg-emerald-50 gap-1.5"
-                                    onClick={() => copyToClipboard(catData.income.toString(), `${catName}-inc`)}
-                                  >
-                                    {formatCurrency(catData.income)}
-                                    {copiedId === `${catName}-inc` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
-                                  </Button>
-                                ) : '—'}
+                            <React.Fragment key={catName}>
+                              <TableRow className="hover:bg-muted/5 border-b group bg-muted/5">
+                                <TableCell className="pl-10 text-sm font-bold text-foreground/80">
+                                  {catName}
+                                  <span className="ml-2 text-[10px] text-muted-foreground font-normal">({catData.count} txns)</span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {catData.income > 0 ? (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-7 text-xs text-emerald-600/80 hover:bg-emerald-50 gap-1.5"
+                                      onClick={() => copyToClipboard(catData.income.toString(), `${catName}-inc`)}
+                                    >
+                                      {formatCurrency(catData.income)}
+                                      {copiedId === `${catName}-inc` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
+                                    </Button>
+                                  ) : '—'}
                                 </TableCell>
                                 <TableCell className="text-right">
                                   {catData.expenses > 0 ? (
@@ -872,10 +887,35 @@ const AccountantPortal = () => {
                                     </Button>
                                   ) : '—'}
                                 </TableCell>
-                                <TableCell className={cn("text-right text-sm font-bold pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                                <TableCell className={cn("text-right text-sm font-black pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
                                   {formatCurrency(catData.income - catData.expenses)}
                                 </TableCell>
-                            </TableRow>
+                              </TableRow>
+                              {/* Subcategory Breakdown */}
+                              {Object.entries(catData.subcategories)
+                                .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
+                                .map(([subName, subData]) => (
+                                  <TableRow key={subName} className="hover:bg-muted/5 border-b last:border-0 group">
+                                    <TableCell className="pl-16 text-xs font-medium text-muted-foreground">
+                                      {subName}
+                                      <span className="ml-2 text-[9px] opacity-60">({subData.count} txns)</span>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {subData.income > 0 ? (
+                                        <span className="text-[11px] text-emerald-600/60 tabular-nums">{formatCurrency(subData.income)}</span>
+                                      ) : '—'}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {subData.expenses > 0 ? (
+                                        <span className="text-[11px] text-rose-600/60 tabular-nums">{formatCurrency(subData.expenses)}</span>
+                                      ) : '—'}
+                                    </TableCell>
+                                    <TableCell className={cn("text-right text-[11px] font-bold pr-6 tabular-nums opacity-80", (subData.income - subData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                                      {formatCurrency(subData.income - subData.expenses)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                            </React.Fragment>
                           ))}
                       </React.Fragment>
                     ))}
