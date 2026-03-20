@@ -6,13 +6,16 @@ import AppSidebar from './AppSidebar';
 import CommandPalette from './CommandPalette';
 import ThemeToggle from './ThemeToggle';
 import { Button } from './ui/button';
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const navigate = useNavigate();
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
@@ -41,7 +44,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 </kbd>
               </Button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <Button 
+                size="sm" 
+                className="rounded-xl h-9 gap-2 px-4 font-bold shadow-lg shadow-primary/20"
+                onClick={() => navigate('/transactions')}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Quick Add</span>
+              </Button>
+              <div className="h-4 w-[1px] bg-border" />
               <ThemeToggle />
             </div>
           </header>

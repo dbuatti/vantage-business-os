@@ -6,6 +6,7 @@ import FinanceSummary from '@/components/FinanceSummary';
 import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
 import CashFlowForecast from '@/components/CashFlowForecast';
+import AnimatedNumber from '@/components/AnimatedNumber';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
@@ -248,7 +249,12 @@ const Index = () => {
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <p className="text-xs font-black uppercase tracking-widest opacity-70">Business Health</p>
-                        <p className="text-5xl font-black tracking-tighter">{formatCurrency(businessStats.outstandingAmount)}</p>
+                        <p className="text-5xl font-black tracking-tighter">
+                          <AnimatedNumber 
+                            value={businessStats.outstandingAmount} 
+                            formatter={(val) => formatCurrency(val)} 
+                          />
+                        </p>
                         <p className="text-sm font-medium opacity-80">Total Outstanding Receivables</p>
                       </div>
                       <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
@@ -281,7 +287,10 @@ const Index = () => {
                                 </Tooltip>
                               </TooltipProvider>
                             </div>
-                            <p className="text-lg font-black">{formatCurrency(businessStats.burnRate)}<span className="text-[10px] font-medium opacity-60">/mo</span></p>
+                            <p className="text-lg font-black">
+                              <AnimatedNumber value={businessStats.burnRate} formatter={(val) => formatCurrency(val)} />
+                              <span className="text-[10px] font-medium opacity-60">/mo</span>
+                            </p>
                           </div>
                           <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
                             <div className="flex items-center gap-1.5 mb-1">
@@ -297,7 +306,10 @@ const Index = () => {
                                 </Tooltip>
                               </TooltipProvider>
                             </div>
-                            <p className="text-lg font-black">{businessStats.runway.toFixed(1)}<span className="text-[10px] font-medium opacity-60"> months</span></p>
+                            <p className="text-lg font-black">
+                              <AnimatedNumber value={businessStats.runway} formatter={(val) => val.toFixed(1)} />
+                              <span className="text-[10px] font-medium opacity-60"> months</span>
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -395,7 +407,7 @@ const Index = () => {
                       <span className="text-xs text-emerald-700 dark:text-emerald-300 font-black uppercase tracking-widest">Income</span>
                     </div>
                     <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300">
-                      {formatCurrency(transactionSummary.totalIncome)}
+                      <AnimatedNumber value={transactionSummary.totalIncome} formatter={(val) => formatCurrency(val)} />
                     </p>
                   </div>
                   <div className="p-6 rounded-3xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 group hover:shadow-lg transition-all">
@@ -404,7 +416,7 @@ const Index = () => {
                       <span className="text-xs text-rose-700 dark:text-rose-300 font-black uppercase tracking-widest">Expenses</span>
                     </div>
                     <p className="text-3xl font-black text-rose-700 dark:text-rose-300">
-                      {formatCurrency(-transactionSummary.totalExpenses)}
+                      <AnimatedNumber value={-transactionSummary.totalExpenses} formatter={(val) => formatCurrency(val)} />
                     </p>
                   </div>
                   <div className={cn(
@@ -427,7 +439,7 @@ const Index = () => {
                       "text-3xl font-black",
                       transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
                     )}>
-                      {formatCurrency(transactionSummary.net)}
+                      <AnimatedNumber value={transactionSummary.net} formatter={(val) => formatCurrency(val)} />
                     </p>
                   </div>
                 </div>
