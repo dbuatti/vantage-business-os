@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Table, 
@@ -45,7 +44,6 @@ import {
   Settings as SettingsIcon,
   Bug,
   LayoutGrid,
-  PieChart,
   Lock,
   ClipboardCheck,
   ListChecks,
@@ -58,13 +56,15 @@ import {
   Flame,
   ChevronRight,
   ChevronDown,
+  Info,
   Maximize2,
-  Minimize2,
-  Info
+  Minimize2
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
+import { formatCurrency, formatDate } from '@/utils/format';
+import PortalFixedCosts from '@/components/portal/PortalFixedCosts';
+import PortalSubscriptions from '@/components/portal/PortalSubscriptions';
 
 interface Transaction {
   id: string;
@@ -78,16 +78,9 @@ interface Transaction {
   account_label: string;
 }
 
-interface CategoryGroup {
-  category_name: string;
-  group_name: string;
-}
-
 const AccountantPortal = () => {
   const { token } = useParams();
   const { session, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  
   const [showDebug, setShowDebug] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
@@ -98,7 +91,6 @@ const AccountantPortal = () => {
   
   const isPublic = !!token;
 
-  // Use React Query for data fetching and caching
   const { data, isLoading, error } = useQuery({
     queryKey: ['accountant-portal-data', token, session?.user?.id],
     queryFn: async () => {
@@ -112,7 +104,6 @@ const AccountantPortal = () => {
       } else {
         if (!session) return null;
 
-        // Fetch transactions with pagination
         let allTransactions: Transaction[] = [];
         let from = 0;
         const step = 1000;
@@ -147,7 +138,7 @@ const AccountantPortal = () => {
       }
     },
     enabled: isPublic || (!authLoading && !!session),
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const transactions = data?.transactions || [];
@@ -159,7 +150,7 @@ const AccountantPortal = () => {
     return accountantSettings?.deduction_keywords || {
       rent: ['rent', 'lease', 'storage'],
       bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates', 'utilities'],
-      phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'],
+      phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'voidafone', 'nbn'],
       fuel: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking']
     };
   }, [accountantSettings]);
@@ -359,10 +350,6 @@ const AccountantPortal = () => {
     const withCategory = workTransactions.filter(t => t.category_1).length;
     return Math.round(((withNotes / workTransactions.length) * 50) + ((withCategory / workTransactions.length) * 50));
   }, [workTransactions]);
-
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(val));
-  };
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => {
@@ -587,7 +574,7 @@ const AccountantPortal = () => {
               </div>
               <div className="pt-2 border-t flex justify-between items-center">
                 <p className="text-xs text-muted-foreground">
-                  Period: <span className="font-bold text-foreground">{format(parseISO(reportIntervalStrings.start), 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(parseISO(reportIntervalStrings.end), 'MMM dd, yyyy')}</span>
+                  Period: <span className="font-bold text-foreground">{formatDate(reportIntervalStrings.start)}</span> to <span className="font-bold text-foreground">{formatDate(reportIntervalStrings.end)}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Found <span className="font-bold text-foreground">{filteredTransactions.length}</span> transactions
@@ -705,7 +692,7 @@ const AccountantPortal = () => {
                       <TableBody>
                         {businessIncome.map((t) => (
                           <TableRow key={t.id}>
-                            <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                             <TableCell className="text-sm font-bold">{t.description}</TableCell>
                             <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
                             <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
@@ -758,7 +745,7 @@ const AccountantPortal = () => {
                         <TableBody>
                           {bucket.items.map((t) => (
                             <TableRow key={t.id} className="hover:bg-muted/20 group">
-                              <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                               <TableCell className="text-sm font-bold">{t.description}</TableCell>
                               <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
                               <TableCell className="text-right font-black text-rose-600">{formatCurrency(t.amount)}</TableCell>
@@ -873,7 +860,6 @@ const AccountantPortal = () => {
                                   {formatCurrency(catData.income - catData.expenses)}
                                 </TableCell>
                               </TableRow>
-                              {/* Subcategory Breakdown */}
                               {Object.entries(catData.subcategories)
                                 .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
                                 .map(([subName, subData]) => (
@@ -907,183 +893,28 @@ const AccountantPortal = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="fixed-costs" className="space-y-8 animate-fade-in">
-            <div className="flex justify-end gap-2 print:hidden">
-              <Button variant="ghost" size="sm" onClick={() => expandAll(fixedCostsData.map(d => d[0]))} className="h-8 text-xs gap-1.5 rounded-lg">
-                <Maximize2 className="w-3.5 h-3.5" /> Expand All
-              </Button>
-              <Button variant="ghost" size="sm" onClick={collapseAll} className="h-8 text-xs gap-1.5 rounded-lg">
-                <Minimize2 className="w-3.5 h-3.5" /> Collapse All
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {fixedCostsData.map(([groupName, data]) => (
-                <Card key={groupName} className="border-0 shadow-lg hover:shadow-xl transition-all group overflow-hidden">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={cn("p-3 rounded-2xl shadow-sm", data.bg, data.color)}>
-                        <data.icon className="w-6 h-6" />
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => copyToClipboard(data.total.toString(), `${groupName}-fixed`)}
-                      >
-                        {copiedId === `${groupName}-fixed` ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
-                      </Button>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{groupName}</p>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-2xl font-black text-rose-600">{formatCurrency(data.total)}</p>
-                        <span className="text-[10px] font-bold text-muted-foreground">{data.items.length} items</span>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => toggleSection(groupName)}
-                      className="mt-4 pt-4 border-t w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <span>{expandedSections.has(groupName) ? 'Hide details' : 'View details'}</span>
-                      {expandedSections.has(groupName) ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="space-y-6">
-              {fixedCostsData.map(([groupName, data]) => {
-                if (!expandedSections.has(groupName)) return null;
-                return (
-                  <Card key={groupName} className="border-0 shadow-lg overflow-hidden animate-fade-in">
-                    <CardHeader className="bg-muted/10 border-b py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={cn("p-1.5 rounded-lg", data.bg, data.color)}>
-                            <data.icon className="w-4 h-4" />
-                          </div>
-                          <CardTitle className="text-sm font-black uppercase tracking-wider">{groupName}</CardTitle>
-                        </div>
-                        <Badge variant="secondary" className="rounded-lg font-bold">{data.items.length} transactions</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/5">
-                            <TableHead className="w-32 text-[10px] uppercase font-black">Date</TableHead>
-                            <TableHead className="text-[10px] uppercase font-black">Description</TableHead>
-                            <TableHead className="text-right pr-6 text-[10px] uppercase font-black">Amount</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {data.items.map((t) => (
-                            <TableRow key={t.id} className="hover:bg-muted/20">
-                              <TableCell className="text-xs font-medium">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                              <TableCell className="text-xs font-bold">{t.description}</TableCell>
-                              <TableCell className="text-right pr-6 text-xs font-black tabular-nums text-rose-600">{formatCurrency(t.amount)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+          <TabsContent value="fixed-costs" className="animate-fade-in">
+            <PortalFixedCosts 
+              data={fixedCostsData}
+              expandedSections={expandedSections}
+              onToggleSection={toggleSection}
+              onExpandAll={() => expandAll(fixedCostsData.map(d => d[0]))}
+              onCollapseAll={collapseAll}
+              onCopyAmount={copyToClipboard}
+              copiedId={copiedId}
+            />
           </TabsContent>
 
-          <TabsContent value="subscriptions" className="space-y-6 animate-fade-in">
-            <div className="flex justify-end gap-2 print:hidden">
-              <Button variant="ghost" size="sm" onClick={() => expandAll(subscriptionGroups.map(d => d[0]))} className="h-8 text-xs gap-1.5 rounded-lg">
-                <Maximize2 className="w-3.5 h-3.5" /> Expand All
-              </Button>
-              <Button variant="ghost" size="sm" onClick={collapseAll} className="h-8 text-xs gap-1.5 rounded-lg">
-                <Minimize2 className="w-3.5 h-3.5" /> Collapse All
-              </Button>
-            </div>
-
-            <Card className="border-0 shadow-xl overflow-hidden">
-              <CardHeader className="bg-muted/30 border-b">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChart className="w-5 h-5 text-primary" />
-                  Subscription Category Summary
-                </CardTitle>
-                <CardDescription>Total spend grouped by secondary category.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="pl-6">Category</TableHead>
-                      <TableHead className="text-right pr-6">Total Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {subscriptionGroups.map(([catName, data]) => (
-                      <TableRow key={catName}>
-                        <TableCell className="pl-6 font-bold">{catName}</TableCell>
-                        <TableCell className="text-right pr-6 font-black text-primary">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 font-bold text-primary hover:bg-primary/5 gap-2"
-                            onClick={() => copyToClipboard(data.total.toString(), `${catName}-sub`)}
-                          >
-                            {formatCurrency(data.total)}
-                            {copiedId === `${catName}-sub` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-6">
-              {subscriptionGroups.map(([catName, data]) => {
-                const isExpanded = expandedSections.has(catName);
-                return (
-                  <Card key={catName} className="border-0 shadow-lg overflow-hidden">
-                    <button 
-                      onClick={() => toggleSection(catName)}
-                      className="w-full text-left bg-muted/10 border-b py-3 px-4 flex items-center justify-between hover:bg-muted/20 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider text-primary">{catName}</CardTitle>
-                        <Badge variant="outline" className="rounded-lg">{data.items.length} transactions</Badge>
-                      </div>
-                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {isExpanded && (
-                      <CardContent className="p-0 animate-fade-in">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-muted/5">
-                              <TableHead className="w-32 text-[10px] uppercase font-bold">Date</TableHead>
-                              <TableHead className="text-[10px] uppercase font-bold">Merchant</TableHead>
-                              <TableHead className="text-right pr-6 text-[10px] uppercase font-bold">Amount</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {data.items.map((t) => (
-                              <TableRow key={t.id}>
-                                <TableCell className="text-xs">{format(parseISO(t.transaction_date), 'MMM dd, yyyy')}</TableCell>
-                                <TableCell className="text-xs font-medium">{t.description}</TableCell>
-                                <TableCell className="text-right pr-6 text-xs font-bold tabular-nums">{formatCurrency(t.amount)}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
+          <TabsContent value="subscriptions" className="animate-fade-in">
+            <PortalSubscriptions 
+              data={subscriptionGroups}
+              expandedSections={expandedSections}
+              onToggleSection={toggleSection}
+              onExpandAll={() => expandAll(subscriptionGroups.map(d => d[0]))}
+              onCollapseAll={collapseAll}
+              onCopyAmount={copyToClipboard}
+              copiedId={copiedId}
+            />
           </TabsContent>
         </Tabs>
       </div>
