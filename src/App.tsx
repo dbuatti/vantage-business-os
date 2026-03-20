@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import Insights from "./pages/Insights";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
+import Productivity from "./pages/Productivity";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
             <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
+            <Route path="/productivity" element={<ProtectedRoute><Productivity /></ProtectedRoute>} />
             <Route path="/accountant-report" element={<ProtectedRoute><AccountantReport /></ProtectedRoute>} />
             <Route path="/accountant-portal" element={<ProtectedRoute><AccountantPortal /></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
