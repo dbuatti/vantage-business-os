@@ -5,6 +5,7 @@ import FinanceForm from '@/components/FinanceForm';
 import FinanceSummary from '@/components/FinanceSummary';
 import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
+import CashFlowForecast from '@/components/CashFlowForecast';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
@@ -32,6 +33,7 @@ interface TransactionSummary {
     transaction_date: string;
     category_1: string;
   }>;
+  allTransactions: any[];
 }
 
 interface BusinessStats {
@@ -105,7 +107,8 @@ const Index = () => {
         totalIncome,
         totalExpenses,
         net: totalIncome - totalExpenses,
-        recentTransactions: (data || []).slice(0, 5)
+        recentTransactions: (data || []).slice(0, 5),
+        allTransactions: data || []
       });
     } catch (error: any) {
       // Silently fail
@@ -291,6 +294,11 @@ const Index = () => {
             <div className="space-y-8">
               <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
               
+              {/* AI Forecast Widget */}
+              {transactionSummary && (
+                <CashFlowForecast transactions={transactionSummary.allTransactions} />
+              )}
+
               {/* Quick Actions Widget */}
               <Card className="border-0 shadow-xl bg-card overflow-hidden">
                 <CardHeader className="pb-3 border-b bg-muted/30">

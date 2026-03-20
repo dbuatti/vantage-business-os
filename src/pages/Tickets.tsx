@@ -45,11 +45,14 @@ import {
   Briefcase,
   Tag,
   MoreVertical,
-  ExternalLink
+  ExternalLink,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
+import TicketKanban from '@/components/TicketKanban';
 
 interface TicketData {
   id: string;
@@ -73,6 +76,7 @@ const Tickets = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('kanban');
 
   const [form, setForm] = useState({
     title: '',
@@ -134,6 +138,16 @@ const Tickets = () => {
     }
   };
 
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase.from('tickets').update({ status }).eq('id', id);
+      if (error) throw error;
+      fetchTickets();
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
+
   const filteredTickets = tickets.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          t.client_display_name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -167,9 +181,29 @@ const Tickets = () => {
           <h1 className="text-3xl font-black tracking-tight">Tickets & Projects</h1>
           <p className="text-muted-foreground">Manage client requests, support tickets, and project tasks.</p>
         </div>
-        <Button onClick={() => setShowDialog(true)} className="rounded-xl gap-2">
-          <Plus className="w-4 h-4" /> New Ticket
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-muted rounded-xl p-1">
+            <Button 
+              variant={viewMode === 'kanban' ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setViewMode('kanban')}
+              className="rounded-lg h-8 gap-2"
+            >
+              <LayoutGrid className="w-4 h-4" /> Kanban
+            </Button>
+            <Button 
+              variant={viewMode === 'table' ? 'default' : 'ghost'} 
+              size="sm" 
+              onClick={() => setViewMode('table')}
+              className="rounded-lg h-8 gap-2"
+            >
+              <List className="w-4 h-4" /> Table
+            </Button>
+          </div>
+          <Button onClick={() => setShowDialog(true)} className="rounded-xl gap-2">
+            <Plus className="w-4 h-4" /> New Ticket
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -228,32 +262,33 @@ const Tickets = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-20">ID</TableHead>
-                <TableHead>Ticket Title</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Created</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-10">Loading tickets...</TableCell></TableRow>
-              ) : filteredTickets.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">
-                    <Ticket className="w-12 h-12 mx-auto opacity-10 mb-4" />
-                    <p className="font-bold text-lg text-foreground">No tickets found</p>
-                    <p>Create a ticket to start tracking work.</p>
-                  </TableCell>
+        <CardContent className={cn("p-0", viewMode === 'kanban' && "p-6 bg-muted/10")}>
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading tickets...</p>
+            </div>
+          ) : filteredTickets.length === 0 ? (
+            <div className="text-center py-20 text-muted-foreground">
+              <Ticket className="w-12 h-12 mx-auto opacity-10 mb-4" />
+              <p className="font-bold text-lg text-foreground">No tickets found</p>
+              <p>Create a ticket to start tracking work.</p>
+            </div>
+          ) : viewMode === 'table' ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-20">ID</TableHead>
+                  <TableHead>Ticket Title</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Created</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
-              ) : (
-                filteredTickets.map((ticket) => (
+              </TableHeader>
+              <TableBody>
+                {filteredTickets.map((ticket) => (
                   <TableRow key={ticket.id} className="group hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/tickets/${ticket.id}`)}>
                     <TableCell className="font-mono text-xs text-muted-foreground">#{ticket.ticket_number}</TableCell>
                     <TableCell>
@@ -273,10 +308,12 @@ const Tickets = () => {
                       <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <TicketKanban tickets={filteredTickets} onStatusChange={handleStatusChange} />
+          )}
         </CardContent>
       </Card>
 
