@@ -105,7 +105,7 @@ Provide your response as a JSON object with this exact structure:
   "timeInvestmentAdvice": [
     {
       "area": "Area name",
-      "advice": "Why they should invest more/less time here",
+      "advice": "Why they should invest more/why they should invest less here",
       "potentialImpact": "Estimated monthly impact",
       "priority": "high|medium|low"
     }
@@ -138,6 +138,13 @@ Generate 5-8 insights, 3-5 time investment recommendations, 2-4 spending pattern
         })
       }
     )
+
+    if (response.status === 429) {
+      return new Response(
+        JSON.stringify({ error: 'RATE_LIMIT_EXCEEDED', message: 'The AI is currently busy. Please wait about 60 seconds and try again.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -172,7 +179,7 @@ Generate 5-8 insights, 3-5 time investment recommendations, 2-4 spending pattern
   } catch (error: any) {
     console.error("[financial-insights] Error:", error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'INTERNAL_ERROR', message: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

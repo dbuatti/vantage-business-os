@@ -73,6 +73,7 @@ const Insights = () => {
   const [generating, setGenerating] = useState(false);
   const [insights, setInsights] = useState<AIInsights | null>(null);
   const [lastGenerated, setLastGenerated] = useState<Date | null>(null);
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -146,6 +147,7 @@ const Insights = () => {
     }
 
     setGenerating(true);
+    setRateLimitError(null);
     try {
       const { data, error } = await supabase.functions.invoke('financial-insights', {
         body: {
@@ -155,8 +157,21 @@ const Insights = () => {
         }
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (error) {
+        // Check for rate limit error from Supabase invoke
+        if (error.status === 429 || (error.message && error.message.includes('429'))) {
+          setRateLimitError('The AI is currently busy. Please wait about 60 seconds and try again.');
+          return;
+        }
+        throw error;
+      }
+
+      if (data.error === 'RATE_LIMIT_EXCEEDED') {
+        setRateLimitError(data.message);
+        return;
+      }
+
+      if (data.error) throw new Error(data.message || data.error);
 
       setInsights(data);
       setLastGenerated(new Date());
@@ -260,6 +275,26 @@ const Insights = () => {
           </Button>
         </div>
       </div>
+
+      {/* Rate Limit Error */}
+      {rateLimitError && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 animate-in fade-in slide-in-from-top-4">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-2 bg-amber-100 rounded-xl text-amber-600">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-amber-800 dark:text-amber-200">AI is taking a breather</p>
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                {rateLimitError}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={generateInsights} className="rounded-xl border-amber-200 text-amber-700 hover:bg-amber-100">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Transaction Count Warning */}
       {filteredTransactions.length < 5 && (
