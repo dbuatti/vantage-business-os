@@ -101,7 +101,9 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, su
       <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-primary" />
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Plus className="w-5 h-5 text-primary" />
+            </div>
             Add Transaction
           </DialogTitle>
           <DialogDescription>
