@@ -23,8 +23,12 @@ serve(async (req: Request) => {
       throw new Error('GEMINI_API_KEY not configured')
     }
 
-    // Filter out 'Account' category transactions as they are internal transfers
-    const filteredTransactions = transactions.filter((t: any) => t.category_1 !== 'Account')
+    // CRITICAL: Filter out 'Account' category transactions as they are internal transfers
+    // We do this case-insensitively to be safe.
+    const filteredTransactions = transactions.filter((t: any) => 
+      t.category_1?.toLowerCase() !== 'account'
+    )
+    
     const recentTransactions = filteredTransactions.slice(0, 200)
     
     const categoryTotals: Record<string, { income: number; expenses: number; count: number }> = {}
@@ -62,6 +66,8 @@ serve(async (req: Request) => {
     })
 
     const prompt = `You are a sharp, insightful financial advisor analyzing personal and business finances. Based on the following transaction data, provide actionable insights and recommendations.
+
+NOTE: All internal transfers (marked as 'Account' category) have been EXCLUDED from this data to ensure accuracy.
 
 FINANCIAL SUMMARY:
 - Total Income: $${summaryStats?.totalIncome?.toFixed(2) || 0}

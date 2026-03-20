@@ -27,11 +27,16 @@ interface CashFlowForecastProps {
 
 const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
   const forecast = useMemo(() => {
-    if (transactions.length < 10) return null;
+    // CRITICAL: Filter out 'Account' category transactions as they are internal transfers
+    const filteredTransactions = transactions.filter(t => 
+      t.category_1?.toLowerCase() !== 'account'
+    );
+
+    if (filteredTransactions.length < 10) return null;
 
     // Group by month
     const monthlyData: Record<string, { income: number; expenses: number }> = {};
-    transactions.forEach(t => {
+    filteredTransactions.forEach(t => {
       const month = format(startOfMonth(new Date(t.transaction_date)), 'yyyy-MM');
       if (!monthlyData[month]) monthlyData[month] = { income: 0, expenses: 0 };
       if (t.amount > 0) monthlyData[month].income += t.amount;

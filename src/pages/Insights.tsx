@@ -131,7 +131,8 @@ const Insights = () => {
   };
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => t.category_1 !== 'Account');
+    // CRITICAL: Filter out 'Account' category transactions as they are internal transfers
+    return transactions.filter(t => t.category_1?.toLowerCase() !== 'account');
   }, [transactions]);
 
   const summaryStats = useMemo(() => {
@@ -157,7 +158,6 @@ const Insights = () => {
         }
       });
 
-      // Robust error handling for Supabase Edge Function responses
       if (error) {
         const status = (error as any).status || (error as any).context?.status;
         const message = error.message || "";
@@ -183,7 +183,6 @@ const Insights = () => {
       showSuccess('Insights generated successfully!');
     } catch (error: any) {
       console.error('Insights error:', error);
-      // Final fallback check for rate limits in the caught error
       if (error.message?.includes('429') || error.message?.includes('non-2xx status code')) {
         setRateLimitError('The AI is currently busy. Please wait about 60 seconds and try again.');
       } else {
