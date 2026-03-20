@@ -52,14 +52,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatDate } from '@/utils/format';
 import TransactionImporter from '@/components/TransactionImporter';
-import TransactionCharts from '@/components/TransactionCharts';
-import RecurringTransactions from '@/components/RecurringTransactions';
 import TransactionBottomBar from '@/components/TransactionBottomBar';
-import MerchantAnalysis from '@/components/MerchantAnalysis';
-import SpendingHeatmap from '@/components/SpendingHeatmap';
-import SavingsGoals from '@/components/SavingsGoals';
-import CategoryBreakdown from '@/components/CategoryBreakdown';
-import TransactionStats from '@/components/TransactionStats';
 import CategoryGroupManager from '@/components/CategoryGroupManager';
 import MonthlyGroupReport from '@/components/MonthlyGroupReport';
 import WorkWizard from '@/components/WorkWizard';
@@ -67,7 +60,8 @@ import ManualTransactionDialog from '@/components/ManualTransactionDialog';
 import TransactionTable from '@/components/TransactionTable';
 import BulkActionsBar from '@/components/BulkActionsBar';
 import TransactionFiltersComponent, { TransactionFilters } from '@/components/TransactionFilters';
-import BudgetTracker from '@/components/BudgetTracker';
+import TransactionAnalyticsTab from '@/components/TransactionAnalyticsTab';
+import TransactionPlanningTab from '@/components/TransactionPlanningTab';
 import { Transaction } from '@/types/finance';
 
 const ITEMS_PER_PAGE = 25;
@@ -684,39 +678,14 @@ const Transactions = () => {
                 </Card>
               </div>
 
-              <Tabs defaultValue="charts" className="space-y-4">
-                <TabsList className="h-9 p-1 bg-muted/30 rounded-lg">
-                  <TabsTrigger value="charts" className="text-xs rounded-md">Visual Trends</TabsTrigger>
-                  <TabsTrigger value="categories" className="text-xs rounded-md">Categories</TabsTrigger>
-                  <TabsTrigger value="merchants" className="text-xs rounded-md">Merchants</TabsTrigger>
-                  <TabsTrigger value="heatmap" className="text-xs rounded-md">Heatmap</TabsTrigger>
-                  <TabsTrigger value="stats" className="text-xs rounded-md">Key Stats</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="charts" className="space-y-4">
-                  <TransactionCharts transactions={analyticsTransactions} categoryGroups={categoryGroups} />
-                </TabsContent>
-                <TabsContent value="categories" className="space-y-4">
-                  <CategoryBreakdown transactions={analyticsTransactions} categoryGroups={categoryGroups} />
-                </TabsContent>
-                <TabsContent value="merchants" className="space-y-4">
-                  <MerchantAnalysis transactions={analyticsTransactions} />
-                </TabsContent>
-                <TabsContent value="heatmap" className="space-y-4">
-                  <SpendingHeatmap transactions={analyticsTransactions} />
-                </TabsContent>
-                <TabsContent value="stats" className="space-y-4">
-                  <TransactionStats transactions={analyticsTransactions} />
-                </TabsContent>
-              </Tabs>
+              <TransactionAnalyticsTab 
+                transactions={analyticsTransactions} 
+                categoryGroups={categoryGroups} 
+              />
             </TabsContent>
 
             <TabsContent value="planning" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <BudgetTracker transactions={analyticsTransactions} />
-                <SavingsGoals transactions={analyticsTransactions} />
-              </div>
-              <RecurringTransactions transactions={analyticsTransactions} />
+              <TransactionPlanningTab transactions={analyticsTransactions} />
             </TabsContent>
           </Tabs>
         )}

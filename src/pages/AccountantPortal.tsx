@@ -65,6 +65,8 @@ import { showError, showSuccess } from '@/utils/toast';
 import { formatCurrency, formatDate } from '@/utils/format';
 import PortalFixedCosts from '@/components/portal/PortalFixedCosts';
 import PortalSubscriptions from '@/components/portal/PortalSubscriptions';
+import PortalTaxSummary from '@/components/portal/PortalTaxSummary';
+import PortalTotalsTable from '@/components/portal/PortalTotalsTable';
 import { Transaction } from '@/types/finance';
 
 const AccountantPortal = () => {
@@ -139,7 +141,7 @@ const AccountantPortal = () => {
     return accountantSettings?.deduction_keywords || {
       rent: ['rent', 'lease', 'storage'],
       bills: ['bill', 'electricity', 'water', 'gas', 'power', 'rates', 'utilities'],
-      phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'voidafone', 'nbn'],
+      phone: ['phone', 'mobile', 'internet', 'telstra', 'optus', 'vodafone', 'nbn'],
       fuel: ['fuel', 'petrol', 'gas station', 'shell', 'caltex', '7-eleven', 'ampol', 'bp', 'toll', 'myki', 'parking']
     };
   }, [accountantSettings]);
@@ -647,239 +649,24 @@ const AccountantPortal = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="summary" className="space-y-8 animate-fade-in">
-            <div className="flex justify-end gap-2 print:hidden">
-              <Button variant="ghost" size="sm" onClick={() => expandAll(['income', ...Object.keys(expenseGroups)])} className="h-8 text-xs gap-1.5 rounded-lg">
-                <Maximize2 className="w-3.5 h-3.5" /> Expand All
-              </Button>
-              <Button variant="ghost" size="sm" onClick={collapseAll} className="h-8 text-xs gap-1.5 rounded-lg">
-                <Minimize2 className="w-3.5 h-3.5" /> Collapse All
-              </Button>
-            </div>
-
-            {/* Income Section */}
-            {businessIncome.length > 0 && (
-              <Card className="border-0 shadow-xl overflow-hidden">
-                <button 
-                  onClick={() => toggleSection('income')}
-                  className="w-full text-left bg-emerald-50 dark:bg-emerald-950/30 border-b p-4 flex items-center justify-between hover:bg-emerald-100/50 transition-colors"
-                >
-                  <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
-                  {expandedSections.has('income') ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                </button>
-                {expandedSections.has('income') && (
-                  <CardContent className="p-0 animate-fade-in">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/30">
-                          <TableHead className="w-32">Date</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {businessIncome.map((t) => (
-                          <TableRow key={t.id}>
-                            <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
-                            <TableCell className="text-sm font-bold">{t.description}</TableCell>
-                            <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
-                            <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                )}
-              </Card>
-            )}
-
-            {/* Expense Groups */}
-            {Object.entries(expenseGroups).map(([key, bucket]) => {
-              if (bucket.items.length === 0) return null;
-              const rawTotal = bucket.items.reduce((s, t) => s + Math.abs(t.amount), 0);
-              const isExpanded = expandedSections.has(key);
-
-              return (
-                <Card key={key} className="border-0 shadow-xl overflow-hidden break-inside-avoid">
-                  <button 
-                    onClick={() => toggleSection(key)}
-                    className={cn("w-full text-left border-b p-4 flex items-center justify-between transition-colors", bucket.bg, "dark:bg-muted/20 hover:opacity-90")}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn("p-2 rounded-xl bg-white dark:bg-card shadow-sm", bucket.color)}>
-                        <bucket.icon className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <CardTitle className={cn("text-xl", bucket.text, "dark:text-foreground")}>{bucket.label}</CardTitle>
-                        <CardDescription className={cn(bucket.text, "opacity-80 dark:text-muted-foreground")}>
-                          Total: <span className="font-bold">{formatCurrency(rawTotal)}</span>
-                        </CardDescription>
-                      </div>
-                    </div>
-                    {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                  </button>
-                  {isExpanded && (
-                    <CardContent className="p-0 animate-fade-in">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/30">
-                            <TableHead className="w-32">Date</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                            <TableHead className="w-1/4">Notes</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {bucket.items.map((t) => (
-                            <TableRow key={t.id} className="hover:bg-muted/20 group">
-                              <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
-                              <TableCell className="text-sm font-bold">{t.description}</TableCell>
-                              <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
-                              <TableCell className="text-right font-black text-rose-600">{formatCurrency(t.amount)}</TableCell>
-                              <TableCell className="text-xs text-muted-foreground italic">{t.notes || '—'}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
+          <TabsContent value="summary" className="animate-fade-in">
+            <PortalTaxSummary 
+              income={businessIncome}
+              expenseGroups={expenseGroups}
+              expandedSections={expandedSections}
+              onToggleSection={toggleSection}
+              onExpandAll={() => expandAll(['income', ...Object.keys(expenseGroups)])}
+              onCollapseAll={collapseAll}
+            />
           </TabsContent>
 
-          <TabsContent value="totals" className="space-y-6 animate-fade-in">
-            <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={copyAllTotals} className="rounded-xl gap-2">
-                <Copy className="w-4 h-4" /> Copy All Totals
-              </Button>
-            </div>
-            <Card className="border-0 shadow-xl overflow-hidden">
-              <CardHeader className="bg-muted/30 border-b">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <ListChecks className="w-5 h-5 text-primary" />
-                  Financial Totals by Category & Subcategory
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="pl-6">Group / Category / Subcategory</TableHead>
-                      <TableHead className="text-right">Income</TableHead>
-                      <TableHead className="text-right">Expenses</TableHead>
-                      <TableHead className="text-right pr-6">Net Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {groupedWorkData.map(([groupName, data]) => (
-                      <React.Fragment key={groupName}>
-                        <TableRow className="bg-muted/20 hover:bg-muted/20">
-                          <TableCell className="pl-6 font-black uppercase tracking-wider text-xs text-primary">
-                            {groupName}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {data.income > 0 ? (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 font-bold text-emerald-600 hover:bg-emerald-50 gap-2"
-                                onClick={() => copyToClipboard(data.income.toString(), `${groupName}-inc`)}
-                              >
-                                {formatCurrency(data.income)}
-                                {copiedId === `${groupName}-inc` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
-                              </Button>
-                            ) : '—'}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {data.expenses > 0 ? (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-8 font-bold text-rose-600 hover:bg-rose-50 gap-2"
-                                onClick={() => copyToClipboard(data.expenses.toString(), `${groupName}-exp`)}
-                              >
-                                {formatCurrency(data.expenses)}
-                                {copiedId === `${groupName}-exp` ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100" />}
-                              </Button>
-                            ) : '—'}
-                          </TableCell>
-                          <TableCell className={cn("text-right font-black pr-6", (data.income - data.expenses) >= 0 ? "text-emerald-700" : "text-rose-700")}>
-                            {formatCurrency(data.income - data.expenses)}
-                          </TableCell>
-                        </TableRow>
-                        {Object.entries(data.categories)
-                          .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
-                          .map(([catName, catData]) => (
-                            <React.Fragment key={catName}>
-                              <TableRow className="hover:bg-muted/5 border-b group bg-muted/5">
-                                <TableCell className="pl-10 text-sm font-bold text-foreground/80">
-                                  {catName}
-                                  <span className="ml-2 text-[10px] text-muted-foreground font-normal">({catData.count} txns)</span>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {catData.income > 0 ? (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-7 text-xs text-emerald-600/80 hover:bg-emerald-50 gap-1.5"
-                                      onClick={() => copyToClipboard(catData.income.toString(), `${catName}-inc`)}
-                                    >
-                                      {formatCurrency(catData.income)}
-                                      {copiedId === `${catName}-inc` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
-                                    </Button>
-                                  ) : '—'}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {catData.expenses > 0 ? (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-7 text-xs text-rose-600/80 hover:bg-rose-50 gap-1.5"
-                                      onClick={() => copyToClipboard(catData.expenses.toString(), `${catName}-exp`)}
-                                    >
-                                      {formatCurrency(catData.expenses)}
-                                      {copiedId === `${catName}-exp` ? <Check className="w-2.5 h-2.5" /> : <Copy className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100" />}
-                                    </Button>
-                                  ) : '—'}
-                                </TableCell>
-                                <TableCell className={cn("text-right text-sm font-black pr-6 tabular-nums", (catData.income - data.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                                  {formatCurrency(catData.income - catData.expenses)}
-                                </TableCell>
-                              </TableRow>
-                              {Object.entries(catData.subcategories)
-                                .sort((a, b) => (b[1].income + b[1].expenses) - (a[1].income + a[1].expenses))
-                                .map(([subName, subData]) => (
-                                  <TableRow key={subName} className="hover:bg-muted/5 border-b last:border-0 group">
-                                    <TableCell className="pl-16 text-xs font-medium text-muted-foreground">
-                                      {subName}
-                                      <span className="ml-2 text-[9px] opacity-60">({subData.count} txns)</span>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      {subData.income > 0 ? (
-                                        <span className="text-[11px] text-emerald-600/60 tabular-nums">{formatCurrency(subData.income)}</span>
-                                      ) : '—'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      {subData.expenses > 0 ? (
-                                        <span className="text-[11px] text-rose-600/60 tabular-nums">{formatCurrency(subData.expenses)}</span>
-                                      ) : '—'}
-                                    </TableCell>
-                                    <TableCell className={cn("text-right text-[11px] font-bold pr-6 tabular-nums opacity-80", (subData.income - subData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                                      {formatCurrency(subData.income - subData.expenses)}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                            </React.Fragment>
-                          ))}
-                      </React.Fragment>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+          <TabsContent value="totals" className="animate-fade-in">
+            <PortalTotalsTable 
+              data={groupedWorkData}
+              onCopyAmount={copyToClipboard}
+              onCopyAll={copyAllTotals}
+              copiedId={copiedId}
+            />
           </TabsContent>
 
           <TabsContent value="fixed-costs" className="animate-fade-in">
