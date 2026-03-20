@@ -28,42 +28,31 @@ import {
 } from "@/components/ui/select";
 import { 
   ArrowLeft, 
-  Trash2,
-  Pencil,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Download,
-  ChevronLeft,
-  ChevronRight,
-  BarChart3,
-  X,
-  Filter,
-  Calculator,
-  Wand2,
-  Search,
-  LayoutGrid,
-  PieChart as PieChartIcon,
-  Calendar as CalendarIcon,
-  Loader2,
-  Plus,
-  FileText,
-  Briefcase,
-  Repeat,
-  ArrowUpRight,
-  Tags,
-  User,
-  Target,
-  Activity
+  TrendingDown, 
+  DollarSign, 
+  Download, 
+  ChevronLeft, 
+  ChevronRight, 
+  Calculator, 
+  Wand2, 
+  LayoutGrid, 
+  PieChart as PieChartIcon, 
+  Calendar as CalendarIcon, 
+  Loader2, 
+  Plus, 
+  FileText, 
+  Briefcase, 
+  Repeat, 
+  ArrowUpRight, 
+  Target, 
+  Activity 
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatDate } from '@/utils/format';
 import TransactionImporter from '@/components/TransactionImporter';
 import TransactionCharts from '@/components/TransactionCharts';
-import MonthlyComparison from '@/components/MonthlyComparison';
-import BudgetTracker from '@/components/BudgetTracker';
 import RecurringTransactions from '@/components/RecurringTransactions';
 import TransactionBottomBar from '@/components/TransactionBottomBar';
 import MerchantAnalysis from '@/components/MerchantAnalysis';
@@ -77,6 +66,8 @@ import WorkWizard from '@/components/WorkWizard';
 import ManualTransactionDialog from '@/components/ManualTransactionDialog';
 import TransactionTable from '@/components/TransactionTable';
 import BulkActionsBar from '@/components/BulkActionsBar';
+import TransactionFiltersComponent, { TransactionFilters } from '@/components/TransactionFilters';
+import BudgetTracker from '@/components/BudgetTracker';
 import { Transaction } from '@/types/finance';
 
 const ITEMS_PER_PAGE = 25;
@@ -93,7 +84,6 @@ const Transactions = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showBulkCategorize, setShowBulkCategorize] = useState(false);
@@ -101,13 +91,15 @@ const Transactions = () => {
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [isSavingYear, setIsSavingYear] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState('All');
-  const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
-  const [filterWork, setFilterWork] = useState<'all' | 'work' | 'personal'>('all');
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
-  const [minAmount, setMinAmount] = useState('');
-  const [maxAmount, setMaxAmount] = useState('');
+  const [filters, setFilters] = useState<TransactionFilters>({
+    search: '',
+    category: 'All',
+    type: 'all',
+    work: 'all',
+    dateRange: { from: undefined, to: undefined },
+    minAmount: '',
+    maxAmount: ''
+  });
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editForm, setEditForm] = useState({
@@ -357,19 +349,6 @@ const Transactions = () => {
     }
   };
 
-  const clearFilters = () => {
-    setSearchQuery('');
-    setFilterCategory('All');
-    setFilterType('all');
-    setFilterWork('all');
-    setDateRange({ from: undefined, to: undefined });
-    setMinAmount('');
-    setMaxAmount('');
-    setCurrentPage(1);
-  };
-
-  const hasActiveFilters = searchQuery || filterCategory !== 'All' || filterType !== 'all' || filterWork !== 'all' || dateRange.from || dateRange.to || minAmount || maxAmount;
-
   const availableYears = useMemo(() => {
     const years = new Set(transactions.map(t => new Date(t.transaction_date).getFullYear().toString()));
     return ['All', ...Array.from(years).sort((a, b) => b.localeCompare(a))];
@@ -377,17 +356,17 @@ const Transactions = () => {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
-      const matchesSearch = !searchQuery ||
-        t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.category_1?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.account_label?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.notes?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = filterCategory === 'All' || t.category_1 === filterCategory;
-      const matchesType = filterType === 'all' || (filterType === 'income' && t.amount > 0) || (filterType === 'expense' && t.amount < 0);
-      const matchesWork = filterWork === 'all' || (filterWork === 'work' && t.is_work) || (filterWork === 'personal' && !t.is_work);
-      const matchesDateRange = (!dateRange.from || new Date(t.transaction_date) >= dateRange.from) && (!dateRange.to || new Date(t.transaction_date) <= dateRange.to);
-      const matchesMinAmount = !minAmount || Math.abs(t.amount) >= parseFloat(minAmount);
-      const matchesMaxAmount = !maxAmount || Math.abs(t.amount) <= parseFloat(maxAmount);
+      const matchesSearch = !filters.search ||
+        t.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        t.category_1?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        t.account_label?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        t.notes?.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesCategory = filters.category === 'All' || t.category_1 === filters.category;
+      const matchesType = filters.type === 'all' || (filters.type === 'income' && t.amount > 0) || (filters.type === 'expense' && t.amount < 0);
+      const matchesWork = filters.work === 'all' || (filters.work === 'work' && t.is_work) || (filters.work === 'personal' && !t.is_work);
+      const matchesDateRange = (!filters.dateRange.from || new Date(t.transaction_date) >= filters.dateRange.from) && (!filters.dateRange.to || new Date(t.transaction_date) <= filters.dateRange.to);
+      const matchesMinAmount = !filters.minAmount || Math.abs(t.amount) >= parseFloat(filters.minAmount);
+      const matchesMaxAmount = !filters.maxAmount || Math.abs(t.amount) <= parseFloat(filters.maxAmount);
       const matchesYear = selectedYear === 'All' || new Date(t.transaction_date).getFullYear().toString() === selectedYear;
 
       return matchesSearch && matchesCategory && matchesType && matchesWork && matchesDateRange && matchesMinAmount && matchesMaxAmount && matchesYear;
@@ -401,7 +380,7 @@ const Transactions = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [transactions, searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount, sortField, sortOrder, selectedYear]);
+  }, [transactions, filters, sortField, sortOrder, selectedYear]);
 
   const analyticsTransactions = useMemo(() => {
     return filteredTransactions.filter(t => t.category_1 !== 'Account');
@@ -459,17 +438,7 @@ const Transactions = () => {
     showSuccess(`Exported ${filteredTransactions.length} transactions`);
   };
 
-  const datePresets = [
-    { label: 'Last 7 days', range: { from: subDays(new Date(), 7), to: new Date() } },
-    { label: 'Last 30 days', range: { from: subDays(new Date(), 30), to: new Date() } },
-    { label: 'This month', range: { from: startOfMonth(new Date()), to: new Date() } },
-    { label: 'Last month', range: { from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) } },
-    { label: 'Last 3 months', range: { from: subMonths(new Date(), 3), to: new Date() } },
-    { label: 'Last 6 months', range: { from: subMonths(new Date(), 6), to: new Date() } },
-    { label: 'This year', range: { from: new Date(new Date().getFullYear(), 0, 1), to: new Date() } },
-  ];
-
-  useEffect(() => { setCurrentPage(1); setSelectedIds(new Set()); }, [searchQuery, filterCategory, filterType, filterWork, dateRange, minAmount, maxAmount, selectedYear]);
+  useEffect(() => { setCurrentPage(1); setSelectedIds(new Set()); }, [filters, selectedYear]);
 
   if (authLoading) return null;
 
@@ -534,42 +503,6 @@ const Transactions = () => {
           </div>
         </div>
 
-        {/* Quick Filters Bar */}
-        <div className="flex flex-wrap items-center gap-2 animate-fade-in">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => { clearFilters(); setFilterWork('work'); }}
-            className={cn("rounded-full px-4 h-8 gap-2", filterWork === 'work' ? "bg-amber-100 text-amber-700" : "bg-muted/50")}
-          >
-            <Briefcase className="w-3.5 h-3.5" /> Work Only
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => { clearFilters(); setFilterCategory('Subscription'); }}
-            className={cn("rounded-full px-4 h-8 gap-2", filterCategory === 'Subscription' ? "bg-indigo-100 text-indigo-700" : "bg-muted/50")}
-          >
-            <Repeat className="w-3.5 h-3.5" /> Subscriptions
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => { clearFilters(); setFilterType('income'); }}
-            className={cn("rounded-full px-4 h-8 gap-2", filterType === 'income' ? "bg-emerald-100 text-emerald-700" : "bg-muted/50")}
-          >
-            <ArrowUpRight className="w-3.5 h-3.5" /> Income
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => { clearFilters(); setFilterType('expense'); }}
-            className={cn("rounded-full px-4 h-8 gap-2", filterType === 'expense' ? "bg-rose-100 text-rose-700" : "bg-muted/50")}
-          >
-            <TrendingDown className="w-3.5 h-3.5" /> Expenses
-          </Button>
-        </div>
-
         {/* Summary Cards */}
         {analyticsTransactions.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
@@ -578,7 +511,7 @@ const Transactions = () => {
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
                   <div><p className="text-sm font-medium text-white/80">Income</p><p className="text-2xl font-bold">{formatCurrency(summaryStats.income)}</p></div>
-                  <div className="p-2 bg-white/20 rounded-xl"><TrendingUp className="w-5 h-5" /></div>
+                  <div className="p-2 bg-white/20 rounded-xl"><ArrowUpRight className="w-5 h-5" /></div>
                 </div>
                 {summaryStats.workIncome > 0 && <p className="text-xs text-white/70 mt-2">{formatCurrency(summaryStats.workIncome)} from work</p>}
               </CardContent>
@@ -649,81 +582,14 @@ const Transactions = () => {
                 <TabsContent value="list" className="space-y-4">
                   {/* Search & Filter Bar */}
                   <Card className="border-0 shadow-lg">
-                    <CardContent className="p-4 space-y-4">
-                      <div className="flex flex-col lg:flex-row gap-4">
-                        <div className="flex-1 relative">
-                          <Input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search description, category, notes..."
-                            className="pl-10 rounded-xl h-11"
-                          />
-                          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Select value={filterCategory} onValueChange={setFilterCategory}>
-                            <SelectTrigger className="w-40 rounded-xl h-11"><SelectValue placeholder="Category" /></SelectTrigger>
-                            <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
-                          </Select>
-                          <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
-                            <SelectTrigger className="w-32 rounded-xl h-11"><SelectValue placeholder="Type" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Types</SelectItem>
-                              <SelectItem value="income">Income</SelectItem>
-                              <SelectItem value="expense">Expense</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className={cn("rounded-xl h-11 px-4", showFilters && "bg-primary/5 border-primary/20")}>
-                            <Filter className="w-4 h-4 mr-2" />Filters
-                          </Button>
-                          {hasActiveFilters && (
-                            <Button variant="ghost" size="sm" onClick={clearFilters} className="rounded-xl h-11 text-muted-foreground">
-                              <X className="w-4 h-4 mr-1" />Clear
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-
-                      {showFilters && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t animate-fade-in">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Date Range</Label>
-                            <div className="flex flex-wrap gap-1">
-                              {datePresets.map(({ label, range }) => (
-                                <Button
-                                  key={label}
-                                  variant="ghost"
-                                  size="sm"
-                                  className={cn("h-7 text-[10px] rounded-lg px-2", dateRange.from?.getTime() === range.from.getTime() && "bg-primary/10 text-primary")}
-                                  onClick={() => setDateRange(range)}
-                                >
-                                  {label}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Work Status</Label>
-                            <Select value={filterWork} onValueChange={(v) => setFilterWork(v as any)}>
-                              <SelectTrigger className="rounded-xl h-9"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="all">All Transactions</SelectItem>
-                                <SelectItem value="work">Work Only</SelectItem>
-                                <SelectItem value="personal">Personal Only</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount Range</Label>
-                            <div className="flex items-center gap-2">
-                              <Input type="number" placeholder="Min" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} className="h-9 rounded-xl text-sm" />
-                              <span className="text-muted-foreground text-sm">to</span>
-                              <Input type="number" placeholder="Max" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} className="h-9 rounded-xl text-sm" />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                    <CardContent className="p-4">
+                      <TransactionFiltersComponent 
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        categories={categories}
+                        totalCount={transactions.length}
+                        filteredCount={filteredTransactions.length}
+                      />
                     </CardContent>
                   </Card>
 
@@ -806,7 +672,7 @@ const Transactions = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                   <CardContent className="p-6 flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 className="w-6 h-6" /></div>
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Activity className="w-6 h-6" /></div>
                     <div><h3 className="font-bold">Charts</h3><p className="text-xs text-muted-foreground">Visual trends & breakdowns</p></div>
                   </CardContent>
                 </Card>

@@ -65,18 +65,7 @@ import { showError, showSuccess } from '@/utils/toast';
 import { formatCurrency, formatDate } from '@/utils/format';
 import PortalFixedCosts from '@/components/portal/PortalFixedCosts';
 import PortalSubscriptions from '@/components/portal/PortalSubscriptions';
-
-interface Transaction {
-  id: string;
-  transaction_date: string;
-  description: string;
-  amount: number;
-  category_1: string;
-  category_2: string;
-  is_work: boolean;
-  notes: string;
-  account_label: string;
-}
+import { Transaction } from '@/types/finance';
 
 const AccountantPortal = () => {
   const { token } = useParams();
@@ -856,7 +845,7 @@ const AccountantPortal = () => {
                                     </Button>
                                   ) : '—'}
                                 </TableCell>
-                                <TableCell className={cn("text-right text-sm font-black pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                                <TableCell className={cn("text-right text-sm font-black pr-6 tabular-nums", (catData.income - data.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
                                   {formatCurrency(catData.income - catData.expenses)}
                                 </TableCell>
                               </TableRow>
