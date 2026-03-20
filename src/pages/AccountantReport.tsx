@@ -48,7 +48,8 @@ import {
   ExternalLink,
   Wand2,
   FileText,
-  PieChart
+  PieChart,
+  ShieldAlert
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -75,6 +76,7 @@ const AccountantReport = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   const [showWizard, setShowWizard] = useState(false);
+  const [taxRate, setTaxRate] = useState<number>(30);
   
   // Edit state
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -206,6 +208,7 @@ const AccountantReport = () => {
   const stats = useMemo(() => {
     const income = workTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
     const expenses = workTransactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+    const net = income - expenses;
     
     const categoryBreakdown: Record<string, number> = {};
     workTransactions.filter(t => t.amount < 0).forEach(t => {
@@ -216,8 +219,10 @@ const AccountantReport = () => {
     const missingNotes = workTransactions.filter(t => !t.notes && Math.abs(t.amount) > 50);
     const unmapped = filteredTransactions.filter(t => !t.category_1 && Math.abs(t.amount) > 0);
 
-    return { income, expenses, net: income - expenses, categoryBreakdown, missingNotes, unmapped };
-  }, [workTransactions, filteredTransactions]);
+    const estimatedTax = net > 0 ? net * (taxRate / 100) : 0;
+
+    return { income, expenses, net, categoryBreakdown, missingNotes, unmapped, estimatedTax };
+  }, [workTransactions, filteredTransactions, taxRate]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -382,7 +387,7 @@ const AccountantReport = () => {
         </Card>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-0 shadow-lg bg-emerald-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
@@ -408,6 +413,25 @@ const AccountantReport = () => {
                 <Briefcase className="w-5 h-5 opacity-50" />
               </div>
               <p className="text-3xl font-black">{formatCurrency(stats.net)}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-lg bg-amber-500 text-white relative overflow-hidden">
+            <div className="absolute -right-4 -bottom-4 opacity-10"><ShieldAlert className="w-24 h-24" /></div>
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium opacity-80">Est. Tax Liability</p>
+                <div className="flex items-center gap-1 bg-white/20 rounded px-1.5 py-0.5">
+                  <Input 
+                    type="number" 
+                    value={taxRate} 
+                    onChange={(e) => setTaxRate(parseInt(e.target.value) || 0)}
+                    className="w-8 h-5 p-0 bg-transparent border-0 text-white text-xs font-bold text-center focus-visible:ring-0"
+                  />
+                  <span className="text-[10px] font-bold">%</span>
+                </div>
+              </div>
+              <p className="text-3xl font-black">{formatCurrency(stats.estimatedTax)}</p>
+              <p className="text-[10px] opacity-70 mt-1 italic">Based on {taxRate}% flat rate</p>
             </CardContent>
           </Card>
         </div>

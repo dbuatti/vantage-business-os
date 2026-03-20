@@ -46,7 +46,9 @@ import {
   ExternalLink,
   PlusCircle,
   X,
-  Package
+  Package,
+  BellRing,
+  Mail
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
@@ -67,6 +69,7 @@ interface Invoice {
 interface Client {
   id: string;
   display_name: string;
+  email?: string;
 }
 
 interface Product {
@@ -119,7 +122,7 @@ const Invoices = () => {
   };
 
   const fetchClients = async () => {
-    const { data } = await supabase.from('clients').select('id, display_name');
+    const { data } = await supabase.from('clients').select('id, display_name, email');
     setClients(data || []);
   };
 
@@ -208,6 +211,20 @@ const Invoices = () => {
     }
   };
 
+  const sendReminder = (invoice: Invoice) => {
+    const client = clients.find(c => c.id === invoice.client_id);
+    if (!client?.email) {
+      showError('Client has no email address set');
+      return;
+    }
+
+    const subject = `Reminder: Invoice ${invoice.number} is ${invoice.status === 'Overdue' ? 'Overdue' : 'Due Soon'}`;
+    const body = `Hi ${invoice.client_display_name},\n\nThis is a friendly reminder that invoice ${invoice.number} for ${formatCurrency(invoice.total_amount)} is ${invoice.status === 'Overdue' ? 'now overdue' : 'due on ' + format(new Date(invoice.due_date), 'MMM dd')}.\n\nPlease let us know if you have any questions.\n\nBest regards,\n${session?.user.email?.split('@')[0]}`;
+    
+    window.location.href = `mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    showSuccess('Reminder email template opened');
+  };
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
   };
@@ -292,9 +309,14 @@ const Invoices = () => {
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {invoice.status !== 'Paid' && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-emerald-600" onClick={() => updateStatus(invoice.id, 'Paid')}>
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-amber-600" onClick={() => sendReminder(invoice)} title="Send Reminder">
+                              <BellRing className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-emerald-600" onClick={() => updateStatus(invoice.id, 'Paid')} title="Mark Paid">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
                         )}
                         <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg">
                           <Link to={`/invoices/${invoice.id}`}>

@@ -8,7 +8,7 @@ import MonthlySummary from '@/components/MonthlySummary';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, subMonths, startOfMonth } from 'date-fns';
 
 interface TransactionSummary {
   totalTransactions: number;
@@ -39,6 +39,8 @@ interface BusinessStats {
   outstandingAmount: number;
   recentInvoices: any[];
   taxReadiness: number;
+  burnRate: number;
+  runway: number;
 }
 
 const Index = () => {
@@ -119,7 +121,7 @@ const Index = () => {
         .order('invoice_date', { ascending: false })
         .limit(3);
       
-      const { data: txns } = await supabase.from('finance_transactions').select('is_work, notes, category_1');
+      const { data: txns } = await supabase.from('finance_transactions').select('is_work, notes, category_1, amount, transaction_date');
       
       // Calculate tax readiness
       const workTxns = txns?.filter(t => t.is_work) || [];
@@ -129,11 +131,29 @@ const Index = () => {
         ? Math.round(((withNotes / workTxns.length) * 50) + ((withCategory / workTxns.length) * 50))
         : 0;
 
+      // Calculate Burn Rate (avg expenses last 3 months)
+      const threeMonthsAgo = subMonths(new Date(), 3);
+      const recentExpenses = txns?.filter(t => t.amount < 0 && new Date(t.transaction_date) >= threeMonthsAgo) || [];
+      const burnRate = recentExpenses.reduce((s, t) => s + Math.abs(t.amount), 0) / 3;
+
+      // Calculate Runway
+      const { data: latestSavings } = await supabase
+        .from('finance_entries')
+        .select('amount')
+        .eq('account', 'Savings')
+        .order('date', { ascending: false })
+        .limit(1)
+        .single();
+      
+      const runway = burnRate > 0 ? (latestSavings?.amount || 0) / burnRate : 0;
+
       setBusinessStats({
         totalClients: clients?.length || 0,
         outstandingAmount: clients?.reduce((s, c) => s + (c.total_receivable || 0), 0) || 0,
         recentInvoices: invoices || [],
-        taxReadiness: readiness
+        taxReadiness: readiness,
+        burnRate,
+        runway
       });
     } catch (error) {
       // Silently fail
@@ -231,13 +251,25 @@ const Index = () => {
                     </div>
                     
                     <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                          <span className="opacity-70">Tax Readiness</span>
-                          <span>{businessStats.taxReadiness}%</span>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                            <span className="opacity-70">Tax Readiness</span>
+                            <span>{businessStats.taxReadiness}%</span>
+                          </div>
+                          <Progress value={businessStats.taxReadiness} className="h-2 bg-white/20 [&>div]:bg-white" />
                         </div>
-                        <Progress value={businessStats.taxReadiness} className="h-2 bg-white/20 [&>div]:bg-white" />
-                        <p className="text-[10px] opacity-60 italic">Based on categorized work transactions and notes</p>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                            <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Burn Rate</p>
+                            <p className="text-lg font-black">{formatCurrency(businessStats.burnRate)}<span className="text-[10px] font-medium opacity-60">/mo</span></p>
+                          </div>
+                          <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                            <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Runway</p>
+                            <p className="text-lg font-black">{businessStats.runway.toFixed(1)}<span className="text-[10px] font-medium opacity-60"> months</span></p>
+                          </div>
+                        </div>
                       </div>
                       <div className="flex gap-3 justify-end">
                         <Button variant="secondary" asChild className="rounded-2xl font-bold px-6 h-12 shadow-xl">
