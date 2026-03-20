@@ -9,7 +9,7 @@ import CashFlowForecast from '@/components/CashFlowForecast';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock } from 'lucide-react';
+import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock, Sun, Moon, Coffee } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,19 +20,14 @@ import { useAuth } from '@/components/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { format, subMonths, startOfMonth } from 'date-fns';
+import { formatCurrency } from '@/utils/format';
 
 interface TransactionSummary {
   totalTransactions: number;
   totalIncome: number;
   totalExpenses: number;
   net: number;
-  recentTransactions: Array<{
-    id: string;
-    description: string;
-    amount: number;
-    transaction_date: string;
-    category_1: string;
-  }>;
+  recentTransactions: any[];
   allTransactions: any[];
 }
 
@@ -110,9 +105,7 @@ const Index = () => {
         recentTransactions: (data || []).slice(0, 5),
         allTransactions: data || []
       });
-    } catch (error: any) {
-      // Silently fail
-    }
+    } catch (error: any) {}
   };
 
   const fetchBusinessStats = async () => {
@@ -126,7 +119,6 @@ const Index = () => {
       
       const { data: txns } = await supabase.from('finance_transactions').select('is_work, notes, category_1, amount, transaction_date');
       
-      // Calculate tax readiness
       const workTxns = txns?.filter(t => t.is_work) || [];
       const withNotes = workTxns.filter(t => t.notes).length;
       const withCategory = workTxns.filter(t => t.category_1).length;
@@ -134,12 +126,10 @@ const Index = () => {
         ? Math.round(((withNotes / workTxns.length) * 50) + ((withCategory / workTxns.length) * 50))
         : 0;
 
-      // Calculate Burn Rate (avg expenses last 3 months)
       const threeMonthsAgo = subMonths(new Date(), 3);
       const recentExpenses = txns?.filter(t => t.amount < 0 && new Date(t.transaction_date) >= threeMonthsAgo) || [];
       const burnRate = recentExpenses.reduce((s, t) => s + Math.abs(t.amount), 0) / 3;
 
-      // Calculate Runway
       const { data: latestSavings } = await supabase
         .from('finance_entries')
         .select('amount')
@@ -158,9 +148,7 @@ const Index = () => {
         burnRate,
         runway
       });
-    } catch (error) {
-      // Silently fail
-    }
+    } catch (error) {}
   };
 
   const addEntry = async (entry: FinanceEntry) => {
@@ -200,26 +188,36 @@ const Index = () => {
       });
   }, [entries]);
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(val);
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { text: 'Good Morning', icon: Coffee, color: 'text-amber-500' };
+    if (hour < 18) return { text: 'Good Afternoon', icon: Sun, color: 'text-orange-500' };
+    return { text: 'Good Evening', icon: Moon, color: 'text-indigo-500' };
   };
+
+  const greeting = getGreeting();
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-fade-in">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-black tracking-tight">Financial Overview</h1>
-          <p className="text-muted-foreground text-lg">Welcome back. Here's your financial pulse.</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <greeting.icon className={cn("w-5 h-5", greeting.color)} />
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{greeting.text}</span>
+          </div>
+          <h1 className="text-4xl font-black tracking-tight">
+            Command Center
+          </h1>
+          <p className="text-muted-foreground text-lg">Welcome back, {session?.user.email?.split('@')[0]}.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3 py-1 rounded-full font-bold">
-            <ShieldCheck className="w-3 h-3 mr-1.5" /> PRO ACCOUNT
-          </Badge>
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">System Status</span>
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-3 py-1 rounded-full font-bold gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              ALL SYSTEMS NOMINAL
+            </Badge>
+          </div>
         </div>
       </header>
 
@@ -237,7 +235,6 @@ const Index = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              {/* Business Health Widget */}
               {businessStats && (
                 <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-700 text-white overflow-hidden relative group">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
@@ -294,12 +291,10 @@ const Index = () => {
             <div className="space-y-8">
               <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
               
-              {/* AI Forecast Widget */}
               {transactionSummary && (
                 <CashFlowForecast transactions={transactionSummary.allTransactions} />
               )}
 
-              {/* Quick Actions Widget */}
               <Card className="border-0 shadow-xl bg-card overflow-hidden">
                 <CardHeader className="pb-3 border-b bg-muted/30">
                   <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Actions</CardTitle>
@@ -341,36 +336,9 @@ const Index = () => {
                   </Button>
                 </CardContent>
               </Card>
-
-              {/* Recent Invoices Widget */}
-              {businessStats && businessStats.recentInvoices.length > 0 && (
-                <Card className="border-0 shadow-xl">
-                  <CardHeader className="pb-3 border-b bg-muted/30">
-                    <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Invoices</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-3 space-y-2">
-                    {businessStats.recentInvoices.map((inv) => (
-                      <Link key={inv.id} to={`/invoices/${inv.id}`} className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/50 transition-all border border-transparent hover:border-border group">
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{inv.client_display_name}</p>
-                          <p className="text-[10px] text-muted-foreground uppercase font-bold">{inv.number}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-black">{formatCurrency(inv.total_amount)}</p>
-                          <Badge variant="outline" className={cn(
-                            "text-[8px] h-4 px-1.5 rounded-md uppercase font-black",
-                            inv.status === 'Paid' ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
-                          )}>{inv.status}</Badge>
-                        </div>
-                      </Link>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
 
-          {/* Transaction Summary Card */}
           {transactionSummary && transactionSummary.totalTransactions > 0 && (
             <Card className="border-0 shadow-2xl bg-card animate-slide-up overflow-hidden">
               <CardHeader className="pb-4 border-b bg-muted/20">
@@ -434,7 +402,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Recent Transactions */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Activity</p>

@@ -62,6 +62,7 @@ import BulkActionsBar from '@/components/BulkActionsBar';
 import TransactionFiltersComponent, { TransactionFilters } from '@/components/TransactionFilters';
 import TransactionAnalyticsTab from '@/components/TransactionAnalyticsTab';
 import TransactionPlanningTab from '@/components/TransactionPlanningTab';
+import UndoToast from '@/components/UndoToast';
 import { Transaction } from '@/types/finance';
 
 const ITEMS_PER_PAGE = 25;
@@ -84,6 +85,9 @@ const Transactions = () => {
   const [bulkCategory, setBulkCategory] = useState('');
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [isSavingYear, setIsSavingYear] = useState(false);
+
+  // Undo state
+  const [undoAction, setUndoAction] = useState<{ message: string; action: () => Promise<void> } | null>(null);
 
   const [filters, setFilters] = useState<TransactionFilters>({
     search: '',
@@ -285,14 +289,30 @@ const Transactions = () => {
 
   const handleBulkWorkStatus = async (isWork: boolean) => {
     if (selectedIds.size === 0) return;
+    
+    const ids = Array.from(selectedIds);
+    const originalStates = transactions
+      .filter(t => selectedIds.has(t.id!))
+      .map(t => ({ id: t.id!, is_work: t.is_work }));
+
     try {
       const { error } = await supabase
         .from('finance_transactions')
         .update({ is_work: isWork })
-        .in('id', Array.from(selectedIds));
+        .in('id', ids);
       
       if (error) throw error;
-      showSuccess(`Updated ${selectedIds.size} transactions to ${isWork ? 'Work' : 'Personal'}`);
+      
+      setUndoAction({
+        message: `Marked ${ids.length} items as ${isWork ? 'Work' : 'Personal'}`,
+        action: async () => {
+          for (const state of originalStates) {
+            await supabase.from('finance_transactions').update({ is_work: state.is_work }).eq('id', state.id);
+          }
+          fetchTransactions();
+        }
+      });
+
       setSelectedIds(new Set());
       fetchTransactions();
     } catch (error: any) {
@@ -301,12 +321,24 @@ const Transactions = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const transaction = transactions.find(t => t.id === id);
+    if (!transaction) return;
+
     try {
       const { error } = await supabase.from('finance_transactions').delete().eq('id', id);
       if (error) throw error;
+      
+      setUndoAction({
+        message: `Deleted transaction: ${transaction.description}`,
+        action: async () => {
+          const { id: _, ...rest } = transaction;
+          await supabase.from('finance_transactions').insert([rest]);
+          fetchTransactions();
+        }
+      });
+
       setTransactions(prev => prev.filter(t => t.id !== id));
       setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-      showSuccess('Transaction deleted');
     } catch (error: any) {
       showError(error.message);
     }
@@ -315,10 +347,21 @@ const Transactions = () => {
   const handleBulkDelete = async () => {
     try {
       const ids = Array.from(selectedIds);
+      const selectedTransactions = transactions.filter(t => selectedIds.has(t.id!));
+      
       const { error } = await supabase.from('finance_transactions').delete().in('id', ids);
       if (error) throw error;
+      
+      setUndoAction({
+        message: `Deleted ${ids.length} transactions`,
+        action: async () => {
+          const toInsert = selectedTransactions.map(({ id: _, ...rest }) => rest);
+          await supabase.from('finance_transactions').insert(toInsert);
+          fetchTransactions();
+        }
+      });
+
       setTransactions(prev => prev.filter(t => !selectedIds.has(t.id!)));
-      showSuccess(`${ids.length} transactions deleted`);
       setSelectedIds(new Set());
       setShowBulkDelete(false);
     } catch (error: any) {
@@ -663,21 +706,6 @@ const Transactions = () => {
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Activity className="w-6 h-6" /></div>
-                    <div><h3 className="font-bold">Charts</h3><p className="text-xs text-muted-foreground">Visual trends & breakdowns</p></div>
-                  </CardContent>
-                </Card>
-                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600"><Activity className="w-6 h-6" /></div>
-                    <div><h3 className="font-bold">Stats</h3><p className="text-xs text-muted-foreground">Key financial metrics</p></div>
-                  </CardContent>
-                </Card>
-              </div>
-
               <TransactionAnalyticsTab 
                 transactions={analyticsTransactions} 
                 categoryGroups={categoryGroups} 
@@ -826,6 +854,15 @@ const Transactions = () => {
           onOpenChange={setShowWizard}
           onComplete={fetchTransactions}
         />
+
+        {/* Undo Toast */}
+        {undoAction && (
+          <UndoToast 
+            message={undoAction.message}
+            onUndo={undoAction.action}
+            onDismiss={() => setUndoAction(null)}
+          />
+        )}
       </div>
 
       {/* Bottom Summary Bar */}
