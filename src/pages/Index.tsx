@@ -9,7 +9,7 @@ import CashFlowForecast from '@/components/CashFlowForecast';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock, Sun, Moon, Coffee } from 'lucide-react';
+import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock, Sun, Moon, Coffee, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { format, subMonths, startOfMonth } from 'date-fns';
 import { formatCurrency } from '@/utils/format';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TransactionSummary {
   totalTransactions: number;
@@ -236,7 +242,7 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
               {businessStats && (
-                <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-700 text-white overflow-hidden relative group">
+                <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-700 text-white overflow-hidden relative group animate-slide-up opacity-0 stagger-2">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
                   <CardContent className="p-8 relative">
                     <div className="flex items-start justify-between">
@@ -262,11 +268,35 @@ const Index = () => {
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
-                            <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Burn Rate</p>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <p className="text-[10px] font-bold uppercase opacity-60">Burn Rate</p>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button className="opacity-40 hover:opacity-100 transition-opacity"><Info className="w-2.5 h-2.5" /></button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="bg-white text-foreground border-0 shadow-xl rounded-xl p-3 max-w-[200px]">
+                                    <p className="text-xs font-medium leading-relaxed">Average monthly spending over the last 3 months.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                             <p className="text-lg font-black">{formatCurrency(businessStats.burnRate)}<span className="text-[10px] font-medium opacity-60">/mo</span></p>
                           </div>
                           <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
-                            <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Runway</p>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <p className="text-[10px] font-bold uppercase opacity-60">Runway</p>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button className="opacity-40 hover:opacity-100 transition-opacity"><Info className="w-2.5 h-2.5" /></button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="bg-white text-foreground border-0 shadow-xl rounded-xl p-3 max-w-[200px]">
+                                    <p className="text-xs font-medium leading-relaxed">Estimated months your current savings will last at your current burn rate.</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                             <p className="text-lg font-black">{businessStats.runway.toFixed(1)}<span className="text-[10px] font-medium opacity-60"> months</span></p>
                           </div>
                         </div>
@@ -295,7 +325,7 @@ const Index = () => {
                 <CashFlowForecast transactions={transactionSummary.allTransactions} />
               )}
 
-              <Card className="border-0 shadow-xl bg-card overflow-hidden">
+              <Card className="border-0 shadow-xl bg-card overflow-hidden animate-slide-up opacity-0 stagger-3">
                 <CardHeader className="pb-3 border-b bg-muted/30">
                   <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Actions</CardTitle>
                 </CardHeader>
@@ -340,7 +370,7 @@ const Index = () => {
           </div>
 
           {transactionSummary && transactionSummary.totalTransactions > 0 && (
-            <Card className="border-0 shadow-2xl bg-card animate-slide-up overflow-hidden">
+            <Card className="border-0 shadow-2xl bg-card animate-slide-up opacity-0 stagger-4 overflow-hidden">
               <CardHeader className="pb-4 border-b bg-muted/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

@@ -3,8 +3,14 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { CalculatedEntry } from '@/types/finance';
-import { Wallet, CreditCard, TrendingUp, TrendingDown, BarChart3, Sparkles } from 'lucide-react';
+import { Wallet, CreditCard, TrendingUp, TrendingDown, BarChart3, Sparkles, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FinanceSummaryProps {
   entries: CalculatedEntry[];
@@ -57,6 +63,7 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
       icon: Wallet,
       gradient: 'from-blue-500 via-blue-600 to-indigo-600',
       iconBg: 'bg-white/20',
+      description: 'Total liquid assets across all savings and checking accounts.'
     },
     {
       title: 'Credit Balance',
@@ -65,6 +72,7 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
       icon: CreditCard,
       gradient: 'from-amber-400 via-amber-500 to-orange-500',
       iconBg: 'bg-white/20',
+      description: 'Total outstanding debt on credit cards and short-term loans.'
     },
     {
       title: 'Net Worth',
@@ -73,6 +81,7 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
       icon: TrendingUp,
       gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
       iconBg: 'bg-white/20',
+      description: 'Your total financial position (Savings minus Credit).'
     },
     {
       title: 'Avg Weekly Change',
@@ -82,6 +91,7 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
       gradient: 'from-emerald-400 via-emerald-500 to-teal-500',
       iconBg: 'bg-white/20',
       subtitle: `Last ${Math.min(recentSavings.length, 4)} entries`,
+      description: 'The average amount your savings change each week based on recent logs.'
     },
   ];
 
@@ -100,7 +110,21 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
           <CardContent className="relative p-5 text-white">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-white/80">{card.title}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-white/80">{card.title}</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="opacity-60 hover:opacity-100 transition-opacity">
+                          <Info className="w-3 h-3" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-white text-foreground border-0 shadow-xl rounded-xl p-3 max-w-[200px]">
+                        <p className="text-xs font-medium leading-relaxed">{card.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <p className="text-2xl font-bold tracking-tight">{card.value}</p>
               </div>
               <div className={cn("p-2.5 rounded-xl", card.iconBg)}>

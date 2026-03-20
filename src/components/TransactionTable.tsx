@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ArrowUpDown, FileText, ChevronRight, ChevronDown, Info } from 'lucide-react';
+import { Pencil, Trash2, ArrowUpDown, FileText, ChevronRight, ChevronDown, Info, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Transaction } from '@/types/finance';
@@ -83,7 +83,7 @@ const TransactionTable = ({
             <React.Fragment key={t.id}>
               <TableRow 
                 className={cn(
-                  "hover:bg-muted/30 transition-all group cursor-pointer border-b",
+                  "hover:bg-primary/[0.02] transition-all group cursor-pointer border-b relative",
                   selectedIds.has(t.id!) && "bg-primary/5",
                   expandedId === t.id && "bg-muted/40"
                 )}
@@ -96,13 +96,13 @@ const TransactionTable = ({
                   />
                 </TableCell>
                 <TableCell className="px-0">
-                  {expandedId === t.id ? <ChevronDown className="w-4 h-4 text-primary" /> : <ChevronRight className="w-4 h-4 text-muted-foreground/50" />}
+                  {expandedId === t.id ? <ChevronDown className="w-4 h-4 text-primary" /> : <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />}
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm font-medium">
                   {format(new Date(t.transaction_date), 'MMM dd, yyyy')}
                 </TableCell>
                 <TableCell className="max-w-[250px]">
-                  <div className="truncate font-bold text-sm" title={t.description}>{t.description}</div>
+                  <div className="truncate font-bold text-sm group-hover:text-primary transition-colors" title={t.description}>{t.description}</div>
                   {t.notes && <div className="text-[10px] text-muted-foreground truncate mt-0.5 flex items-center gap-1"><Info className="w-2.5 h-2.5" /> {t.notes}</div>}
                 </TableCell>
                 <TableCell>
