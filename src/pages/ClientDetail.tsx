@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Table, 
   TableBody, 
@@ -41,7 +42,9 @@ import {
   Shield,
   Key,
   Info,
-  Trash2
+  Trash2,
+  Ticket,
+  LayoutGrid
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
@@ -68,6 +71,15 @@ interface Invoice {
   total_amount: number;
 }
 
+interface TicketData {
+  id: string;
+  ticket_number: number;
+  title: string;
+  status: string;
+  priority: string;
+  created_at: string;
+}
+
 interface ClientAsset {
   id: string;
   asset_type: string;
@@ -81,6 +93,7 @@ const ClientDetail = () => {
   const { session } = useAuth();
   const [client, setClient] = useState<Client | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [tickets, setTickets] = useState<TicketData[]>([]);
   const [assets, setAssets] = useState<ClientAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAssetDialog, setShowAssetDialog] = useState(false);
@@ -109,14 +122,21 @@ const ClientDetail = () => {
       if (clientError) throw clientError;
       setClient(clientData);
 
-      const { data: invoiceData, error: invoiceError } = await supabase
+      const { data: invoiceData } = await supabase
         .from('invoices')
         .select('id, number, invoice_date, due_date, status, total_amount')
         .eq('client_id', id)
         .order('invoice_date', { ascending: false });
       
-      if (invoiceError) throw invoiceError;
       setInvoices(invoiceData || []);
+
+      const { data: ticketData } = await supabase
+        .from('tickets')
+        .select('id, ticket_number, title, status, priority, created_at')
+        .eq('client_id', id)
+        .order('created_at', { ascending: false });
+      
+      setTickets(ticketData || []);
 
       const { data: assetData } = await supabase
         .from('client_assets')
@@ -288,69 +308,135 @@ const ClientDetail = () => {
           </Card>
         </div>
 
-        {/* Right Column: Invoice List */}
+        {/* Right Column: Tabs for Invoices & Tickets */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-0 shadow-xl overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Invoice History</CardTitle>
-                <CardDescription>All billing records for this client</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead>Invoice</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                        No invoices found for this client.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    invoices.map((invoice) => (
-                      <TableRow key={invoice.id} className="group hover:bg-muted/30 transition-colors">
-                        <TableCell>
-                          <p className="font-bold">{invoice.number}</p>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={cn(
-                            "rounded-lg text-[10px] font-bold uppercase",
-                            invoice.status === 'Paid' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                            invoice.status === 'Overdue' ? "bg-rose-100 text-rose-700 border-rose-200" :
-                            "bg-blue-100 text-blue-700 border-blue-200"
-                          )}>
-                            {invoice.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-black">
-                          {formatCurrency(invoice.total_amount)}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Link to={`/invoices/${invoice.id}`}>
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Link>
-                          </Button>
-                        </TableCell>
+          <Tabs defaultValue="invoices" className="space-y-6">
+            <TabsList className="bg-muted/50 p-1 rounded-xl h-auto gap-1">
+              <TabsTrigger value="invoices" className="rounded-lg gap-2 py-2 px-4">
+                <FileText className="w-4 h-4" /> Invoices
+              </TabsTrigger>
+              <TabsTrigger value="tickets" className="rounded-lg gap-2 py-2 px-4">
+                <Ticket className="w-4 h-4" /> Tickets & Work
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="invoices" className="animate-fade-in">
+              <Card className="border-0 shadow-xl overflow-hidden">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead>Invoice</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="w-12"></TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {invoices.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                            No invoices found for this client.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        invoices.map((invoice) => (
+                          <TableRow key={invoice.id} className="group hover:bg-muted/30 transition-colors">
+                            <TableCell>
+                              <p className="font-bold">{invoice.number}</p>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {format(new Date(invoice.invoice_date), 'MMM dd, yyyy')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={cn(
+                                "rounded-lg text-[10px] font-bold uppercase",
+                                invoice.status === 'Paid' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                                invoice.status === 'Overdue' ? "bg-rose-100 text-rose-700 border-rose-200" :
+                                "bg-blue-100 text-blue-700 border-blue-200"
+                              )}>
+                                {invoice.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-black">
+                              {formatCurrency(invoice.total_amount)}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Link to={`/invoices/${invoice.id}`}>
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="tickets" className="animate-fade-in">
+              <Card className="border-0 shadow-xl overflow-hidden">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead>Ticket</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Created</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tickets.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                            No active tickets for this client.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        tickets.map((ticket) => (
+                          <TableRow key={ticket.id} className="group hover:bg-muted/30 transition-colors">
+                            <TableCell>
+                              <p className="font-bold">{ticket.title}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">#{ticket.ticket_number}</p>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={cn(
+                                "rounded-lg text-[10px] font-bold uppercase",
+                                ticket.priority === 'high' ? "bg-rose-100 text-rose-700" : "bg-muted text-muted-foreground"
+                              )}>
+                                {ticket.priority}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="rounded-lg text-[10px] font-bold uppercase">
+                                {ticket.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right text-xs text-muted-foreground">
+                              {format(new Date(ticket.created_at), 'MMM dd, yyyy')}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Link to={`/tickets/${ticket.id}`}>
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
@@ -396,7 +482,7 @@ const ClientDetail = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAssetDialog(false)} className="rounded-xl">Cancel</Button>
-            <Button onClick={handleAddAsset} className="rounded-xl" disabled={!assetForm.name}>Add Asset</Button>
+            <Button onClick={handleAddAsset} className="rounded-xl">Add Asset</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

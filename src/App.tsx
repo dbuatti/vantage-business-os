@@ -16,6 +16,8 @@ import InvoiceDetail from "./pages/InvoiceDetail";
 import Products from "./pages/Products";
 import Settings from "./pages/Settings";
 import Insights from "./pages/Insights";
+import Tickets from "./pages/Tickets";
+import TicketDetail from "./pages/TicketDetail";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -53,6 +55,8 @@ const App = () => (
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
             <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
             <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+            <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
+            <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             
             <Route path="*" element={<NotFound />} />

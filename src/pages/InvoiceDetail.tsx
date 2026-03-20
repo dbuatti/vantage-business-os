@@ -26,7 +26,10 @@ import {
   Globe,
   Phone,
   FileText,
-  ExternalLink
+  ExternalLink,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
@@ -46,6 +49,7 @@ interface Invoice {
   }>;
   client_id: string;
   client_display_name: string;
+  public_share_token: string;
 }
 
 interface Settings {
@@ -63,6 +67,7 @@ const InvoiceDetail = () => {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (session && id) {
@@ -113,6 +118,15 @@ const InvoiceDetail = () => {
     }
   };
 
+  const copyPublicLink = () => {
+    if (!invoice?.public_share_token) return;
+    const url = `${window.location.origin}/portal/invoice/${invoice.public_share_token}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    showSuccess('Public link copied to clipboard');
+  };
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
   };
@@ -141,6 +155,10 @@ const InvoiceDetail = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={copyPublicLink} className="rounded-xl gap-2">
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+            {copied ? 'Copied' : 'Public Link'}
+          </Button>
           {invoice.status !== 'Paid' && (
             <Button variant="outline" onClick={markAsPaid} className="rounded-xl gap-2 text-emerald-600 hover:bg-emerald-50">
               <CheckCircle2 className="w-4 h-4" /> Mark Paid

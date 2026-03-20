@@ -31,7 +31,8 @@ import {
   Brain,
   ShieldCheck,
   Activity,
-  Sparkles
+  Sparkles,
+  Ticket
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -49,6 +50,7 @@ const AppSidebar = () => {
   const businessItems = [
     { title: "Clients", icon: Users, url: "/clients" },
     { title: "Invoices", icon: FileText, url: "/invoices" },
+    { title: "Tickets & Projects", icon: Ticket, url: "/tickets" },
     { title: "Catalog", icon: Package, url: "/products" },
     { title: "Accountant Portal", icon: ShieldCheck, url: "/accountant-portal" },
     { title: "Tax Report", icon: Calculator, url: "/accountant-report" },
