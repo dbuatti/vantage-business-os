@@ -157,21 +157,24 @@ const Insights = () => {
         }
       });
 
+      // Robust error handling for Supabase Edge Function responses
       if (error) {
-        // Check for rate limit error from Supabase invoke
-        if (error.status === 429 || (error.message && error.message.includes('429'))) {
+        const status = (error as any).status || (error as any).context?.status;
+        const message = error.message || "";
+        
+        if (status === 429 || message.includes('429') || message.includes('rate limit')) {
           setRateLimitError('The AI is currently busy. Please wait about 60 seconds and try again.');
           return;
         }
         throw error;
       }
 
-      if (data.error === 'RATE_LIMIT_EXCEEDED') {
+      if (data?.error === 'RATE_LIMIT_EXCEEDED') {
         setRateLimitError(data.message);
         return;
       }
 
-      if (data.error) throw new Error(data.message || data.error);
+      if (data?.error) throw new Error(data.message || data.error);
 
       setInsights(data);
       setLastGenerated(new Date());
@@ -180,7 +183,12 @@ const Insights = () => {
       showSuccess('Insights generated successfully!');
     } catch (error: any) {
       console.error('Insights error:', error);
-      showError(error.message || 'Failed to generate insights');
+      // Final fallback check for rate limits in the caught error
+      if (error.message?.includes('429') || error.message?.includes('non-2xx status code')) {
+        setRateLimitError('The AI is currently busy. Please wait about 60 seconds and try again.');
+      } else {
+        showError(error.message || 'Failed to generate insights');
+      }
     } finally {
       setGenerating(false);
     }
