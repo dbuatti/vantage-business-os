@@ -39,9 +39,6 @@ import {
   BarChart3,
   X,
   Filter,
-  CheckSquare,
-  Target,
-  Activity,
   Calculator,
   Wand2,
   Search,
@@ -51,16 +48,18 @@ import {
   Loader2,
   Plus,
   FileText,
-  Link as LinkIcon,
   Briefcase,
   Repeat,
   ArrowUpRight,
   Tags,
-  User
+  User,
+  Target,
+  Activity
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import { format, subDays, startOfMonth, endOfMonth, subMonths, isSameMonth } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/utils/format';
 import TransactionImporter from '@/components/TransactionImporter';
 import TransactionCharts from '@/components/TransactionCharts';
 import MonthlyComparison from '@/components/MonthlyComparison';
@@ -77,23 +76,8 @@ import MonthlyGroupReport from '@/components/MonthlyGroupReport';
 import WorkWizard from '@/components/WorkWizard';
 import ManualTransactionDialog from '@/components/ManualTransactionDialog';
 import TransactionTable from '@/components/TransactionTable';
+import BulkActionsBar from '@/components/BulkActionsBar';
 import { Transaction } from '@/types/finance';
-
-interface CategoryGroup {
-  id: string;
-  category_name: string;
-  group_name: string;
-}
-
-interface Invoice {
-  id: string;
-  number: string;
-  client_display_name: string;
-  total_amount: number;
-}
-
-type SortField = 'date' | 'amount' | 'description' | 'category';
-type SortOrder = 'asc' | 'desc';
 
 const ITEMS_PER_PAGE = 25;
 
@@ -101,12 +85,12 @@ const Transactions = () => {
   const { session, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [sortField, setSortField] = useState<any>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -114,7 +98,6 @@ const Transactions = () => {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showBulkCategorize, setShowBulkCategorize] = useState(false);
   const [bulkCategory, setBulkCategory] = useState('');
-  
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [isSavingYear, setIsSavingYear] = useState(false);
 
@@ -227,9 +210,7 @@ const Transactions = () => {
         .order('group_name');
       if (error) throw error;
       setCategoryGroups(data || []);
-    } catch (error: any) {
-      // Table might not exist yet
-    }
+    } catch (error: any) {}
   };
 
   const fetchInvoices = async () => {
@@ -457,11 +438,7 @@ const Transactions = () => {
     return { count: selected.length, total };
   }, [filteredTransactions, selectedIds]);
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', signDisplay: val !== 0 ? 'always' : 'auto' }).format(val);
-  };
-
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: any) => {
     if (sortField === field) setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortOrder('desc'); }
   };
@@ -751,36 +728,14 @@ const Transactions = () => {
                   </Card>
 
                   {/* Bulk Actions Bar */}
-                  {selectedIds.size > 0 && (
-                    <Card className="border-0 shadow-lg bg-primary/5 border-primary/20 animate-fade-in">
-                      <CardContent className="p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <CheckSquare className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-medium">{selectedIds.size} selected</span>
-                          <span className="text-sm text-muted-foreground">
-                            Total: <span className="font-medium text-foreground">{formatCurrency(selectedStats.total)}</span>
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleBulkWorkStatus(true)} className="rounded-xl gap-2 bg-background text-amber-700 border-amber-200 hover:bg-amber-50">
-                            <Briefcase className="w-4 h-4" /> Mark Work
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleBulkWorkStatus(false)} className="rounded-xl gap-2 bg-background text-blue-700 border-blue-200 hover:bg-blue-50">
-                            <User className="w-4 h-4" /> Mark Personal
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => setShowBulkCategorize(true)} className="rounded-xl gap-2 bg-background">
-                            <Tags className="w-4 h-4" /> Categorize
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="rounded-xl">
-                            <X className="w-4 h-4 mr-1" />Deselect
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => setShowBulkDelete(true)} className="rounded-xl text-rose-600 hover:bg-rose-50">
-                            <Trash2 className="w-4 h-4 mr-1" />Delete
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                  <BulkActionsBar 
+                    selectedCount={selectedIds.size}
+                    totalAmount={selectedStats.total}
+                    onMarkWork={handleBulkWorkStatus}
+                    onCategorize={() => setShowBulkCategorize(true)}
+                    onDelete={() => setShowBulkDelete(true)}
+                    onClear={() => setSelectedIds(new Set())}
+                  />
 
                   {/* Transactions Table */}
                   <Card className="border-0 shadow-xl overflow-hidden">
@@ -931,7 +886,7 @@ const Transactions = () => {
               </div>
             </div>
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setShowBulkCategorize(false)} className="rounded-xl Cancel">Cancel</Button>
+              <Button variant="outline" onClick={() => setShowBulkCategorize(false)} className="rounded-xl">Cancel</Button>
               <Button onClick={handleBulkCategorize} className="rounded-xl" disabled={!bulkCategory}>Update All</Button>
             </DialogFooter>
           </DialogContent>
@@ -942,7 +897,7 @@ const Transactions = () => {
             <DialogHeader><DialogTitle>Edit Transaction</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-xl">
-                📅 {editingTransaction && format(new Date(editingTransaction.transaction_date), 'MMMM dd, yyyy')}
+                📅 {editingTransaction && formatDate(editingTransaction.transaction_date, 'MMMM dd, yyyy')}
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
