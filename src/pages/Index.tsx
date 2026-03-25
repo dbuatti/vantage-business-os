@@ -6,12 +6,11 @@ import FinanceSummary from '@/components/FinanceSummary';
 import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
 import CashFlowForecast from '@/components/CashFlowForecast';
-import WeeklyGlance from '@/components/WeeklyGlance';
 import AnimatedNumber from '@/components/AnimatedNumber';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock, Sun, Moon, Coffee, Info } from 'lucide-react';
+import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock, Sun, Moon, Coffee, Info, CalendarRange } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -327,7 +326,6 @@ const Index = () => {
                 </Card>
               )}
 
-              <WeeklyGlance />
               <FinanceChart entries={calculatedEntries} />
               <MonthlySummary entries={calculatedEntries} />
             </div>
@@ -345,6 +343,17 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="p-2 grid grid-cols-1 gap-1">
                   <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
+                    <Link to="/time-glance">
+                      <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
+                        <CalendarRange className="w-5 h-5" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Time Glance</p>
+                        <p className="text-[10px] text-muted-foreground">Day, Week, Month views</p>
+                      </div>
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
                     <Link to="/insights">
                       <div className="p-2 rounded-lg bg-violet-100 text-violet-600 group-hover:scale-110 transition-transform">
                         <Brain className="w-5 h-5" />
@@ -353,7 +362,6 @@ const Index = () => {
                         <p className="text-sm font-bold">AI Insights</p>
                         <p className="text-[10px] text-muted-foreground">Smart financial analysis</p>
                       </div>
-                      <Badge className="ml-auto rounded-full text-[9px] bg-violet-100 text-violet-700 border-violet-200">NEW</Badge>
                     </Link>
                   </Button>
                   <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
@@ -364,17 +372,6 @@ const Index = () => {
                       <div className="text-left">
                         <p className="text-sm font-bold">History</p>
                         <p className="text-[10px] text-muted-foreground">Manage all transactions</p>
-                      </div>
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
-                    <Link to="/accountant-report">
-                      <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
-                        <Calculator className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold">Tax Report</p>
-                        <p className="text-[10px] text-muted-foreground">Accountant-ready data</p>
                       </div>
                     </Link>
                   </Button>
