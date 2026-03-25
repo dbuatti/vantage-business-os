@@ -20,6 +20,7 @@ import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import Productivity from "./pages/Productivity";
 import TimeGlance from "./pages/TimeGlance";
+import WeeklyLog from "./pages/WeeklyLog";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/portal/:token" element={<AccountantPortal />} />
             
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/weekly-routine" element={<ProtectedRoute><WeeklyLog /></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
             <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
             <Route path="/productivity" element={<ProtectedRoute><Productivity /></ProtectedRoute>} />

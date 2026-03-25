@@ -1,26 +1,38 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import FinanceForm from '@/components/FinanceForm';
-import FinanceSummary from '@/components/FinanceSummary';
-import FinanceChart from '@/components/FinanceChart';
-import MonthlySummary from '@/components/MonthlySummary';
 import CashFlowForecast from '@/components/CashFlowForecast';
 import AnimatedNumber from '@/components/AnimatedNumber';
-import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
-import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { PiggyBank, CreditCard, ArrowUpRight, ArrowDownRight, TrendingUp, ListFilter, Calculator, Sparkles, Users, FileText, Briefcase, Brain, ShieldCheck, CheckCircle2, AlertCircle, Zap, Clock, Sun, Moon, Coffee, Info, CalendarRange } from 'lucide-react';
+import { 
+  TrendingUp, 
+  ListFilter, 
+  Sparkles, 
+  Briefcase, 
+  Brain, 
+  Zap, 
+  Clock, 
+  Sun, 
+  Moon, 
+  Coffee, 
+  Info, 
+  CalendarRange,
+  ArrowUpRight,
+  ArrowDownRight,
+  CreditCard,
+  CalendarCheck,
+  ChevronRight,
+  Loader2
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/components/AuthProvider';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { format, subMonths, startOfMonth } from 'date-fns';
+import { subMonths, format } from 'date-fns';
 import { formatCurrency } from '@/utils/format';
 import {
   Tooltip,
@@ -49,7 +61,6 @@ interface BusinessStats {
 
 const Index = () => {
   const { session } = useAuth();
-  const [entries, setEntries] = useState<FinanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] = useState<TransactionSummary | null>(null);
   const [businessStats, setBusinessStats] = useState<BusinessStats | null>(null);
@@ -57,35 +68,17 @@ const Index = () => {
 
   useEffect(() => {
     if (session) {
-      fetchEntries();
-      fetchTransactionSummary();
-      fetchBusinessStats();
+      fetchData();
     }
   }, [session]);
 
-  const fetchEntries = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('finance_entries')
-        .select('*')
-        .order('date', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      
-      const mappedData = (data || []).map(item => ({
-        id: item.id,
-        date: item.date,
-        creditWas: item.credit_was,
-        amount: item.amount,
-        account: item.account,
-        monthYear: item.month_year
-      }));
-      
-      setEntries(mappedData);
-    } catch (error: any) {
-      showError(error.message);
+      await Promise.all([
+        fetchTransactionSummary(),
+        fetchBusinessStats()
+      ]);
     } finally {
       setLoading(false);
     }
@@ -158,43 +151,6 @@ const Index = () => {
     } catch (error) {}
   };
 
-  const addEntry = async (entry: FinanceEntry) => {
-    if (!session) return;
-    try {
-      const { error } = await supabase
-        .from('finance_entries')
-        .insert([{
-          date: entry.date,
-          credit_was: entry.creditWas,
-          amount: entry.amount,
-          account: entry.account,
-          month_year: entry.monthYear,
-          user_id: session.user.id
-        }]);
-
-      if (error) throw error;
-      fetchEntries();
-      showSuccess('Entry added successfully!');
-    } catch (error: any) {
-      showError(error.message);
-    }
-  };
-
-  const calculatedEntries: CalculatedEntry[] = useMemo(() => {
-    return entries
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .map((entry, index, allEntries) => {
-        const previousEntry = allEntries.slice(index + 1).find(e => e.account === entry.account);
-        let difference = 0;
-        if (previousEntry) {
-          difference = entry.amount - previousEntry.amount;
-        } else if (entry.account === 'Credit' && entry.creditWas !== undefined) {
-          difference = entry.amount - entry.creditWas;
-        }
-        return { ...entry, difference };
-      });
-  }, [entries]);
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return { text: 'Good Morning', icon: Coffee, color: 'text-amber-500' };
@@ -204,6 +160,8 @@ const Index = () => {
 
   const greeting = getGreeting();
 
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-fade-in">
@@ -212,176 +170,84 @@ const Index = () => {
             <greeting.icon className={cn("w-5 h-5", greeting.color)} />
             <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{greeting.text}</span>
           </div>
-          <h1 className="text-4xl font-black tracking-tight">
-            Command Center
-          </h1>
-          <p className="text-muted-foreground text-lg">Welcome back, {session?.user.email?.split('@')[0]}.</p>
+          <h1 className="text-4xl font-black tracking-tight">Command Center</h1>
+          <p className="text-muted-foreground text-lg">Your business intelligence at a glance.</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">System Status</span>
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-3 py-1 rounded-full font-bold gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              ALL SYSTEMS NOMINAL
-            </Badge>
-          </div>
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-3 py-1 rounded-full font-bold gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            LIVE DATA SYNC
+          </Badge>
         </div>
       </header>
 
-      {loading ? (
-        <div className="space-y-8">
-          <SummarySkeleton />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FormSkeleton />
-            <Card className="h-64 animate-pulse bg-muted/20" />
-          </div>
-        </div>
-      ) : (
-        <>
-          <FinanceSummary entries={calculatedEntries} />
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-              {businessStats && (
-                <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-700 text-white overflow-hidden relative group animate-slide-up opacity-0 stagger-2">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-                  <CardContent className="p-8 relative">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <p className="text-xs font-black uppercase tracking-widest opacity-70">Business Health</p>
-                        <p className="text-5xl font-black tracking-tighter">
-                          <AnimatedNumber 
-                            value={businessStats.outstandingAmount} 
-                            formatter={(val) => formatCurrency(val)} 
-                          />
-                        </p>
-                        <p className="text-sm font-medium opacity-80">Total Outstanding Receivables</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Column */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Business Health Hero */}
+          {businessStats && (
+            <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-700 text-white overflow-hidden relative group animate-slide-up">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+              <CardContent className="p-8 relative">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="text-xs font-black uppercase tracking-widest opacity-70">Business Health</p>
+                    <p className="text-5xl font-black tracking-tighter">
+                      <AnimatedNumber 
+                        value={businessStats.outstandingAmount} 
+                        formatter={(val) => formatCurrency(val)} 
+                      />
+                    </p>
+                    <p className="text-sm font-medium opacity-80">Total Outstanding Receivables</p>
+                  </div>
+                  <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
+                    <Briefcase className="w-10 h-10" />
+                  </div>
+                </div>
+                
+                <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
+                        <span className="opacity-70">Tax Readiness</span>
+                        <span>{businessStats.taxReadiness}%</span>
                       </div>
-                      <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
-                        <Briefcase className="w-10 h-10" />
-                      </div>
+                      <Progress value={businessStats.taxReadiness} className="h-2 bg-white/20 [&>div]:bg-white" />
                     </div>
                     
-                    <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                            <span className="opacity-70">Tax Readiness</span>
-                            <span>{businessStats.taxReadiness}%</span>
-                          </div>
-                          <Progress value={businessStats.taxReadiness} className="h-2 bg-white/20 [&>div]:bg-white" />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <p className="text-[10px] font-bold uppercase opacity-60">Burn Rate</p>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button className="opacity-40 hover:opacity-100 transition-opacity"><Info className="w-2.5 h-2.5" /></button>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="bg-white text-foreground border-0 shadow-xl rounded-xl p-3 max-w-[200px]">
-                                    <p className="text-xs font-medium leading-relaxed">Average monthly spending over the last 3 months.</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                            <p className="text-lg font-black">
-                              <AnimatedNumber value={businessStats.burnRate} formatter={(val) => formatCurrency(val)} />
-                              <span className="text-[10px] font-medium opacity-60">/mo</span>
-                            </p>
-                          </div>
-                          <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <p className="text-[10px] font-bold uppercase opacity-60">Runway</p>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button className="opacity-40 hover:opacity-100 transition-opacity"><Info className="w-2.5 h-2.5" /></button>
-                                  </TooltipTrigger>
-                                  <TooltipContent className="bg-white text-foreground border-0 shadow-xl rounded-xl p-3 max-w-[200px]">
-                                    <p className="text-xs font-medium leading-relaxed">Estimated months your current savings will last at your current burn rate.</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
-                            <p className="text-lg font-black">
-                              <AnimatedNumber value={businessStats.runway} formatter={(val) => val.toFixed(1)} />
-                              <span className="text-[10px] font-medium opacity-60"> months</span>
-                            </p>
-                          </div>
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                        <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Burn Rate</p>
+                        <p className="text-lg font-black">
+                          {formatCurrency(businessStats.burnRate)}
+                          <span className="text-[10px] font-medium opacity-60">/mo</span>
+                        </p>
                       </div>
-                      <div className="flex gap-3 justify-end">
-                        <Button variant="secondary" asChild className="rounded-2xl font-bold px-6 h-12 shadow-xl">
-                          <Link to="/invoices">Invoices</Link>
-                        </Button>
-                        <Button variant="outline" asChild className="rounded-2xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold px-6 h-12">
-                          <Link to="/clients">Clients</Link>
-                        </Button>
+                      <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                        <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Runway</p>
+                        <p className="text-lg font-black">
+                          {businessStats.runway.toFixed(1)}
+                          <span className="text-[10px] font-medium opacity-60"> months</span>
+                        </p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                    <Button variant="secondary" asChild className="rounded-2xl font-bold px-6 h-12 shadow-xl">
+                      <Link to="/invoices">Invoices</Link>
+                    </Button>
+                    <Button variant="outline" asChild className="rounded-2xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold px-6 h-12">
+                      <Link to="/clients">Clients</Link>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-              <FinanceChart entries={calculatedEntries} />
-              <MonthlySummary entries={calculatedEntries} />
-            </div>
-            
-            <div className="space-y-8">
-              <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
-              
-              {transactionSummary && (
-                <CashFlowForecast transactions={transactionSummary.allTransactions} />
-              )}
-
-              <Card className="border-0 shadow-xl bg-card overflow-hidden animate-slide-up opacity-0 stagger-3">
-                <CardHeader className="pb-3 border-b bg-muted/30">
-                  <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="p-2 grid grid-cols-1 gap-1">
-                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
-                    <Link to="/time-glance">
-                      <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
-                        <CalendarRange className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold">Time Glance</p>
-                        <p className="text-[10px] text-muted-foreground">Day, Week, Month views</p>
-                      </div>
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
-                    <Link to="/insights">
-                      <div className="p-2 rounded-lg bg-violet-100 text-violet-600 group-hover:scale-110 transition-transform">
-                        <Brain className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold">AI Insights</p>
-                        <p className="text-[10px] text-muted-foreground">Smart financial analysis</p>
-                      </div>
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
-                    <Link to="/transactions">
-                      <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
-                        <ListFilter className="w-5 h-5" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-bold">History</p>
-                        <p className="text-[10px] text-muted-foreground">Manage all transactions</p>
-                      </div>
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {transactionSummary && transactionSummary.totalTransactions > 0 && (
-            <Card className="border-0 shadow-2xl bg-card animate-slide-up opacity-0 stagger-4 overflow-hidden">
+          {/* Transaction Pulse */}
+          {transactionSummary && (
+            <Card className="border-0 shadow-2xl bg-card overflow-hidden animate-slide-up stagger-1">
               <CardHeader className="pb-4 border-b bg-muted/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -406,7 +272,7 @@ const Index = () => {
                       <span className="text-xs text-emerald-700 dark:text-emerald-300 font-black uppercase tracking-widest">Income</span>
                     </div>
                     <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300">
-                      <AnimatedNumber value={transactionSummary.totalIncome} formatter={(val) => formatCurrency(val)} />
+                      {formatCurrency(transactionSummary.totalIncome)}
                     </p>
                   </div>
                   <div className="p-6 rounded-3xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 group hover:shadow-lg transition-all">
@@ -415,7 +281,7 @@ const Index = () => {
                       <span className="text-xs text-rose-700 dark:text-rose-300 font-black uppercase tracking-widest">Expenses</span>
                     </div>
                     <p className="text-3xl font-black text-rose-700 dark:text-rose-300">
-                      <AnimatedNumber value={-transactionSummary.totalExpenses} formatter={(val) => formatCurrency(val)} />
+                      {formatCurrency(-transactionSummary.totalExpenses)}
                     </p>
                   </div>
                   <div className={cn(
@@ -438,7 +304,7 @@ const Index = () => {
                       "text-3xl font-black",
                       transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
                     )}>
-                      <AnimatedNumber value={transactionSummary.net} formatter={(val) => formatCurrency(val)} />
+                      {formatCurrency(transactionSummary.net)}
                     </p>
                   </div>
                 </div>
@@ -477,8 +343,82 @@ const Index = () => {
               </CardContent>
             </Card>
           )}
-        </>
-      )}
+        </div>
+
+        {/* Sidebar Column */}
+        <div className="space-y-8">
+          {/* Weekly Routine Reminder */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative group animate-slide-up">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+            <CardContent className="p-6 relative space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <CalendarCheck className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest opacity-80">Weekly Routine</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black">Thursday Snapshot</h3>
+                <p className="text-sm font-medium opacity-80 leading-relaxed">
+                  It's time to log your weekly savings and debt snapshot. Keep your progress chart accurate.
+                </p>
+              </div>
+              <Button variant="secondary" asChild className="w-full rounded-xl font-bold gap-2 shadow-lg group-hover:scale-[1.02] transition-transform">
+                <Link to="/weekly-routine">
+                  Start Routine <ChevronRight className="w-4 h-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* AI Forecast */}
+          {transactionSummary && (
+            <CashFlowForecast transactions={transactionSummary.allTransactions} />
+          )}
+
+          {/* Quick Actions */}
+          <Card className="border-0 shadow-xl bg-card overflow-hidden animate-slide-up stagger-2">
+            <CardHeader className="pb-3 border-b bg-muted/30">
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Navigation</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2 grid grid-cols-1 gap-1">
+              <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
+                <Link to="/time-glance">
+                  <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
+                    <CalendarRange className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold">Time Glance</p>
+                    <p className="text-[10px] text-muted-foreground">Day, Week, Month views</p>
+                  </div>
+                </Link>
+              </Button>
+              <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
+                <Link to="/insights">
+                  <div className="p-2 rounded-lg bg-violet-100 text-violet-600 group-hover:scale-110 transition-transform">
+                    <Brain className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold">AI Insights</p>
+                    <p className="text-[10px] text-muted-foreground">Smart financial analysis</p>
+                  </div>
+                </Link>
+              </Button>
+              <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
+                <Link to="/transactions">
+                  <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
+                    <ListFilter className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold">History</p>
+                    <p className="text-[10px] text-muted-foreground">Manage all transactions</p>
+                  </div>
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       <footer className="pt-12 pb-6">
         <MadeWithDyad />

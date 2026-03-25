@@ -32,7 +32,8 @@ import {
   ShieldCheck,
   Activity,
   Sparkles,
-  CalendarRange
+  CalendarRange,
+  CalendarCheck
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -44,6 +45,7 @@ const AppSidebar = () => {
 
   const mainItems = [
     { title: "Dashboard", icon: LayoutDashboard, url: "/" },
+    { title: "Weekly Routine", icon: CalendarCheck, url: "/weekly-routine" },
     { title: "Time Glance", icon: CalendarRange, url: "/time-glance" },
     { title: "AI Insights", icon: Brain, url: "/insights" },
   ];
