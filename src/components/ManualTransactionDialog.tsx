@@ -66,6 +66,7 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, su
           category_1: form.category_1,
           category_2: form.category_2 === 'none' ? '' : form.category_2,
           is_work: form.is_work,
+          is_reviewed: true, // Manual entries are considered reviewed
           notes: form.notes,
           account_label: form.account_label,
           mmm_yyyy: format(date, 'MMM yyyy'),

@@ -257,6 +257,7 @@ const Transactions = () => {
         category_1: editForm.category_1,
         category_2: editForm.category_2,
         is_work: editForm.is_work,
+        is_reviewed: true, // Mark as reviewed when manually edited
         notes: editForm.notes,
         invoice_id: editForm.invoice_id === 'none' ? null : (editForm.invoice_id || null)
       }).eq('id', editingTransaction.id);
@@ -274,7 +275,10 @@ const Transactions = () => {
     try {
       const { error } = await supabase
         .from('finance_transactions')
-        .update({ category_1: bulkCategory })
+        .update({ 
+          category_1: bulkCategory,
+          is_reviewed: true // Mark as reviewed when bulk categorized
+        })
         .in('id', Array.from(selectedIds));
       
       if (error) throw error;
@@ -293,12 +297,15 @@ const Transactions = () => {
     const ids = Array.from(selectedIds);
     const originalStates = transactions
       .filter(t => selectedIds.has(t.id!))
-      .map(t => ({ id: t.id!, is_work: t.is_work }));
+      .map(t => ({ id: t.id!, is_work: t.is_work, is_reviewed: t.is_reviewed }));
 
     try {
       const { error } = await supabase
         .from('finance_transactions')
-        .update({ is_work: isWork })
+        .update({ 
+          is_work: isWork,
+          is_reviewed: true 
+        })
         .in('id', ids);
       
       if (error) throw error;
@@ -307,7 +314,10 @@ const Transactions = () => {
         message: `Marked ${ids.length} items as ${isWork ? 'Work' : 'Personal'}`,
         action: async () => {
           for (const state of originalStates) {
-            await supabase.from('finance_transactions').update({ is_work: state.is_work }).eq('id', state.id);
+            await supabase.from('finance_transactions').update({ 
+              is_work: state.is_work,
+              is_reviewed: state.is_reviewed 
+            }).eq('id', state.id);
           }
           fetchTransactions();
         }

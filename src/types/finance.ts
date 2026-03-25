@@ -27,6 +27,7 @@ export interface Transaction {
   category_1: string;
   category_2: string;
   is_work: boolean;
+  is_reviewed?: boolean; // Added to track if user has confirmed the status
   amount: number;
   notes: string;
   mmm_yyyy: string;

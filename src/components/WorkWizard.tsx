@@ -29,15 +29,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { showSuccess, showError } from '@/utils/toast';
-
-interface Transaction {
-  id?: string;
-  transaction_date: string;
-  description: string;
-  amount: number;
-  category_1: string;
-  is_work: boolean;
-}
+import { Transaction } from '@/types/finance';
 
 interface SuggestionGroup {
   normalizedDescription: string;
@@ -113,8 +105,9 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
   const suggestionGroups = useMemo(() => {
     const groups: Record<string, SuggestionGroup> = {};
 
+    // Only suggest transactions that haven't been reviewed yet
     transactions
-      .filter(t => !t.is_work)
+      .filter(t => !t.is_reviewed)
       .forEach(t => {
         const normalized = normalizeDescription(t.description);
         const match = WORK_KEYWORDS.find(k => normalized.includes(k.word) || (t.category_1 || '').toLowerCase().includes(k.word));
@@ -140,7 +133,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
   const currentGroup = suggestionGroups[currentIndex];
   const progress = suggestionGroups.length > 0 ? ((currentIndex) / suggestionGroups.length) * 100 : 0;
 
-  const handleMoveToWork = async () => {
+  const handleUpdateStatus = async (isWork: boolean) => {
     if (!currentGroup) return;
     setIsProcessing(true);
     try {
@@ -148,12 +141,15 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
       
       const { error } = await supabase
         .from('finance_transactions')
-        .update({ is_work: true })
+        .update({ 
+          is_work: isWork,
+          is_reviewed: true 
+        })
         .in('id', ids);
       
       if (error) throw error;
       
-      showSuccess(`Moved ${ids.length} transactions to Work`);
+      showSuccess(`Marked ${ids.length} transactions as ${isWork ? 'Work' : 'Personal'}`);
       
       if (currentIndex < suggestionGroups.length - 1) {
         setCurrentIndex(prev => prev + 1);
@@ -167,16 +163,6 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
       showError(error.message);
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handleSkip = () => {
-    if (currentIndex < suggestionGroups.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setShowAllTransactions(false);
-    } else {
-      onComplete();
-      onOpenChange(false);
     }
   };
 
@@ -203,7 +189,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
             </div>
             <div className="space-y-1">
               <p className="font-bold text-lg">All caught up!</p>
-              <p className="text-sm text-muted-foreground">No personal transactions look like work items right now.</p>
+              <p className="text-sm text-muted-foreground">No unreviewed transactions look like work items right now.</p>
             </div>
           </div>
           <DialogFooter>
@@ -330,7 +316,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={handleSkip}
+                  onClick={() => handleUpdateStatus(false)}
                   className="h-14 rounded-2xl border-2 hover:bg-muted/50 group"
                   disabled={isProcessing}
                 >
@@ -338,7 +324,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                   Keep Personal
                 </Button>
                 <Button 
-                  onClick={handleMoveToWork}
+                  onClick={() => handleUpdateStatus(true)}
                   className="h-14 rounded-2xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 group"
                   disabled={isProcessing}
                 >
