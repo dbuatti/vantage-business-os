@@ -91,6 +91,7 @@ const TimeGlance = () => {
         .select('*')
         .gte('transaction_date', format(dateRange.start, 'yyyy-MM-dd'))
         .lte('transaction_date', format(dateRange.end, 'yyyy-MM-dd'))
+        .neq('category_1', 'Account') // Ignore internal transfers
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
