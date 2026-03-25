@@ -6,6 +6,7 @@ import FinanceSummary from '@/components/FinanceSummary';
 import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
 import CashFlowForecast from '@/components/CashFlowForecast';
+import WeeklyGlance from '@/components/WeeklyGlance';
 import AnimatedNumber from '@/components/AnimatedNumber';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
@@ -326,6 +327,7 @@ const Index = () => {
                 </Card>
               )}
 
+              <WeeklyGlance />
               <FinanceChart entries={calculatedEntries} />
               <MonthlySummary entries={calculatedEntries} />
             </div>
