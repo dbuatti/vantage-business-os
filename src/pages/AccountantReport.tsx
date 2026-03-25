@@ -55,18 +55,7 @@ import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showSuccess, showError } from '@/utils/toast';
 import WorkWizard from '@/components/WorkWizard';
-
-interface Transaction {
-  id: string;
-  transaction_date: string;
-  description: string;
-  amount: number;
-  category_1: string;
-  category_2: string;
-  is_work: boolean;
-  notes: string;
-  account_label: string;
-}
+import { Transaction } from '@/types/finance';
 
 const AccountantReport = () => {
   const { session, loading: authLoading } = useAuth();
