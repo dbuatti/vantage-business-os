@@ -10,6 +10,7 @@ import FinanceForm from '@/components/FinanceForm';
 import FinanceSummary from '@/components/FinanceSummary';
 import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
+import FinanceTable from '@/components/FinanceTable';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
 import { CalendarCheck, ArrowLeft, Info, Sparkles, ShieldCheck, TrendingUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,39 @@ const WeeklyLog = () => {
       if (error) throw error;
       fetchEntries();
       showSuccess('Weekly snapshot recorded!');
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
+
+  const deleteEntry = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('finance_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchEntries();
+      showSuccess('Entry deleted');
+    } catch (error: any) {
+      showError(error.message);
+    }
+  };
+
+  const updateEntry = async (id: string, updates: { amount: number; creditWas?: number }) => {
+    try {
+      const { error } = await supabase
+        .from('finance_entries')
+        .update({
+          amount: updates.amount,
+          credit_was: updates.creditWas
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchEntries();
+      showSuccess('Entry updated');
     } catch (error: any) {
       showError(error.message);
     }
@@ -195,6 +229,18 @@ const WeeklyLog = () => {
                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Monthly History</h2>
               </div>
               <MonthlySummary entries={calculatedEntries} />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-2">
+                <History className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Detailed History</h2>
+              </div>
+              <FinanceTable 
+                entries={calculatedEntries} 
+                onDeleteEntry={deleteEntry} 
+                onUpdateEntry={updateEntry} 
+              />
             </div>
           </div>
         </div>
