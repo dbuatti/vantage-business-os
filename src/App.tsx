@@ -25,7 +25,15 @@ import WeeklyLog from "./pages/WeeklyLog";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
-const queryClient = new QueryClient();
+// Configure QueryClient to disable automatic refetching on window focus
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // Prevents data from refreshing when you switch back to the tab
+      staleTime: 5 * 60 * 1000,    // Keeps data "fresh" for 5 minutes to reduce unnecessary loading
+    },
+  },
+});
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
