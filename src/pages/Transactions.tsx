@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { useSettings } from '@/components/SettingsProvider';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +70,7 @@ const ITEMS_PER_PAGE = 25;
 
 const Transactions = () => {
   const { session, loading: authLoading } = useAuth();
+  const { selectedYear } = useSettings();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categoryGroups, setCategoryGroups] = useState<any[]>([]);
@@ -83,8 +85,6 @@ const Transactions = () => {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showBulkCategorize, setShowBulkCategorize] = useState(false);
   const [bulkCategory, setBulkCategory] = useState('');
-  const [selectedYear, setSelectedYear] = useState<string>('All');
-  const [isSavingYear, setIsSavingYear] = useState(false);
 
   // Undo state
   const [undoAction, setUndoAction] = useState<{ message: string; action: () => Promise<void> } | null>(null);
@@ -112,49 +112,9 @@ const Transactions = () => {
     } else if (session) {
       fetchTransactions();
       fetchCategoryGroups();
-      fetchUserSettings();
       fetchInvoices();
     }
-  }, [session, authLoading, navigate]);
-
-  const fetchUserSettings = async () => {
-    if (!session) return;
-    try {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('selected_transaction_year')
-        .eq('owner_user_id', session.user.id)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      if (data?.selected_transaction_year) {
-        setSelectedYear(data.selected_transaction_year);
-      }
-    } catch (error) {
-      console.error("Error fetching user settings:", error);
-    }
-  };
-
-  const handleYearChange = async (year: string) => {
-    setSelectedYear(year);
-    if (!session) return;
-
-    setIsSavingYear(true);
-    try {
-      const { error } = await supabase
-        .from('settings')
-        .upsert({ 
-          owner_user_id: session.user.id, 
-          selected_transaction_year: year,
-          updated_at: new Date().toISOString()
-        });
-      if (error) throw error;
-    } catch (error: any) {
-      showError("Failed to save year preference");
-    } finally {
-      setIsSavingYear(false);
-    }
-  };
+  }, [session, authLoading, navigate, selectedYear]);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -165,12 +125,17 @@ const Transactions = () => {
       let hasMore = true;
 
       while (hasMore) {
-        const { data, error } = await supabase
+        let query = supabase
           .from('finance_transactions')
           .select('*')
           .order('transaction_date', { ascending: false })
-          .order('id', { ascending: false })
-          .range(from, from + step - 1);
+          .order('id', { ascending: false });
+
+        if (selectedYear !== 'All') {
+          query = query.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
+        }
+
+        const { data, error } = await query.range(from, from + step - 1);
 
         if (error) throw error;
         
@@ -257,7 +222,7 @@ const Transactions = () => {
         category_1: editForm.category_1,
         category_2: editForm.category_2,
         is_work: editForm.is_work,
-        is_reviewed: true, // Mark as reviewed when manually edited
+        is_reviewed: true,
         notes: editForm.notes,
         invoice_id: editForm.invoice_id === 'none' ? null : (editForm.invoice_id || null)
       }).eq('id', editingTransaction.id);
@@ -277,7 +242,7 @@ const Transactions = () => {
         .from('finance_transactions')
         .update({ 
           category_1: bulkCategory,
-          is_reviewed: true // Mark as reviewed when bulk categorized
+          is_reviewed: true 
         })
         .in('id', Array.from(selectedIds));
       
@@ -315,7 +280,7 @@ const Transactions = () => {
         action: async () => {
           for (const state of originalStates) {
             await supabase.from('finance_transactions').update({ 
-              is_work: state.is_work,
+              is_work: state.is_work, 
               is_reviewed: state.is_reviewed 
             }).eq('id', state.id);
           }
@@ -396,11 +361,6 @@ const Transactions = () => {
     }
   };
 
-  const availableYears = useMemo(() => {
-    const years = new Set(transactions.map(t => new Date(t.transaction_date).getFullYear().toString()));
-    return ['All', ...Array.from(years).sort((a, b) => b.localeCompare(a))];
-  }, [transactions]);
-
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       const matchesSearch = !filters.search ||
@@ -414,9 +374,8 @@ const Transactions = () => {
       const matchesDateRange = (!filters.dateRange.from || new Date(t.transaction_date) >= filters.dateRange.from) && (!filters.dateRange.to || new Date(t.transaction_date) <= filters.dateRange.to);
       const matchesMinAmount = !filters.minAmount || Math.abs(t.amount) >= parseFloat(filters.minAmount);
       const matchesMaxAmount = !filters.maxAmount || Math.abs(t.amount) <= parseFloat(filters.maxAmount);
-      const matchesYear = selectedYear === 'All' || new Date(t.transaction_date).getFullYear().toString() === selectedYear;
 
-      return matchesSearch && matchesCategory && matchesType && matchesWork && matchesDateRange && matchesMinAmount && matchesMaxAmount && matchesYear;
+      return matchesSearch && matchesCategory && matchesType && matchesWork && matchesDateRange && matchesMinAmount && matchesMaxAmount;
     }).sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
@@ -427,7 +386,7 @@ const Transactions = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [transactions, filters, sortField, sortOrder, selectedYear]);
+  }, [transactions, filters, sortField, sortOrder]);
 
   const analyticsTransactions = useMemo(() => {
     return filteredTransactions.filter(t => t.category_1 !== 'Account');
@@ -501,25 +460,11 @@ const Transactions = () => {
             <div>
               <h1 className="text-3xl font-black tracking-tight">Transaction History</h1>
               <p className="text-sm text-muted-foreground">
-                {transactions.length > 0 ? `${transactions.length} transactions imported` : 'Import your bank transactions to get started'}
+                {transactions.length > 0 ? `${transactions.length} transactions in ${selectedYear}` : 'Import your bank transactions to get started'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Select value={selectedYear} onValueChange={handleYearChange}>
-                <SelectTrigger className="w-32 rounded-xl h-9 bg-background border-primary/20 text-primary font-bold">
-                  {isSavingYear ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <CalendarIcon className="w-4 h-4 mr-2" />}
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <Button 
               variant="outline" 
               size="sm" 
@@ -883,7 +828,7 @@ const Transactions = () => {
           totalIncome={summaryStats.income}
           totalExpenses={summaryStats.expenses}
           net={summaryStats.net}
-          selectedCount={selectedStats.count}
+          selectedCount={selectedIds.size}
           selectedTotal={selectedStats.total}
         />
       )}
