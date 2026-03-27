@@ -6,8 +6,16 @@ import AppSidebar from './AppSidebar';
 import CommandPalette from './CommandPalette';
 import ThemeToggle from './ThemeToggle';
 import { Button } from './ui/button';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from './SettingsProvider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,6 +23,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
+  const { selectedYear, setSelectedYear, availableYears } = useSettings();
 
   return (
     <SidebarProvider>
@@ -45,6 +54,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </Button>
             </div>
             <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[100px] h-9 rounded-xl bg-muted/50 border-0 font-bold text-xs">
+                    <Calendar className="w-3 h-3 mr-2 text-primary" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map(year => (
+                      <SelectItem key={year} value={year} className="text-xs font-bold">{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="h-4 w-[1px] bg-border" />
               <Button 
                 size="sm" 
                 className="rounded-xl h-9 gap-2 px-4 font-bold shadow-lg shadow-primary/20"

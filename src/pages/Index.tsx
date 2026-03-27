@@ -30,6 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/components/AuthProvider';
+import { useSettings } from '@/components/SettingsProvider';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { subMonths, format } from 'date-fns';
@@ -61,6 +62,7 @@ interface BusinessStats {
 
 const Index = () => {
   const { session } = useAuth();
+  const { selectedYear } = useSettings();
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] = useState<TransactionSummary | null>(null);
   const [businessStats, setBusinessStats] = useState<BusinessStats | null>(null);
@@ -70,7 +72,7 @@ const Index = () => {
     if (session) {
       fetchData();
     }
-  }, [session]);
+  }, [session, selectedYear]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -86,11 +88,16 @@ const Index = () => {
 
   const fetchTransactionSummary = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('finance_transactions')
         .select('id, description, amount, transaction_date, category_1')
-        .order('transaction_date', { ascending: false })
-        .limit(500);
+        .order('transaction_date', { ascending: false });
+
+      if (selectedYear !== 'All') {
+        query = query.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
+      }
+
+      const { data, error } = await query.limit(500);
 
       if (error) throw error;
       
@@ -117,7 +124,11 @@ const Index = () => {
         .order('invoice_date', { ascending: false })
         .limit(3);
       
-      const { data: txns } = await supabase.from('finance_transactions').select('is_work, notes, category_1, amount, transaction_date');
+      let txnsQuery = supabase.from('finance_transactions').select('is_work, notes, category_1, amount, transaction_date');
+      if (selectedYear !== 'All') {
+        txnsQuery = txnsQuery.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
+      }
+      const { data: txns } = await txnsQuery;
       
       const workTxns = txns?.filter(t => t.is_work) || [];
       const withNotes = workTxns.filter(t => t.notes).length;

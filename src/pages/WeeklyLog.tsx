@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { useSettings } from '@/components/SettingsProvider';
 import { FinanceEntry, CalculatedEntry } from '@/types/finance';
 import { showError, showSuccess } from '@/utils/toast';
 import FinanceForm from '@/components/FinanceForm';
@@ -10,28 +11,36 @@ import FinanceSummary from '@/components/FinanceSummary';
 import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
-import { CalendarCheck, ArrowLeft, Info } from 'lucide-react';
+import { CalendarCheck, ArrowLeft, Info, Sparkles, ShieldCheck, TrendingUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { MadeWithDyad } from "@/components/made-with-dyad";
+import { cn } from '@/lib/utils';
 
 const WeeklyLog = () => {
   const { session } = useAuth();
+  const { selectedYear } = useSettings();
   const [entries, setEntries] = useState<FinanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (session) fetchEntries();
-  }, [session]);
+  }, [session, selectedYear]);
 
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('finance_entries')
         .select('*')
-        .order('date', { ascending: false })
-        .limit(100);
+        .order('date', { ascending: false });
+
+      if (selectedYear !== 'All') {
+        query = query.gte('date', `${selectedYear}-01-01`).lte('date', `${selectedYear}-12-31`);
+      }
+
+      const { data, error } = await query.limit(100);
 
       if (error) throw error;
       
@@ -101,48 +110,99 @@ const WeeklyLog = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-primary">
-            <CalendarCheck className="w-5 h-5" />
-            <span className="text-xs font-black uppercase tracking-widest">Weekly Routine</span>
-          </div>
-          <h1 className="text-3xl font-black tracking-tight">Thursday Snapshot</h1>
-          <p className="text-muted-foreground">Log your savings and debt to track your true financial progress.</p>
-        </div>
-        <Button variant="outline" asChild className="rounded-xl">
-          <Link to="/"><ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard</Link>
-        </Button>
-      </header>
-
-      <FinanceSummary entries={calculatedEntries} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-          <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-10">
+        {/* Immersive Header */}
+        <header className="relative py-8 px-6 rounded-[2.5rem] bg-primary overflow-hidden shadow-2xl shadow-primary/20 animate-fade-in">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-indigo-600 to-purple-700" />
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:32px_32px]" />
           
-          <div className="mt-6 p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-3">
-            <div className="flex items-center gap-2 text-primary">
-              <Info className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase">Why do this?</span>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 text-white">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-white/20 rounded-2xl backdrop-blur-md">
+                  <CalendarCheck className="w-7 h-7" />
+                </div>
+                <span className="text-xs font-black uppercase tracking-[0.2em] opacity-80">Routine Mode</span>
+              </div>
+              <h1 className="text-4xl font-black tracking-tighter">Thursday Snapshot</h1>
+              <p className="text-white/70 text-lg font-medium max-w-xl">
+                Log your savings and debt to map your true financial progress.
+              </p>
             </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              By recording your balances every Thursday, you create a high-fidelity map of your wealth. 
-              This helps you spot if you're "behind" on credit card payments before they become a problem.
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+                <p className="text-[10px] font-black uppercase opacity-60">Current Year</p>
+                <p className="text-xl font-black">{selectedYear}</p>
+              </div>
+              <Button variant="outline" asChild className="rounded-2xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold h-12 px-6">
+                <Link to="/"><ArrowLeft className="w-4 h-4 mr-2" /> Dashboard</Link>
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Summary Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 px-2">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Financial Health</h2>
+          </div>
+          <FinanceSummary entries={calculatedEntries} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column: Entry Form */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="sticky top-24">
+              <div className="flex items-center gap-2 px-2 mb-4">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">New Entry</h2>
+              </div>
+              <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
+              
+              <Card className="mt-6 border-0 shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden relative">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+                <CardContent className="p-6 relative space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white/20 rounded-lg">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-widest opacity-80">Why this matters</span>
+                  </div>
+                  <p className="text-sm font-medium leading-relaxed opacity-90">
+                    Recording your balances every Thursday creates a high-fidelity map of your wealth. 
+                    It helps you spot if you're "behind" on credit card payments before they become a problem.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          
+          {/* Right Column: Charts & History */}
+          <div className="lg:col-span-8 space-y-10">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Progress Chart</h2>
+              </div>
+              <FinanceChart entries={calculatedEntries} />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-2">
+                <History className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Monthly History</h2>
+              </div>
+              <MonthlySummary entries={calculatedEntries} />
+            </div>
           </div>
         </div>
-        
-        <div className="lg:col-span-2 space-y-8">
-          <FinanceChart entries={calculatedEntries} />
-          <MonthlySummary entries={calculatedEntries} />
-        </div>
-      </div>
 
-      <footer className="pt-12 pb-6">
-        <MadeWithDyad />
-      </footer>
+        <footer className="pt-12 pb-6">
+          <MadeWithDyad />
+        </footer>
+      </div>
     </div>
   );
 };
