@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FinanceEntry, AccountType } from '@/types/finance';
 import { format, startOfMonth, subDays } from 'date-fns';
-import { PlusCircle, Copy, Keyboard, Sparkles, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, Copy, Keyboard, Sparkles, Calendar as CalendarIcon, DollarSign } from 'lucide-react';
 import { showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 
@@ -20,7 +20,6 @@ interface FinanceFormProps {
 const STORAGE_KEY = 'vantage_weekly_log_draft';
 
 const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
-  // Initialize state from localStorage if available
   const [date, setDate] = useState(() => {
     const saved = localStorage.getItem(`${STORAGE_KEY}_date`);
     return saved || format(new Date(), 'yyyy-MM-dd');
@@ -43,7 +42,6 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
   const amountRef = useRef<HTMLInputElement>(null);
   const creditWasRef = useRef<HTMLInputElement>(null);
 
-  // Persist state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem(`${STORAGE_KEY}_date`, date);
     localStorage.setItem(`${STORAGE_KEY}_account`, account);
@@ -51,7 +49,6 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
     localStorage.setItem(`${STORAGE_KEY}_creditWas`, creditWas);
   }, [date, account, amount, creditWas]);
 
-  // Handle focus when account type changes
   useEffect(() => {
     if (account === 'Credit') {
       creditWasRef.current?.focus();
@@ -86,14 +83,6 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
     clearDraft();
     setJustSubmitted(true);
     setTimeout(() => setJustSubmitted(false), 1500);
-    
-    setTimeout(() => {
-      if (account === 'Credit') {
-        creditWasRef.current?.focus();
-      } else {
-        amountRef.current?.focus();
-      }
-    }, 100);
   };
 
   const handleCopyLast = () => {
@@ -142,30 +131,30 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
       </CardHeader>
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="space-y-6">
             {/* Date Field */}
             <div className="space-y-3">
               <Label htmlFor="date" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
                 Entry Date
               </Label>
               <div className="relative">
-                <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 <Input 
                   id="date" 
                   type="date" 
                   value={date} 
                   onChange={(e) => setDate(e.target.value)}
                   required
-                  className="h-12 rounded-2xl pl-10 bg-muted/30 border-muted focus:bg-background transition-all font-bold"
+                  className="h-14 rounded-2xl pl-12 bg-muted/30 border-muted focus:bg-background transition-all font-bold text-base"
                 />
               </div>
-              <div className="flex flex-wrap gap-1.5 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1">
                 {quickDates.map(({ label, days }) => (
                   <button
                     key={days}
                     type="button"
                     className={cn(
-                      "h-7 text-[10px] px-3 rounded-full font-black uppercase tracking-tighter transition-all border",
+                      "h-8 text-[10px] px-4 rounded-full font-black uppercase tracking-tighter transition-all border",
                       format(subDays(new Date(), days), 'yyyy-MM-dd') === date
                         ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
                         : "bg-muted/50 text-muted-foreground border-transparent hover:border-muted-foreground/20"
@@ -184,7 +173,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
                 Account Type
               </Label>
               <Select value={account} onValueChange={(val) => setAccount(val as AccountType)}>
-                <SelectTrigger className="h-12 rounded-2xl bg-muted/30 border-muted focus:bg-background transition-all font-bold">
+                <SelectTrigger className="h-14 rounded-2xl bg-muted/30 border-muted focus:bg-background transition-all font-bold text-base">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-muted shadow-2xl">
@@ -204,57 +193,59 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
               </Select>
             </div>
 
-            {/* Credit Was Field (Conditional) */}
-            {account === 'Credit' && (
-              <div className="space-y-3 animate-in fade-in slide-in-from-left-4 duration-300">
-                <Label htmlFor="creditWas" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
-                  Previous Balance ($)
+            <div className="grid grid-cols-1 gap-6">
+              {/* Credit Was Field (Conditional) */}
+              {account === 'Credit' && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-left-4 duration-300">
+                  <Label htmlFor="creditWas" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+                    Previous Balance ($)
+                  </Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      ref={creditWasRef}
+                      id="creditWas" 
+                      type="number" 
+                      step="0.01"
+                      placeholder="-262.00"
+                      value={creditWas} 
+                      onChange={(e) => setCreditWas(e.target.value)}
+                      required
+                      className="h-14 rounded-2xl pl-12 bg-muted/30 border-muted focus:bg-background transition-all font-bold text-lg text-rose-600"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Amount Field */}
+              <div className="space-y-3">
+                <Label htmlFor="amount" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+                  Current Balance ($)
                 </Label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</div>
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input 
-                    ref={creditWasRef}
-                    id="creditWas" 
+                    ref={amountRef}
+                    id="amount" 
                     type="number" 
                     step="0.01"
-                    placeholder="-262.00"
-                    value={creditWas} 
-                    onChange={(e) => setCreditWas(e.target.value)}
+                    placeholder="12,970.67"
+                    value={amount} 
+                    onChange={(e) => setAmount(e.target.value)}
                     required
-                    className="h-12 rounded-2xl pl-8 bg-muted/30 border-muted focus:bg-background transition-all font-bold text-rose-600"
+                    className="h-14 rounded-2xl pl-12 bg-muted/30 border-muted focus:bg-background transition-all text-xl font-black tracking-tight"
                   />
                 </div>
-              </div>
-            )}
-
-            {/* Amount Field */}
-            <div className="space-y-3">
-              <Label htmlFor="amount" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
-                Current Balance ($)
-              </Label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</div>
-                <Input 
-                  ref={amountRef}
-                  id="amount" 
-                  type="number" 
-                  step="0.01"
-                  placeholder="12,970.67"
-                  value={amount} 
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  className="h-12 rounded-2xl pl-8 bg-muted/30 border-muted focus:bg-background transition-all text-lg font-black tracking-tight"
-                />
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-col gap-3 pt-4">
             <Button 
               type="submit" 
               className={cn(
-                "h-14 rounded-2xl font-black text-lg transition-all duration-500 flex-1 shadow-xl",
+                "h-16 rounded-2xl font-black text-lg transition-all duration-500 shadow-xl",
                 justSubmitted 
                   ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" 
                   : "bg-primary hover:bg-primary/90 shadow-primary/20"
@@ -278,10 +269,10 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
                 type="button" 
                 variant="outline" 
                 onClick={handleCopyLast}
-                className="h-14 rounded-2xl font-bold px-8 border-2 hover:bg-muted/50 transition-all"
+                className="h-14 rounded-2xl font-bold border-2 hover:bg-muted/50 transition-all gap-2"
               >
-                <Copy className="w-5 h-5 mr-2" />
-                Copy Last
+                <Copy className="w-4 h-4" />
+                Copy Last Entry
               </Button>
             )}
           </div>
