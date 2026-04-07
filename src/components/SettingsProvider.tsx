@@ -15,8 +15,9 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const { session } = useAuth();
-  const [selectedYear, setSelectedYearState] = useState<string>(new Date().getFullYear().toString());
-  const [availableYears, setAvailableYears] = useState<string[]>(['All', new Date().getFullYear().toString()]);
+  const currentYear = new Date().getFullYear().toString();
+  const [selectedYear, setSelectedYearState] = useState<string>(currentYear);
+  const [availableYears, setAvailableYears] = useState<string[]>(['All', currentYear]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,17 +48,25 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
 
   const fetchAvailableYears = async () => {
     try {
-      const { data, error } = await supabase
-        .from('finance_transactions')
-        .select('transaction_date');
-      
-      if (error) throw error;
+      // Check both tables for unique years
+      const [txnsRes, entriesRes] = await Promise.all([
+        supabase.from('finance_transactions').select('transaction_date'),
+        supabase.from('finance_entries').select('date')
+      ]);
       
       const years = new Set<string>();
       years.add('All');
-      data?.forEach(t => {
+      years.add(currentYear); // Always include current year
+      
+      txnsRes.data?.forEach(t => {
         if (t.transaction_date) {
           years.add(new Date(t.transaction_date).getFullYear().toString());
+        }
+      });
+
+      entriesRes.data?.forEach(e => {
+        if (e.date) {
+          years.add(new Date(e.date).getFullYear().toString());
         }
       });
       
