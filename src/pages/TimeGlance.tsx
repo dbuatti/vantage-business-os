@@ -24,7 +24,11 @@ import {
   CalendarRange,
   History,
   ArrowRight,
-  Target
+  Target,
+  ArrowUpDown,
+  Store,
+  Layers,
+  Zap
 } from 'lucide-react';
 import { 
   format, 
@@ -42,7 +46,8 @@ import {
   subDays,
   eachDayOfInterval,
   isSameDay,
-  parseISO
+  parseISO,
+  differenceInDays
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
@@ -59,8 +64,9 @@ import {
   PieChart,
   Pie
 } from 'recharts';
+import { Progress } from '@/components/ui/progress';
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
 
 const TimeGlance = () => {
   const { session } = useAuth();
@@ -69,6 +75,8 @@ const TimeGlance = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortField, setSortField] = useState<'date' | 'amount' | 'description'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Ensure currentDate is within the selected year if not 'All'
   useEffect(() => {
@@ -115,55 +123,86 @@ const TimeGlance = () => {
   };
 
   const stats = useMemo(() => {
-    const income = transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
-    const expenses = transactions.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+    const incomeTxns = transactions.filter(t => t.amount > 0);
+    const expenseTxns = transactions.filter(t => t.amount < 0);
     
-    const categoryData: Record<string, number> = {};
-    transactions.filter(t => t.amount < 0).forEach(t => {
-      const cat = t.category_1 || 'Other';
-      categoryData[cat] = (categoryData[cat] || 0) + Math.abs(t.amount);
+    const income = incomeTxns.reduce((s, t) => s + t.amount, 0);
+    const expenses = expenseTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
+    
+    // Category Breakdown
+    const categoryMap: Record<string, { total: number, count: number, type: 'income' | 'expense' }> = {};
+    transactions.forEach(t => {
+      const cat = t.category_1 || 'Uncategorized';
+      if (!categoryMap[cat]) categoryMap[cat] = { total: 0, count: 0, type: t.amount > 0 ? 'income' : 'expense' };
+      categoryMap[cat].total += Math.abs(t.amount);
+      categoryMap[cat].count++;
     });
 
-    const pieData = Object.entries(categoryData)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+    const categories = Object.entries(categoryMap)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.total - a.total);
 
-    let chartData: any[] = [];
-    if (view === 'week' || view === 'month') {
-      const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
-      chartData = days.map(day => {
-        const dayTxns = transactions.filter(t => isSameDay(parseISO(t.transaction_date), day));
-        return {
-          name: format(day, view === 'week' ? 'EEE' : 'dd'),
-          income: dayTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
-          expenses: dayTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
-        };
-      });
-    }
+    // Merchant Analysis
+    const merchantMap: Record<string, number> = {};
+    expenseTxns.forEach(t => {
+      merchantMap[t.description] = (merchantMap[t.description] || 0) + Math.abs(t.amount);
+    });
+    const topMerchant = Object.entries(merchantMap).sort((a, b) => b[1] - a[1])[0];
 
-    return { income, expenses, net: income - expenses, pieData, chartData };
+    // Daily Average
+    const daysInPeriod = Math.max(1, differenceInDays(dateRange.end, dateRange.start) + 1);
+    const avgDailySpend = expenses / daysInPeriod;
+
+    // Chart Data
+    const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+    const chartData = days.map(day => {
+      const dayTxns = transactions.filter(t => isSameDay(parseISO(t.transaction_date), day));
+      return {
+        name: format(day, view === 'week' ? 'EEE' : 'dd'),
+        income: dayTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+        expenses: dayTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+      };
+    });
+
+    return { 
+      income, 
+      expenses, 
+      net: income - expenses, 
+      categories, 
+      chartData,
+      topMerchant,
+      avgDailySpend,
+      daysInPeriod
+    };
   }, [transactions, view, dateRange]);
+
+  const sortedTransactions = useMemo(() => {
+    return [...transactions].sort((a, b) => {
+      let comparison = 0;
+      if (sortField === 'date') comparison = new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
+      else if (sortField === 'amount') comparison = Math.abs(a.amount) - Math.abs(b.amount);
+      else comparison = a.description.localeCompare(b.description);
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [transactions, sortField, sortOrder]);
 
   const navigate = (direction: 'prev' | 'next' | 'today') => {
     if (direction === 'today') {
       setCurrentDate(new Date());
       return;
     }
-
     const amount = direction === 'next' ? 1 : -1;
     let nextDate;
     if (view === 'day') nextDate = addDays(currentDate, amount);
     else if (view === 'week') nextDate = addWeeks(currentDate, amount);
     else nextDate = addMonths(currentDate, amount);
-
-    // Prevent navigating outside selected year if not 'All'
-    if (selectedYear !== 'All') {
-      const year = parseInt(selectedYear);
-      if (nextDate.getFullYear() !== year) return;
-    }
-    
+    if (selectedYear !== 'All' && nextDate.getFullYear() !== parseInt(selectedYear)) return;
     setCurrentDate(nextDate);
+  };
+
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortOrder('desc'); }
   };
 
   const getTitle = () => {
@@ -173,7 +212,7 @@ const TimeGlance = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
@@ -207,44 +246,59 @@ const TimeGlance = () => {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 animate-slide-up opacity-0 stagger-1">
+      {/* Quick Insights Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
         <Card className="border-0 shadow-xl bg-emerald-600 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-          <CardContent className="p-6 relative">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-widest opacity-80">Total Income</p>
-              <ArrowUpRight className="w-5 h-5 opacity-50" />
+          <CardContent className="p-5 relative">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Income</p>
+            <p className="text-2xl font-black">{formatCurrency(stats.income)}</p>
+            <div className="mt-2 flex items-center gap-1 text-[10px] font-bold bg-white/20 w-fit px-2 py-0.5 rounded-full">
+              <ArrowUpRight className="w-3 h-3" /> {stats.income > 0 ? 'Active' : 'No income'}
             </div>
-            <p className="text-3xl font-black">{formatCurrency(stats.income)}</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-xl bg-rose-600 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-          <CardContent className="p-6 relative">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-widest opacity-80">Total Expenses</p>
-              <ArrowDownRight className="w-5 h-5 opacity-50" />
+          <CardContent className="p-5 relative">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Expenses</p>
+            <p className="text-2xl font-black">{formatCurrency(-stats.expenses)}</p>
+            <div className="mt-2 flex items-center gap-1 text-[10px] font-bold bg-white/20 w-fit px-2 py-0.5 rounded-full">
+              <ArrowDownRight className="w-3 h-3" /> {stats.expenses > 0 ? 'Spending' : 'No spend'}
             </div>
-            <p className="text-3xl font-black">{formatCurrency(-stats.expenses)}</p>
           </CardContent>
         </Card>
-        <Card className={cn("border-0 shadow-xl text-white overflow-hidden relative", stats.net >= 0 ? "bg-primary" : "bg-amber-600")}>
+        <Card className="border-0 shadow-xl bg-indigo-600 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-          <CardContent className="p-6 relative">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold uppercase tracking-widest opacity-80">Net Position</p>
-              <TrendingUp className="w-5 h-5 opacity-50" />
-            </div>
-            <p className="text-3xl font-black">{formatCurrency(stats.net)}</p>
+          <CardContent className="p-5 relative">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Avg Daily Spend</p>
+            <p className="text-2xl font-black">{formatCurrency(stats.avgDailySpend)}</p>
+            <p className="text-[10px] opacity-60 mt-1">Over {stats.daysInPeriod} days</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-xl bg-amber-500 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+          <CardContent className="p-5 relative">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Top Merchant</p>
+            <p className="text-lg font-black truncate" title={stats.topMerchant?.[0] || 'None'}>
+              {stats.topMerchant ? stats.topMerchant[0] : '—'}
+            </p>
+            <p className="text-[10px] opacity-80 mt-1">{stats.topMerchant ? formatCurrency(stats.topMerchant[1]) : 'No data'}</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: Charts & Categories */}
+        <div className="lg:col-span-8 space-y-8">
           {view !== 'day' && (
             <Card className="border-0 shadow-xl animate-slide-up opacity-0 stagger-2">
-              <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="w-5 h-5 text-primary" />{view === 'week' ? 'Daily Activity' : 'Monthly Trend'}</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  {view === 'week' ? 'Daily Activity' : 'Monthly Trend'}
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
@@ -262,68 +316,147 @@ const TimeGlance = () => {
             </Card>
           )}
 
-          <Card className="border-0 shadow-xl overflow-hidden animate-slide-up opacity-0 stagger-3">
-            <CardHeader className="bg-muted/20 border-b">
+          {/* Category Breakdown */}
+          <Card className="border-0 shadow-xl animate-slide-up opacity-0 stagger-3">
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2"><History className="w-5 h-5 text-primary" />Transactions</CardTitle>
-                <Badge variant="outline" className="rounded-lg">{transactions.length} items</Badge>
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-primary" />
+                    Category Breakdown
+                  </CardTitle>
+                  <CardDescription>Spending and income by category for this period.</CardDescription>
+                </div>
+                <Badge variant="outline" className="rounded-lg">{stats.categories.length} categories</Badge>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y max-h-[600px] overflow-y-auto">
-                {loading ? (
-                  <div className="p-12 flex flex-col items-center justify-center text-muted-foreground gap-3"><Loader2 className="w-8 h-8 animate-spin text-primary" /><p className="text-sm font-bold uppercase tracking-widest">Syncing Data...</p></div>
-                ) : transactions.length === 0 ? (
-                  <div className="p-20 text-center space-y-4"><div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mx-auto opacity-50"><History className="w-10 h-10 text-muted-foreground" /></div><div><p className="font-bold text-lg text-muted-foreground">No activity found</p><p className="text-sm text-muted-foreground/60">Try navigating to a different period.</p></div></div>
-                ) : (
-                  transactions.map((t) => (
-                    <div key={t.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors group">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className={cn("w-2.5 h-2.5 rounded-full shrink-0 shadow-sm", t.amount > 0 ? "bg-emerald-500" : "bg-rose-500")} />
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{t.description}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">{format(parseISO(t.transaction_date), 'EEE, MMM dd')}</span>
-                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-primary/10 bg-primary/5 text-primary">{t.category_1}</Badge>
-                            {t.is_work && <Badge className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black bg-amber-100 text-amber-700 border-amber-200">Work</Badge>}
+            <CardContent className="space-y-6">
+              {stats.categories.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground italic">No category data for this period.</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  {stats.categories.map((cat, i) => {
+                    const totalForType = cat.type === 'income' ? stats.income : stats.expenses;
+                    const percentage = totalForType > 0 ? (cat.total / totalForType) * 100 : 0;
+                    const color = COLORS[i % COLORS.length];
+
+                    return (
+                      <div key={cat.name} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                            <span className="font-bold truncate">{cat.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
                           </div>
+                          <span className={cn("font-black tabular-nums", cat.type === 'income' ? "text-emerald-600" : "text-rose-600")}>
+                            {formatCurrency(cat.total)}
+                          </span>
+                        </div>
+                        <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="absolute top-0 left-0 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%`, backgroundColor: color }}
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of {cat.type}</span>
                         </div>
                       </div>
-                      <div className="text-right shrink-0 ml-4"><p className={cn("text-base font-black tabular-nums", t.amount > 0 ? "text-emerald-600" : "text-rose-600")}>{formatCurrency(t.amount)}</p></div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="space-y-8">
-          <Card className="border-0 shadow-xl animate-slide-up opacity-0 stagger-2">
-            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><PieChartIcon className="w-5 h-5 text-primary" />Spending Mix</CardTitle></CardHeader>
-            <CardContent>
-              {stats.pieData.length > 0 ? (
-                <div className="space-y-6">
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie data={stats.pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                          {stats.pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }} formatter={(value: number) => formatCurrency(value)} />
-                      </PieChart>
-                    </ResponsiveContainer>
+        {/* Right Column: Transaction List with Sorting */}
+        <div className="lg:col-span-4 space-y-8">
+          <Card className="border-0 shadow-xl overflow-hidden h-full flex flex-col animate-slide-up opacity-0 stagger-2">
+            <CardHeader className="bg-muted/20 border-b shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <History className="w-5 h-5 text-primary" />
+                  Transactions
+                </CardTitle>
+                <Badge variant="outline" className="rounded-lg">{transactions.length}</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('date')}
+                  className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'date' && "bg-primary/10 text-primary")}
+                >
+                  Date <ArrowUpDown className="w-3 h-3" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('amount')}
+                  className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'amount' && "bg-primary/10 text-primary")}
+                >
+                  Amount <ArrowUpDown className="w-3 h-3" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('description')}
+                  className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'description' && "bg-primary/10 text-primary")}
+                >
+                  Name <ArrowUpDown className="w-3 h-3" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 overflow-hidden">
+              <div className="divide-y h-full overflow-y-auto max-h-[800px]">
+                {loading ? (
+                  <div className="p-12 flex flex-col items-center justify-center text-muted-foreground gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm font-bold uppercase tracking-widest">Syncing Data...</p>
                   </div>
-                  <div className="space-y-2">
-                    {stats.pieData.map((item, i) => (
-                      <div key={item.name} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} /><span className="font-medium text-muted-foreground">{item.name}</span></div>
-                        <span className="font-bold">{formatCurrency(item.value)}</span>
+                ) : sortedTransactions.length === 0 ? (
+                  <div className="p-20 text-center space-y-4">
+                    <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mx-auto opacity-50">
+                      <History className="w-10 h-10 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg text-muted-foreground">No activity found</p>
+                      <p className="text-sm text-muted-foreground/60">Try navigating to a different period.</p>
+                    </div>
+                  </div>
+                ) : (
+                  sortedTransactions.map((t) => (
+                    <div key={t.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors group">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={cn(
+                          "w-2.5 h-2.5 rounded-full shrink-0 shadow-sm",
+                          t.amount > 0 ? "bg-emerald-500" : "bg-rose-500"
+                        )} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{t.description}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">
+                              {format(parseISO(t.transaction_date), 'MMM dd')}
+                            </span>
+                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-primary/10 bg-primary/5 text-primary">
+                              {t.category_1}
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ) : <div className="py-12 text-center text-muted-foreground italic text-sm">No spending data to analyze.</div>}
+                      <div className="text-right shrink-0 ml-4">
+                        <p className={cn(
+                          "text-base font-black tabular-nums",
+                          t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                        )}>
+                          {formatCurrency(t.amount)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
