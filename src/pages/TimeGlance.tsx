@@ -31,7 +31,12 @@ import {
   Layers,
   Zap,
   AlertTriangle,
-  ArrowDown
+  ArrowDown,
+  Calculator,
+  Info,
+  Minus,
+  Plus as PlusIcon,
+  Equal
 } from 'lucide-react';
 import { 
   format, 
@@ -136,7 +141,19 @@ const TimeGlance = () => {
     // High Expenses (> $200)
     const highExpenses = expenseTxns
       .filter(t => Math.abs(t.amount) >= 200)
-      .sort((a, b) => a.amount - b.amount); // Most expensive first
+      .sort((a, b) => a.amount - b.amount);
+
+    // Neurodivergent Breakdown Logic
+    const bigHits = expenseTxns.filter(t => Math.abs(t.amount) >= 100);
+    const bigHitsTotal = bigHits.reduce((s, t) => s + Math.abs(t.amount), 0);
+    
+    const subscriptions = expenseTxns.filter(t => t.category_1?.toLowerCase() === 'subscription');
+    const subscriptionsTotal = subscriptions.reduce((s, t) => s + Math.abs(t.amount), 0);
+    
+    const smallStuff = expenseTxns.filter(t => Math.abs(t.amount) < 20);
+    const smallStuffTotal = smallStuff.reduce((s, t) => s + Math.abs(t.amount), 0);
+    
+    const everythingElseTotal = expenses - bigHitsTotal - subscriptionsTotal;
 
     // Category Breakdown
     const categoryMap: Record<string, { total: number, count: number, type: 'income' | 'expense' }> = {};
@@ -182,7 +199,13 @@ const TimeGlance = () => {
       topMerchant,
       avgDailySpend,
       daysInPeriod,
-      highExpenses
+      highExpenses,
+      breakdown: {
+        bigHits: { count: bigHits.length, total: bigHitsTotal },
+        subscriptions: { count: subscriptions.length, total: subscriptionsTotal },
+        smallStuff: { count: smallStuff.length, total: smallStuffTotal },
+        everythingElse: everythingElseTotal
+      }
     };
   }, [transactions, view, dateRange]);
 
@@ -306,32 +329,75 @@ const TimeGlance = () => {
         </Card>
       </div>
 
-      {/* High Expense Spotlight */}
-      {stats.highExpenses.length > 0 && (
-        <Card className="border-0 shadow-xl bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900 animate-slide-up opacity-0 stagger-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /> High Expense Spotlight (+$200)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {stats.highExpenses.map((t) => (
-                <div key={t.id} className="bg-white dark:bg-card p-3 rounded-xl border border-rose-100 dark:border-rose-900 shadow-sm flex items-center gap-4 min-w-[240px] flex-1">
-                  <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
-                    <ArrowDown className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-black truncate">{t.description}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
-                  </div>
-                  <p className="text-lg font-black text-rose-600 tabular-nums">{formatCurrency(t.amount)}</p>
-                </div>
-              ))}
+      {/* The Expense Story - Neurodivergent Friendly Breakdown */}
+      <Card className="border-0 shadow-2xl bg-card overflow-hidden animate-slide-up opacity-0 stagger-2">
+        <CardHeader className="pb-4 border-b bg-primary/5">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+              <Calculator className="w-6 h-6" />
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div>
+              <CardTitle className="text-xl font-black tracking-tight">The Expense Story</CardTitle>
+              <CardDescription className="text-xs font-bold uppercase tracking-wider">How your {formatCurrency(stats.expenses)} adds up</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            {/* Visual Equation */}
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 flex-1">
+              <div className="text-center space-y-2">
+                <div className="p-4 rounded-3xl bg-rose-50 border border-rose-100 shadow-sm">
+                  <p className="text-2xl font-black text-rose-600">{formatCurrency(stats.breakdown.bigHits.total)}</p>
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">The Big Hits (+$100)</p>
+              </div>
+              
+              <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
+
+              <div className="text-center space-y-2">
+                <div className="p-4 rounded-3xl bg-blue-50 border border-blue-100 shadow-sm">
+                  <p className="text-2xl font-black text-blue-600">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subscriptions</p>
+              </div>
+
+              <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
+
+              <div className="text-center space-y-2">
+                <div className="p-4 rounded-3xl bg-amber-50 border border-amber-100 shadow-sm">
+                  <p className="text-2xl font-black text-amber-600">{formatCurrency(stats.breakdown.everythingElse)}</p>
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Daily Life</p>
+              </div>
+
+              <Equal className="w-5 h-5 text-muted-foreground/40" />
+
+              <div className="text-center space-y-2">
+                <div className="p-5 rounded-[2rem] bg-primary text-white shadow-xl shadow-primary/20">
+                  <p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p>
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-primary">Total Spent</p>
+              </div>
+            </div>
+
+            {/* Plain English Summary */}
+            <div className="w-full lg:w-80 space-y-4 p-6 rounded-3xl bg-muted/30 border border-dashed">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
+                <Info className="w-4 h-4" /> Plain English
+              </div>
+              <p className="text-sm leading-relaxed font-medium">
+                This period, <span className="text-rose-600 font-bold">{Math.round((stats.breakdown.bigHits.total / stats.expenses) * 100)}%</span> of your spending came from just <span className="font-bold">{stats.breakdown.bigHits.count} large transactions</span>. 
+                {stats.breakdown.smallStuff.total > 50 && (
+                  <span className="block mt-2 text-amber-600">
+                    ⚠️ You also had <span className="font-bold">{stats.breakdown.smallStuff.count} small purchases</span> under $20, totaling <span className="font-bold">{formatCurrency(stats.breakdown.smallStuff.total)}</span>.
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Charts & Categories */}
