@@ -36,7 +36,8 @@ import {
   Info,
   Minus,
   Plus as PlusIcon,
-  Equal
+  Equal,
+  List
 } from 'lucide-react';
 import { 
   format, 
@@ -66,13 +67,20 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Cell,
   PieChart,
   Pie
 } from 'recharts';
 import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
 
@@ -143,17 +151,25 @@ const TimeGlance = () => {
       .filter(t => Math.abs(t.amount) >= 200)
       .sort((a, b) => a.amount - b.amount);
 
-    // Neurodivergent Breakdown Logic
+    // Neurodivergent Breakdown Logic - Mutually Exclusive Buckets
     const bigHits = expenseTxns.filter(t => Math.abs(t.amount) >= 100);
     const bigHitsTotal = bigHits.reduce((s, t) => s + Math.abs(t.amount), 0);
     
-    const subscriptions = expenseTxns.filter(t => t.category_1?.toLowerCase() === 'subscription');
+    const subscriptions = expenseTxns.filter(t => 
+      (t.category_1?.toLowerCase() === 'subscription' || t.category_2?.toLowerCase() === 'subscription') && 
+      Math.abs(t.amount) < 100
+    );
     const subscriptionsTotal = subscriptions.reduce((s, t) => s + Math.abs(t.amount), 0);
     
+    const dailyLife = expenseTxns.filter(t => 
+      Math.abs(t.amount) < 100 && 
+      t.category_1?.toLowerCase() !== 'subscription' && 
+      t.category_2?.toLowerCase() !== 'subscription'
+    );
+    const dailyLifeTotal = dailyLife.reduce((s, t) => s + Math.abs(t.amount), 0);
+
     const smallStuff = expenseTxns.filter(t => Math.abs(t.amount) < 20);
     const smallStuffTotal = smallStuff.reduce((s, t) => s + Math.abs(t.amount), 0);
-    
-    const everythingElseTotal = expenses - bigHitsTotal - subscriptionsTotal;
 
     // Category Breakdown
     const categoryMap: Record<string, { total: number, count: number, type: 'income' | 'expense' }> = {};
@@ -200,11 +216,12 @@ const TimeGlance = () => {
       avgDailySpend,
       daysInPeriod,
       highExpenses,
+      expenseTxns,
       breakdown: {
-        bigHits: { count: bigHits.length, total: bigHitsTotal },
-        subscriptions: { count: subscriptions.length, total: subscriptionsTotal },
-        smallStuff: { count: smallStuff.length, total: smallStuffTotal },
-        everythingElse: everythingElseTotal
+        bigHits: { items: bigHits, total: bigHitsTotal },
+        subscriptions: { items: subscriptions, total: subscriptionsTotal },
+        dailyLife: { items: dailyLife, total: dailyLifeTotal },
+        smallStuff: { items: smallStuff, total: smallStuffTotal }
       }
     };
   }, [transactions, view, dateRange]);
@@ -251,6 +268,27 @@ const TimeGlance = () => {
     if (view === 'week') return `${format(dateRange.start, 'MMM dd')} — ${format(dateRange.end, 'MMM dd, yyyy')}`;
     return format(currentDate, 'MMMM yyyy');
   };
+
+  const renderTransactionList = (items: Transaction[]) => (
+    <ScrollArea className="h-[300px] w-[350px] p-4">
+      <div className="space-y-3">
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Transaction List ({items.length})</p>
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">No transactions in this bucket.</p>
+        ) : (
+          items.map((t, i) => (
+            <div key={i} className="flex items-center justify-between gap-4 border-b border-muted pb-2 last:border-0">
+              <div className="min-w-0">
+                <p className="text-xs font-bold truncate">{t.description}</p>
+                <p className="text-[10px] text-muted-foreground">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
+              </div>
+              <p className="text-xs font-black tabular-nums shrink-0">{formatCurrency(Math.abs(t.amount))}</p>
+            </div>
+          ))
+        )}
+      </div>
+    </ScrollArea>
+  );
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
@@ -343,59 +381,89 @@ const TimeGlance = () => {
           </div>
         </CardHeader>
         <CardContent className="p-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            {/* Visual Equation */}
-            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 flex-1">
-              <div className="text-center space-y-2">
-                <div className="p-4 rounded-3xl bg-rose-50 border border-rose-100 shadow-sm">
-                  <p className="text-2xl font-black text-rose-600">{formatCurrency(stats.breakdown.bigHits.total)}</p>
+          <TooltipProvider delayDuration={0}>
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+              {/* Visual Equation */}
+              <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 flex-1">
+                <div className="text-center space-y-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="p-4 rounded-3xl bg-rose-50 border border-rose-100 shadow-sm cursor-help hover:scale-105 transition-transform">
+                        <p className="text-2xl font-black text-rose-600">{formatCurrency(stats.breakdown.bigHits.total)}</p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                      {renderTransactionList(stats.breakdown.bigHits.items)}
+                    </TooltipContent>
+                  </Tooltip>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">The Big Hits (+$100)</p>
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">The Big Hits (+$100)</p>
+                
+                <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
+
+                <div className="text-center space-y-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="p-4 rounded-3xl bg-blue-50 border border-blue-100 shadow-sm cursor-help hover:scale-105 transition-transform">
+                        <p className="text-2xl font-black text-blue-600">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                      {renderTransactionList(stats.breakdown.subscriptions.items)}
+                    </TooltipContent>
+                  </Tooltip>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subscriptions</p>
+                </div>
+
+                <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
+
+                <div className="text-center space-y-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="p-4 rounded-3xl bg-amber-50 border border-amber-100 shadow-sm cursor-help hover:scale-105 transition-transform">
+                        <p className="text-2xl font-black text-amber-600">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                      {renderTransactionList(stats.breakdown.dailyLife.items)}
+                    </TooltipContent>
+                  </Tooltip>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Daily Life</p>
+                </div>
+
+                <Equal className="w-5 h-5 text-muted-foreground/40" />
+
+                <div className="text-center space-y-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="p-5 rounded-[2rem] bg-primary text-white shadow-xl shadow-primary/20 cursor-help hover:scale-105 transition-transform">
+                        <p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                      {renderTransactionList(stats.expenseTxns)}
+                    </TooltipContent>
+                  </Tooltip>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary">Total Spent</p>
+                </div>
               </div>
-              
-              <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
 
-              <div className="text-center space-y-2">
-                <div className="p-4 rounded-3xl bg-blue-50 border border-blue-100 shadow-sm">
-                  <p className="text-2xl font-black text-blue-600">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
+              {/* Plain English Summary */}
+              <div className="w-full lg:w-80 space-y-4 p-6 rounded-3xl bg-muted/30 border border-dashed">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  <Info className="w-4 h-4" /> Plain English
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subscriptions</p>
-              </div>
-
-              <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
-
-              <div className="text-center space-y-2">
-                <div className="p-4 rounded-3xl bg-amber-50 border border-amber-100 shadow-sm">
-                  <p className="text-2xl font-black text-amber-600">{formatCurrency(stats.breakdown.everythingElse)}</p>
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Daily Life</p>
-              </div>
-
-              <Equal className="w-5 h-5 text-muted-foreground/40" />
-
-              <div className="text-center space-y-2">
-                <div className="p-5 rounded-[2rem] bg-primary text-white shadow-xl shadow-primary/20">
-                  <p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p>
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-primary">Total Spent</p>
+                <p className="text-sm leading-relaxed font-medium">
+                  This period, <span className="text-rose-600 font-bold">{Math.round((stats.breakdown.bigHits.total / stats.expenses) * 100)}%</span> of your spending came from just <span className="font-bold">{stats.breakdown.bigHits.items.length} large transactions</span>. 
+                  {stats.breakdown.smallStuff.total > 50 && (
+                    <span className="block mt-2 text-amber-600">
+                      ⚠️ You also had <span className="font-bold">{stats.breakdown.smallStuff.items.length} small purchases</span> under $20, totaling <span className="font-bold">{formatCurrency(stats.breakdown.smallStuff.total)}</span>.
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
-
-            {/* Plain English Summary */}
-            <div className="w-full lg:w-80 space-y-4 p-6 rounded-3xl bg-muted/30 border border-dashed">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
-                <Info className="w-4 h-4" /> Plain English
-              </div>
-              <p className="text-sm leading-relaxed font-medium">
-                This period, <span className="text-rose-600 font-bold">{Math.round((stats.breakdown.bigHits.total / stats.expenses) * 100)}%</span> of your spending came from just <span className="font-bold">{stats.breakdown.bigHits.count} large transactions</span>. 
-                {stats.breakdown.smallStuff.total > 50 && (
-                  <span className="block mt-2 text-amber-600">
-                    ⚠️ You also had <span className="font-bold">{stats.breakdown.smallStuff.count} small purchases</span> under $20, totaling <span className="font-bold">{formatCurrency(stats.breakdown.smallStuff.total)}</span>.
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
+          </TooltipProvider>
         </CardContent>
       </Card>
 
@@ -417,7 +485,7 @@ const TimeGlance = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600, fill: 'hsl(var(--muted-foreground))' }} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                      <Tooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }} />
+                      <RechartsTooltip cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }} contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }} />
                       <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
                     </BarChart>
