@@ -78,6 +78,19 @@ const SubscriptionAuditPage = () => {
   };
 
   const audit = useMemo(() => {
+    // Helper to strip bank metadata (receipts, dates, card numbers, locations)
+    const cleanDescription = (desc: string) => {
+      return desc
+        .replace(/Visa Purchase - Receipt \d+/gi, '')
+        .replace(/In [A-Z\s]+ Date \d{1,2} [A-Z]{3} \d{4}/gi, '')
+        .replace(/Card \d{4}x+\d{4}/gi, '')
+        .replace(/Foreign Currency Amount: [A-Z\s\d\.]+/gi, '')
+        .replace(/Ref \d+/gi, '')
+        .replace(/[\-\*#]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
     // 1. Filter for potential subscriptions
     const potentialSubs = transactions.filter(t => 
       t.amount < 0 && (
@@ -90,19 +103,19 @@ const SubscriptionAuditPage = () => {
         t.description.toLowerCase().includes('apple.com/bill') ||
         t.description.toLowerCase().includes('notion') ||
         t.description.toLowerCase().includes('dropbox') ||
-        t.description.toLowerCase().includes('sqsp')
+        t.description.toLowerCase().includes('sqsp') ||
+        t.description.toLowerCase().includes('adobe') ||
+        t.description.toLowerCase().includes('microsoft')
       )
     );
 
     // 2. Normalize and Group
     const groups: Record<string, Transaction[]> = {};
     potentialSubs.forEach(t => {
-      // Strip unique IDs, hashes, and dates from description
-      const normalized = t.description
-        .split('#')[0]
-        .split('*')[0]
-        .replace(/\d{4,}/g, '') // Remove long numbers
-        .replace(/[A-Z0-9]{10,}/g, '') // Remove alphanumeric hashes
+      const cleaned = cleanDescription(t.description);
+      // Further normalize for grouping (uppercase, remove small numbers)
+      const normalized = cleaned
+        .replace(/\d+/g, '')
         .trim()
         .toUpperCase();
       
@@ -120,7 +133,7 @@ const SubscriptionAuditPage = () => {
         // Frequency detection
         let frequency: any = 'Monthly';
         if (txns.length >= 2) {
-          const days = differenceInDays(parseISO(sorted[0].transaction_date), parseISO(sorted[1].transaction_date));
+          const days = Math.abs(differenceInDays(parseISO(sorted[0].transaction_date), parseISO(sorted[1].transaction_date)));
           if (days > 300) frequency = 'Yearly';
           else if (days < 10) frequency = 'Weekly';
           else if (days > 45) frequency = 'Irregular';
@@ -135,10 +148,10 @@ const SubscriptionAuditPage = () => {
         // Check for multiple charges in same month (Duplicate detection)
         const lastMonth = format(parseISO(sorted[0].transaction_date), 'yyyy-MM');
         const chargesThisMonth = txns.filter(t => format(parseISO(t.transaction_date), 'yyyy-MM') === lastMonth);
-        if (chargesThisMonth.length > 1) alerts.push('Multiple Active Streams');
+        if (chargesThisMonth.length > 1) alerts.push('Multiple Streams');
 
         return {
-          name: sorted[0].description.split('#')[0].split('*')[0].trim(),
+          name: cleanDescription(sorted[0].description),
           normalizedName,
           monthlyCost: frequency === 'Yearly' ? latestAmount / 12 : latestAmount,
           totalSpent,
@@ -160,7 +173,6 @@ const SubscriptionAuditPage = () => {
     const aiSpend = services.filter(s => s.isAI).reduce((s, v) => s + v.monthlyCost, 0);
     const workSpend = services.filter(s => s.isWork).reduce((s, v) => s + v.monthlyCost, 0);
     
-    // Redundancy detection (e.g. multiple cloud storage)
     const cloudServices = services.filter(s => s.normalizedName.includes('DROPBOX') || s.normalizedName.includes('GOOGLE') || s.normalizedName.includes('ICLOUD'));
     const redundancyAlerts = cloudServices.length > 1 ? [`You have ${cloudServices.length} different cloud storage/workspace providers active.`] : [];
 
@@ -245,7 +257,7 @@ const SubscriptionAuditPage = () => {
                   <p>{alert}</p>
                 </div>
               ))}
-              {audit.services.filter(s => s.alerts.includes('Multiple Active Streams')).map((s, i) => (
+              {audit.services.filter(s => s.alerts.includes('Multiple Streams')).map((s, i) => (
                 <div key={i} className="flex items-start gap-3 text-sm text-amber-900 dark:text-amber-100 font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p><span className="font-black">{s.name}</span> has multiple active billing streams. Check for duplicate accounts.</p>
@@ -326,9 +338,11 @@ const SubscriptionAuditPage = () => {
                         </Badge>
                       ))}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right min-w-[120px]">
                       <p className="text-2xl font-black tracking-tight">{formatCurrency(service.monthlyCost)}</p>
-                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Per Month</p>
+                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                        {service.frequency === 'Yearly' ? 'Per Month (Avg)' : 'Per Month'}
+                      </p>
                     </div>
                     <Button variant="ghost" size="icon" className="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
                       <ChevronRight className="w-5 h-5" />
