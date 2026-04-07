@@ -35,6 +35,7 @@ import {
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 import { formatCurrency } from '@/utils/format';
+import SubscriptionAudit from '@/components/SubscriptionAudit';
 
 interface Insight {
   title: string;
@@ -92,7 +93,6 @@ const Insights = () => {
     const cachedTime = localStorage.getItem(`ai-insights-time-${selectedYear}`);
     if (cached && cachedTime) {
       const age = Date.now() - new Date(cachedTime).getTime();
-      // Cache valid for 30 minutes
       if (age < 30 * 60 * 1000) {
         setInsights(JSON.parse(cached));
         setLastGenerated(new Date(cachedTime));
@@ -320,34 +320,60 @@ const Insights = () => {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {insights.insights.map((insight, i) => {
-              const colors = getInsightColors(insight.type);
-              return (
-                <Card key={i} className={cn("border-0 shadow-lg overflow-hidden transition-all hover:shadow-xl", colors.border)}>
-                  <div className={cn("h-1", insight.type === 'opportunity' ? 'bg-blue-500' : insight.type === 'warning' ? 'bg-amber-500' : insight.type === 'success' ? 'bg-emerald-500' : 'bg-violet-500')} />
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className={cn("p-2 rounded-xl", colors.bg)}><div className={colors.icon}>{getInsightIcon(insight.type)}</div></div>
-                      <div>
-                        <h3 className="font-bold text-sm">{insight.title}</h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <Badge variant="outline" className={cn("text-[9px] rounded-md", colors.badge)}>{insight.type}</Badge>
-                          <Badge variant="outline" className="text-[9px] rounded-md">{insight.impact} impact</Badge>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-7 space-y-6">
+              <div className="grid grid-cols-1 gap-4">
+                {insights.insights.map((insight, i) => {
+                  const colors = getInsightColors(insight.type);
+                  return (
+                    <Card key={i} className={cn("border-0 shadow-lg overflow-hidden transition-all hover:shadow-xl", colors.border)}>
+                      <div className={cn("h-1", insight.type === 'opportunity' ? 'bg-blue-500' : insight.type === 'warning' ? 'bg-amber-500' : insight.type === 'success' ? 'bg-emerald-500' : 'bg-violet-500')} />
+                      <CardContent className="p-5 space-y-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className={cn("p-2 rounded-xl", colors.bg)}><div className={colors.icon}>{getInsightIcon(insight.type)}</div></div>
+                          <div>
+                            <h3 className="font-bold text-sm">{insight.title}</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Badge variant="outline" className={cn("text-[9px] rounded-md", colors.badge)}>{insight.type}</Badge>
+                              <Badge variant="outline" className="text-[9px] rounded-md">{insight.impact} impact</Badge>
+                            </div>
+                          </div>
                         </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{insight.description}</p>
+                        <div className={cn("p-3 rounded-xl text-sm", colors.bg)}>
+                          <div className="flex items-start gap-2">
+                            <Zap className={cn("w-4 h-4 shrink-0 mt-0.5", colors.icon)} />
+                            <p className="font-medium">{insight.actionable}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 space-y-8">
+              <SubscriptionAudit transactions={filteredTransactions} />
+              
+              <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden relative">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+                <CardContent className="p-6 relative space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5" />
+                    <span className="text-xs font-black uppercase tracking-widest opacity-80">Quick Wins</span>
+                  </div>
+                  <div className="space-y-3">
+                    {insights.quickWins.map((win, i) => (
+                      <div key={i} className="flex items-start gap-3 text-sm font-medium">
+                        <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-[10px]">{i + 1}</div>
+                        <p>{win}</p>
                       </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{insight.description}</p>
-                    <div className={cn("p-3 rounded-xl text-sm", colors.bg)}>
-                      <div className="flex items-start gap-2">
-                        <Zap className={cn("w-4 h-4 shrink-0 mt-0.5", colors.icon)} />
-                        <p className="font-medium">{insight.actionable}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       )}

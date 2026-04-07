@@ -35,7 +35,20 @@ serve(async (req: Request) => {
       t.category_1?.toLowerCase() === 'subscription' || 
       t.category_2?.toLowerCase() === 'subscription'
     )
-    const subCount = new Set(subscriptionTxns.map((t: any) => t.description.toLowerCase())).size
+    
+    const subGroups: Record<string, { total: number, count: number }> = {}
+    subscriptionTxns.forEach((t: any) => {
+      const name = t.description.split('-')[0].trim()
+      if (!subGroups[name]) subGroups[name] = { total: 0, count: 0 }
+      subGroups[name].total += Math.abs(t.amount)
+      subGroups[name].count++
+    })
+
+    const subList = Object.entries(subGroups)
+      .map(([name, data]) => `${name} ($${data.total.toFixed(2)})`)
+      .join(', ')
+
+    const subCount = Object.keys(subGroups).length
     const subTotal = subscriptionTxns.reduce((s: number, t: any) => s + Math.abs(t.amount), 0)
     
     const categoryTotals: Record<string, { income: number; expenses: number; count: number }> = {}
@@ -85,7 +98,9 @@ FINANCIAL SUMMARY FOR ${period || 'SELECTED PERIOD'}:
 - Work Net: $${(workIncome - workExpenses).toFixed(2)}
 
 SUBSCRIPTION DATA:
-- You are spending $${subTotal.toFixed(2)} on subscriptions across ${subCount} different services.
+- Total Spend: $${subTotal.toFixed(2)}
+- Service Count: ${subCount}
+- Detected Services: ${subList}
 
 SPENDING BY CATEGORY:
 ${Object.entries(categoryTotals)
@@ -101,8 +116,8 @@ MONTHLY TRENDS:
 ${Object.entries(monthlyData).slice(-6).map(([month, data]) => `- ${month}: Income $${data.income.toFixed(2)}, Expenses $${data.expenses.toFixed(2)}, Net $${(data.income - data.expenses).toFixed(2)}`).join('\n')}
 
 CONSTRAINTS & PREFERENCES:
-1. DO NOT flag payments to "Daniele Buatti" as a warning or issue. These are known, necessary recurring expenses (likely rent/transfers) and the user does not want to see insights about them.
-2. BE VERY SPECIFIC about subscriptions. Use the provided total ($${subTotal.toFixed(2)}) and count (${subCount}) in your "Subscription Review Needed" insight.
+1. DO NOT flag payments to "Daniele Buatti" as a warning or issue. These are known, necessary recurring expenses.
+2. BE VERY SPECIFIC about subscriptions. Use the provided list (${subList}) to give concrete advice. If you see multiple AI tools or streaming services, point them out.
 3. Focus on where they should INVEST MORE TIME for maximum financial return.
 
 Provide your response as a JSON object with this exact structure:
