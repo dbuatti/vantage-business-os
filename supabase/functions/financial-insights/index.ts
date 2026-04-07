@@ -30,6 +30,14 @@ serve(async (req: Request) => {
     
     const recentTransactions = filteredTransactions.slice(0, 200)
     
+    // Calculate Subscription Specifics
+    const subscriptionTxns = recentTransactions.filter((t: any) => 
+      t.category_1?.toLowerCase() === 'subscription' || 
+      t.category_2?.toLowerCase() === 'subscription'
+    )
+    const subCount = new Set(subscriptionTxns.map((t: any) => t.description.toLowerCase())).size
+    const subTotal = subscriptionTxns.reduce((s: number, t: any) => s + Math.abs(t.amount), 0)
+    
     const categoryTotals: Record<string, { income: number; expenses: number; count: number }> = {}
     recentTransactions.forEach((t: any) => {
       const cat = t.category_1 || 'Uncategorized'
@@ -66,7 +74,7 @@ serve(async (req: Request) => {
 
     const prompt = `You are a sharp, insightful financial advisor analyzing personal and business finances. Based on the following transaction data for the period: ${period || 'All Time'}, provide actionable insights and recommendations.
 
-NOTE: All internal transfers (marked as 'Account' category) have been EXCLUDED from this data to ensure accuracy.
+NOTE: All internal transfers (marked as 'Account' category) have been EXCLUDED.
 
 FINANCIAL SUMMARY FOR ${period || 'SELECTED PERIOD'}:
 - Total Income: $${summaryStats?.totalIncome?.toFixed(2) || 0}
@@ -75,7 +83,9 @@ FINANCIAL SUMMARY FOR ${period || 'SELECTED PERIOD'}:
 - Work Income: $${workIncome.toFixed(2)}
 - Work Expenses: $${workExpenses.toFixed(2)}
 - Work Net: $${(workIncome - workExpenses).toFixed(2)}
-- Total Transactions: ${recentTransactions.length}
+
+SUBSCRIPTION DATA:
+- You are spending $${subTotal.toFixed(2)} on subscriptions across ${subCount} different services.
 
 SPENDING BY CATEGORY:
 ${Object.entries(categoryTotals)
@@ -90,8 +100,10 @@ ${topMerchants.map((m, i) => `${i + 1}. ${m.name}: $${m.total.toFixed(2)} (${m.c
 MONTHLY TRENDS:
 ${Object.entries(monthlyData).slice(-6).map(([month, data]) => `- ${month}: Income $${data.income.toFixed(2)}, Expenses $${data.expenses.toFixed(2)}, Net $${(data.income - data.expenses).toFixed(2)}`).join('\n')}
 
-CATEGORY GROUPS (how categories are organized):
-${categoryGroups?.slice(0, 20).map((cg: any) => `- ${cg.category_name} → ${cg.group_name}`).join('\n') || 'No groups configured'}
+CONSTRAINTS & PREFERENCES:
+1. DO NOT flag payments to "Daniele Buatti" as a warning or issue. These are known, necessary recurring expenses (likely rent/transfers) and the user does not want to see insights about them.
+2. BE VERY SPECIFIC about subscriptions. Use the provided total ($${subTotal.toFixed(2)}) and count (${subCount}) in your "Subscription Review Needed" insight.
+3. Focus on where they should INVEST MORE TIME for maximum financial return.
 
 Provide your response as a JSON object with this exact structure:
 {
@@ -127,7 +139,7 @@ Provide your response as a JSON object with this exact structure:
   ]
 }
 
-Generate 5-8 insights, 3-5 time investment recommendations, 2-4 spending patterns, and 3-5 quick wins. Be specific to their actual data - reference real categories, merchants, and amounts. Focus on where they should INVEST MORE TIME for maximum financial return.`
+Generate 5-8 insights. Be specific to their actual data.`
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
