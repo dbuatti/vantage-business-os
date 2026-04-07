@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -87,6 +87,7 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 const TimeGlance = () => {
   const { session } = useAuth();
   const { selectedYear } = useSettings();
+  const navigate = useNavigate();
   const [view, setView] = useState<'day' | 'week' | 'month'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -244,7 +245,7 @@ const TimeGlance = () => {
     });
   }, [filteredTransactions, sortField, sortOrder]);
 
-  const navigate = (direction: 'prev' | 'next' | 'today') => {
+  const navigatePeriod = (direction: 'prev' | 'next' | 'today') => {
     if (direction === 'today') {
       setCurrentDate(new Date());
       return;
@@ -310,10 +311,10 @@ const TimeGlance = () => {
             <Button variant={view === 'month' ? 'default' : 'ghost'} size="sm" onClick={() => setView('month')} className="rounded-lg h-8 px-4 text-xs font-bold">Month</Button>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('today')} className="rounded-xl h-9 font-bold">Today</Button>
+            <Button variant="outline" size="sm" onClick={() => navigatePeriod('today')} className="rounded-xl h-9 font-bold">Today</Button>
             <div className="flex items-center bg-muted rounded-xl p-1">
-              <Button variant="ghost" size="icon" onClick={() => navigate('prev')} className="h-7 w-7 rounded-lg"><ChevronLeft className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => navigate('next')} className="h-7 w-7 rounded-lg"><ChevronRight className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => navigatePeriod('prev')} className="h-7 w-7 rounded-lg"><ChevronLeft className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => navigatePeriod('next')} className="h-7 w-7 rounded-lg"><ChevronRight className="w-4 h-4" /></Button>
             </div>
           </div>
         </div>
@@ -375,7 +376,13 @@ const TimeGlance = () => {
               <Calculator className="w-6 h-6" />
             </div>
             <div>
-              <CardTitle className="text-xl font-black tracking-tight">The Expense Story</CardTitle>
+              <Link 
+                to={`/expense-story?view=${view}&date=${format(currentDate, 'yyyy-MM-dd')}`}
+                className="group flex items-center gap-2"
+              >
+                <CardTitle className="text-xl font-black tracking-tight group-hover:text-primary transition-colors">The Expense Story</CardTitle>
+                <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+              </Link>
               <CardDescription className="text-xs font-bold uppercase tracking-wider">How your {formatCurrency(stats.expenses)} adds up</CardDescription>
             </div>
           </div>
