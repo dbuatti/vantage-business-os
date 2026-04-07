@@ -16,7 +16,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { transactions, categoryGroups, summaryStats } = await req.json()
+    const { transactions, categoryGroups, summaryStats, period } = await req.json()
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) {
@@ -24,7 +24,6 @@ serve(async (req: Request) => {
     }
 
     // CRITICAL: Filter out 'Account' category transactions as they are internal transfers
-    // We do this case-insensitively to be safe.
     const filteredTransactions = transactions.filter((t: any) => 
       t.category_1?.toLowerCase() !== 'account'
     )
@@ -65,11 +64,11 @@ serve(async (req: Request) => {
       else monthlyData[month].expenses += Math.abs(t.amount)
     })
 
-    const prompt = `You are a sharp, insightful financial advisor analyzing personal and business finances. Based on the following transaction data, provide actionable insights and recommendations.
+    const prompt = `You are a sharp, insightful financial advisor analyzing personal and business finances. Based on the following transaction data for the period: ${period || 'All Time'}, provide actionable insights and recommendations.
 
 NOTE: All internal transfers (marked as 'Account' category) have been EXCLUDED from this data to ensure accuracy.
 
-FINANCIAL SUMMARY:
+FINANCIAL SUMMARY FOR ${period || 'SELECTED PERIOD'}:
 - Total Income: $${summaryStats?.totalIncome?.toFixed(2) || 0}
 - Total Expenses: $${summaryStats?.totalExpenses?.toFixed(2) || 0}
 - Net: $${summaryStats?.net?.toFixed(2) || 0}
@@ -96,7 +95,7 @@ ${categoryGroups?.slice(0, 20).map((cg: any) => `- ${cg.category_name} → ${cg.
 
 Provide your response as a JSON object with this exact structure:
 {
-  "headline": "A punchy one-line summary of their financial health",
+  "headline": "A punchy one-line summary of their financial health for this period",
   "score": <number 1-100>,
   "scoreLabel": "<Poor|Fair|Good|Great|Excellent>",
   "insights": [

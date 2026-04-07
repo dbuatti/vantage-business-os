@@ -92,6 +92,7 @@ const Insights = () => {
     const cachedTime = localStorage.getItem(`ai-insights-time-${selectedYear}`);
     if (cached && cachedTime) {
       const age = Date.now() - new Date(cachedTime).getTime();
+      // Cache valid for 30 minutes
       if (age < 30 * 60 * 1000) {
         setInsights(JSON.parse(cached));
         setLastGenerated(new Date(cachedTime));
@@ -168,7 +169,8 @@ const Insights = () => {
         body: {
           transactions: filteredTransactions.slice(0, 300),
           categoryGroups,
-          summaryStats
+          summaryStats,
+          period: selectedYear
         }
       });
 
