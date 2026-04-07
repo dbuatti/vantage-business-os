@@ -182,9 +182,26 @@ const Transactions = () => {
     }
   };
 
-  const handleImport = async (parsedData: any[]) => {
+  const handleImport = async (parsedData: any[], newMappings?: Record<string, string>) => {
     if (!session) return { total: 0, imported: 0, duplicates: 0, errors: 1 };
     try {
+      // 1. Save new category mappings if provided
+      if (newMappings && Object.keys(newMappings).length > 0) {
+        const mappingEntries = Object.entries(newMappings).map(([cat, group]) => ({
+          user_id: session.user.id,
+          category_name: cat,
+          group_name: group
+        }));
+
+        const { error: mappingError } = await supabase
+          .from('category_groups')
+          .upsert(mappingEntries, { onConflict: 'user_id,category_name' });
+        
+        if (mappingError) throw mappingError;
+        await fetchCategoryGroups();
+      }
+
+      // 2. Insert transactions
       const dataToInsert = parsedData.map(({ _isDuplicate, ...rest }) => ({
         ...rest,
         user_id: session.user.id
@@ -542,7 +559,11 @@ const Transactions = () => {
         )}
 
         {/* Import */}
-        <TransactionImporter onImport={handleImport} existingTransactions={transactions} />
+        <TransactionImporter 
+          onImport={handleImport} 
+          existingTransactions={transactions} 
+          existingCategoryGroups={categoryGroups}
+        />
 
         {/* Main Content */}
         {transactions.length > 0 && (

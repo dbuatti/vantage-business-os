@@ -13,7 +13,8 @@ import {
   Loader2,
   X,
   FileSpreadsheet,
-  Eye
+  Eye,
+  Tags
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Papa from 'papaparse';
@@ -25,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ImportCategoryMapper from './ImportCategoryMapper';
 
 interface ImportResult {
   total: number;
@@ -34,11 +36,12 @@ interface ImportResult {
 }
 
 interface TransactionImporterProps {
-  onImport: (data: any[]) => Promise<ImportResult>;
+  onImport: (data: any[], newMappings?: Record<string, string>) => Promise<ImportResult>;
   existingTransactions?: Array<{ transaction_date: string; description: string; amount: number }>;
+  existingCategoryGroups?: Array<{ category_name: string }>;
 }
 
-const TransactionImporter = ({ onImport, existingTransactions = [] }: TransactionImporterProps) => {
+const TransactionImporter = ({ onImport, existingTransactions = [], existingCategoryGroups = [] }: TransactionImporterProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -46,6 +49,8 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
   const [fileName, setFileName] = useState<string>('');
   const [preview, setPreview] = useState<any[] | null>(null);
   const [parsedData, setParsedData] = useState<any[] | null>(null);
+  const [unmappedCategories, setUnmappedCategories] = useState<string[]>([]);
+  const [showMapper, setShowMapper] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const parseCSVDate = (dateStr: string): string => {
@@ -72,7 +77,6 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
     return isNaN(num) ? null : num;
   };
 
-  // Generate a unique signature for a transaction to detect duplicates
   const generateSignature = (t: { transaction_date: string; description: string; amount: number }) => {
     return `${t.transaction_date}-${t.description.toLowerCase().trim()}-${t.amount.toFixed(2)}`;
   };
@@ -93,6 +97,8 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
           const existingSignatures = new Set(
             existingTransactions.map(t => generateSignature(t))
           );
+
+          const mappedCategoryNames = new Set(existingCategoryGroups.map(g => g.category_name));
 
           const parsedData = results.data.map((row: any) => {
             const credit = parseAmount(row['Credit'] || row['credit']);
@@ -128,6 +134,11 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
             };
           }).filter(t => t.transaction_date && t.description);
 
+          // Detect unmapped categories
+          const incomingCategories = new Set<string>(parsedData.map(t => t.category_1).filter(Boolean));
+          const unmapped = Array.from(incomingCategories).filter(cat => !mappedCategoryNames.has(cat));
+          setUnmappedCategories(unmapped);
+
           // Mark duplicates
           parsedData.forEach(t => {
             const sig = generateSignature(t);
@@ -161,13 +172,18 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
     });
   };
 
-  const confirmImport = async () => {
+  const confirmImport = async (newMappings?: Record<string, string>) => {
     if (!parsedData) return;
     
+    // If we have unmapped categories and haven't shown the mapper yet, show it
+    if (unmappedCategories.length > 0 && !showMapper && !newMappings) {
+      setShowMapper(true);
+      return;
+    }
+
     setImporting(true);
     setProgress(30);
 
-    // Only import non-duplicates
     const newData = parsedData.filter(t => !t._isDuplicate);
     const duplicates = parsedData.filter(t => t._isDuplicate).length;
 
@@ -181,11 +197,12 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
       setImporting(false);
       setPreview(null);
       setParsedData(null);
+      setShowMapper(false);
       return;
     }
 
     setProgress(60);
-    const importResult = await onImport(newData);
+    const importResult = await onImport(newData, newMappings);
     setProgress(100);
     
     setResult({
@@ -195,6 +212,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
     setImporting(false);
     setPreview(null);
     setParsedData(null);
+    setShowMapper(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -220,6 +238,8 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
     setFileName('');
     setPreview(null);
     setParsedData(null);
+    setUnmappedCategories([]);
+    setShowMapper(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -231,6 +251,16 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
       currency: 'USD',
     }).format(val);
   };
+
+  if (showMapper) {
+    return (
+      <ImportCategoryMapper 
+        unmappedCategories={unmappedCategories}
+        onMappingComplete={(mappings) => confirmImport(mappings)}
+        onCancel={clearAll}
+      />
+    );
+  }
 
   return (
     <Card className="border-0 shadow-xl">
@@ -304,6 +334,18 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
               </div>
             </div>
 
+            {unmappedCategories.length > 0 && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+                  <Tags className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-amber-800">New Categories Detected</p>
+                  <p className="text-[10px] text-amber-700">You'll be asked to map {unmappedCategories.length} new categories in the next step.</p>
+                </div>
+              </div>
+            )}
+
             <div className="rounded-xl border overflow-hidden">
               <Table>
                 <TableHeader>
@@ -348,9 +390,9 @@ const TransactionImporter = ({ onImport, existingTransactions = [] }: Transactio
                 <X className="w-4 h-4 mr-1" />
                 Cancel
               </Button>
-              <Button onClick={confirmImport} className="rounded-xl" disabled={importing}>
+              <Button onClick={() => confirmImport()} className="rounded-xl" disabled={importing}>
                 {importing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Import {parsedData.filter(t => !t._isDuplicate).length} Transactions
+                {unmappedCategories.length > 0 ? 'Next: Map Categories' : `Import ${parsedData.filter(t => !t._isDuplicate).length} Transactions`}
               </Button>
             </div>
           </div>
