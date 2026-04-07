@@ -26,7 +26,8 @@ import {
   Zap,
   AlertTriangle,
   Briefcase,
-  DollarSign
+  DollarSign,
+  CheckCircle2
 } from 'lucide-react';
 import { 
   format, 
