@@ -8,6 +8,7 @@ import { useSettings } from '@/components/SettingsProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -28,7 +29,9 @@ import {
   ArrowUpDown,
   Store,
   Layers,
-  Zap
+  Zap,
+  AlertTriangle,
+  ArrowDown
 } from 'lucide-react';
 import { 
   format, 
@@ -77,6 +80,7 @@ const TimeGlance = () => {
   const [loading, setLoading] = useState(true);
   const [sortField, setSortField] = useState<'date' | 'amount' | 'description'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   // Ensure currentDate is within the selected year if not 'All'
   useEffect(() => {
@@ -129,6 +133,11 @@ const TimeGlance = () => {
     const income = incomeTxns.reduce((s, t) => s + t.amount, 0);
     const expenses = expenseTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
     
+    // High Expenses (> $200)
+    const highExpenses = expenseTxns
+      .filter(t => Math.abs(t.amount) >= 200)
+      .sort((a, b) => a.amount - b.amount); // Most expensive first
+
     // Category Breakdown
     const categoryMap: Record<string, { total: number, count: number, type: 'income' | 'expense' }> = {};
     transactions.forEach(t => {
@@ -172,19 +181,28 @@ const TimeGlance = () => {
       chartData,
       topMerchant,
       avgDailySpend,
-      daysInPeriod
+      daysInPeriod,
+      highExpenses
     };
   }, [transactions, view, dateRange]);
 
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      if (typeFilter === 'income') return t.amount > 0;
+      if (typeFilter === 'expense') return t.amount < 0;
+      return true;
+    });
+  }, [transactions, typeFilter]);
+
   const sortedTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => {
+    return [...filteredTransactions].sort((a, b) => {
       let comparison = 0;
       if (sortField === 'date') comparison = new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime();
       else if (sortField === 'amount') comparison = Math.abs(a.amount) - Math.abs(b.amount);
       else comparison = a.description.localeCompare(b.description);
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [transactions, sortField, sortOrder]);
+  }, [filteredTransactions, sortField, sortOrder]);
 
   const navigate = (direction: 'prev' | 'next' | 'today') => {
     if (direction === 'today') {
@@ -288,6 +306,33 @@ const TimeGlance = () => {
         </Card>
       </div>
 
+      {/* High Expense Spotlight */}
+      {stats.highExpenses.length > 0 && (
+        <Card className="border-0 shadow-xl bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900 animate-slide-up opacity-0 stagger-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" /> High Expense Spotlight (+$200)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {stats.highExpenses.map((t) => (
+                <div key={t.id} className="bg-white dark:bg-card p-3 rounded-xl border border-rose-100 dark:border-rose-900 shadow-sm flex items-center gap-4 min-w-[240px] flex-1">
+                  <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
+                    <ArrowDown className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black truncate">{t.description}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
+                  </div>
+                  <p className="text-lg font-black text-rose-600 tabular-nums">{formatCurrency(t.amount)}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Charts & Categories */}
         <div className="lg:col-span-8 space-y-8">
@@ -316,9 +361,9 @@ const TimeGlance = () => {
             </Card>
           )}
 
-          {/* Category Breakdown */}
+          {/* Category Breakdown with Tabs */}
           <Card className="border-0 shadow-xl animate-slide-up opacity-0 stagger-3">
-            <CardHeader>
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -327,85 +372,99 @@ const TimeGlance = () => {
                   </CardTitle>
                   <CardDescription>Spending and income by category for this period.</CardDescription>
                 </div>
-                <Badge variant="outline" className="rounded-lg">{stats.categories.length} categories</Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {stats.categories.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground italic">No category data for this period.</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                  {stats.categories.map((cat, i) => {
-                    const totalForType = cat.type === 'income' ? stats.income : stats.expenses;
-                    const percentage = totalForType > 0 ? (cat.total / totalForType) * 100 : 0;
-                    const color = COLORS[i % COLORS.length];
+            <CardContent>
+              <Tabs defaultValue="expenses" className="space-y-6">
+                <TabsList className="bg-muted/50 p-1 rounded-xl h-auto gap-1">
+                  <TabsTrigger value="expenses" className="rounded-lg gap-2 py-1.5 px-4 data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+                    <ArrowDownRight className="w-4 h-4" /> Expenses
+                  </TabsTrigger>
+                  <TabsTrigger value="income" className="rounded-lg gap-2 py-1.5 px-4 data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                    <ArrowUpRight className="w-4 h-4" /> Income
+                  </TabsTrigger>
+                </TabsList>
 
-                    return (
-                      <div key={cat.name} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                            <span className="font-bold truncate">{cat.name}</span>
-                            <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
+                <TabsContent value="expenses" className="animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                    {stats.categories.filter(c => c.type === 'expense').length === 0 ? (
+                      <div className="col-span-2 py-12 text-center text-muted-foreground italic">No expense data for this period.</div>
+                    ) : (
+                      stats.categories.filter(c => c.type === 'expense').map((cat, i) => {
+                        const percentage = stats.expenses > 0 ? (cat.total / stats.expenses) * 100 : 0;
+                        const color = COLORS[i % COLORS.length];
+                        return (
+                          <div key={cat.name} className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                <span className="font-bold truncate">{cat.name}</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
+                              </div>
+                              <span className="font-black tabular-nums text-rose-600">{formatCurrency(cat.total)}</span>
+                            </div>
+                            <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as any} />
+                            <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of expenses</span></div>
                           </div>
-                          <span className={cn("font-black tabular-nums", cat.type === 'income' ? "text-emerald-600" : "text-rose-600")}>
-                            {formatCurrency(cat.total)}
-                          </span>
-                        </div>
-                        <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="absolute top-0 left-0 h-full rounded-full transition-all duration-500"
-                            style={{ width: `${percentage}%`, backgroundColor: color }}
-                          />
-                        </div>
-                        <div className="flex justify-end">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of {cat.type}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                        );
+                      })
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="income" className="animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                    {stats.categories.filter(c => c.type === 'income').length === 0 ? (
+                      <div className="col-span-2 py-12 text-center text-muted-foreground italic">No income data for this period.</div>
+                    ) : (
+                      stats.categories.filter(c => c.type === 'income').map((cat, i) => {
+                        const percentage = stats.income > 0 ? (cat.total / stats.income) * 100 : 0;
+                        const color = COLORS[i % COLORS.length];
+                        return (
+                          <div key={cat.name} className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                <span className="font-bold truncate">{cat.name}</span>
+                                <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
+                              </div>
+                              <span className="font-black tabular-nums text-emerald-600">{formatCurrency(cat.total)}</span>
+                            </div>
+                            <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as any} />
+                            <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of income</span></div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column: Transaction List with Sorting */}
+        {/* Right Column: Transaction List with Sorting & Filtering */}
         <div className="lg:col-span-4 space-y-8">
           <Card className="border-0 shadow-xl overflow-hidden h-full flex flex-col animate-slide-up opacity-0 stagger-2">
-            <CardHeader className="bg-muted/20 border-b shrink-0">
-              <div className="flex items-center justify-between mb-4">
+            <CardHeader className="bg-muted/20 border-b shrink-0 space-y-4">
+              <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <History className="w-5 h-5 text-primary" />
                   Transactions
                 </CardTitle>
-                <Badge variant="outline" className="rounded-lg">{transactions.length}</Badge>
+                <Badge variant="outline" className="rounded-lg">{filteredTransactions.length}</Badge>
               </div>
+              
+              <div className="flex items-center bg-background rounded-xl p-1 border">
+                <Button variant={typeFilter === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('all')} className="flex-1 h-7 text-[10px] font-bold uppercase">All</Button>
+                <Button variant={typeFilter === 'expense' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('expense')} className="flex-1 h-7 text-[10px] font-bold uppercase text-rose-600">Exp</Button>
+                <Button variant={typeFilter === 'income' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('income')} className="flex-1 h-7 text-[10px] font-bold uppercase text-emerald-600">Inc</Button>
+              </div>
+
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleSort('date')}
-                  className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'date' && "bg-primary/10 text-primary")}
-                >
-                  Date <ArrowUpDown className="w-3 h-3" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleSort('amount')}
-                  className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'amount' && "bg-primary/10 text-primary")}
-                >
-                  Amount <ArrowUpDown className="w-3 h-3" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleSort('description')}
-                  className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'description' && "bg-primary/10 text-primary")}
-                >
-                  Name <ArrowUpDown className="w-3 h-3" />
-                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleSort('date')} className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'date' && "bg-primary/10 text-primary")}>Date <ArrowUpDown className="w-3 h-3" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleSort('amount')} className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'amount' && "bg-primary/10 text-primary")}>Amount <ArrowUpDown className="w-3 h-3" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleSort('description')} className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'description' && "bg-primary/10 text-primary")}>Name <ArrowUpDown className="w-3 h-3" /></Button>
               </div>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-hidden">
@@ -427,7 +486,10 @@ const TimeGlance = () => {
                   </div>
                 ) : (
                   sortedTransactions.map((t) => (
-                    <div key={t.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors group">
+                    <div key={t.id} className={cn(
+                      "p-4 flex items-center justify-between hover:bg-muted/30 transition-colors group",
+                      Math.abs(t.amount) >= 200 && t.amount < 0 && "bg-rose-50/30 dark:bg-rose-950/10"
+                    )}>
                       <div className="flex items-center gap-4 min-w-0">
                         <div className={cn(
                           "w-2.5 h-2.5 rounded-full shrink-0 shadow-sm",
