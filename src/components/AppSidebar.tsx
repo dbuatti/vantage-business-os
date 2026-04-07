@@ -33,7 +33,8 @@ import {
   Activity,
   Sparkles,
   CalendarRange,
-  CalendarCheck
+  CalendarCheck,
+  Repeat
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -60,6 +61,7 @@ const AppSidebar = () => {
 
   const financeItems = [
     { title: "Transactions", icon: ListFilter, url: "/transactions" },
+    { title: "Subscriptions", icon: Repeat, url: "/subscriptions" },
     { title: "Budgets", icon: Target, url: "/transactions?tab=planning" },
     { title: "Savings Goals", icon: PiggyBank, url: "/transactions?tab=planning" },
   ];

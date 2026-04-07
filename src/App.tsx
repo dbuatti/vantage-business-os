@@ -22,6 +22,7 @@ import TicketDetail from "./pages/TicketDetail";
 import Productivity from "./pages/Productivity";
 import TimeGlance from "./pages/TimeGlance";
 import WeeklyLog from "./pages/WeeklyLog";
+import SubscriptionAudit from "./pages/SubscriptionAudit";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/weekly-routine" element={<ProtectedRoute><WeeklyLog /></ProtectedRoute>} />
               <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
               <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
+              <Route path="/subscriptions" element={<ProtectedRoute><SubscriptionAudit /></ProtectedRoute>} />
               <Route path="/productivity" element={<ProtectedRoute><Productivity /></ProtectedRoute>} />
               <Route path="/time-glance" element={<ProtectedRoute><TimeGlance /></ProtectedRoute>} />
               <Route path="/accountant-report" element={<ProtectedRoute><AccountantReport /></ProtectedRoute>} />
