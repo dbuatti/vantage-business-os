@@ -270,19 +270,19 @@ const TimeGlance = () => {
   };
 
   const renderTransactionList = (items: Transaction[]) => (
-    <ScrollArea className="h-[300px] w-[350px] p-4">
-      <div className="space-y-3">
-        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Transaction List ({items.length})</p>
+    <ScrollArea className="max-h-[250px] w-[280px] p-3">
+      <div className="space-y-2">
+        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Breakdown ({items.length})</p>
         {items.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">No transactions in this bucket.</p>
+          <p className="text-[10px] text-muted-foreground italic">No transactions.</p>
         ) : (
           items.map((t, i) => (
-            <div key={i} className="flex items-center justify-between gap-4 border-b border-muted pb-2 last:border-0">
+            <div key={i} className="flex items-start justify-between gap-3 border-b border-muted/50 pb-1.5 last:border-0">
               <div className="min-w-0">
-                <p className="text-xs font-bold truncate">{t.description}</p>
-                <p className="text-[10px] text-muted-foreground">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
+                <p className="text-[10px] font-bold truncate leading-tight">{t.description}</p>
+                <p className="text-[8px] font-medium text-muted-foreground uppercase tracking-tighter">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
               </div>
-              <p className="text-xs font-black tabular-nums shrink-0">{formatCurrency(Math.abs(t.amount))}</p>
+              <p className="text-[10px] font-black tabular-nums shrink-0">{formatCurrency(Math.abs(t.amount))}</p>
             </div>
           ))
         )}
@@ -392,7 +392,7 @@ const TimeGlance = () => {
                         <p className="text-2xl font-black text-rose-600">{formatCurrency(stats.breakdown.bigHits.total)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.breakdown.bigHits.items)}
                     </TooltipContent>
                   </Tooltip>
@@ -408,7 +408,7 @@ const TimeGlance = () => {
                         <p className="text-2xl font-black text-blue-600">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.breakdown.subscriptions.items)}
                     </TooltipContent>
                   </Tooltip>
@@ -424,7 +424,7 @@ const TimeGlance = () => {
                         <p className="text-2xl font-black text-amber-600">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.breakdown.dailyLife.items)}
                     </TooltipContent>
                   </Tooltip>
@@ -440,7 +440,7 @@ const TimeGlance = () => {
                         <p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="p-0 border-0 shadow-2xl rounded-2xl overflow-hidden">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.expenseTxns)}
                     </TooltipContent>
                   </Tooltip>
