@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/lib/supabase';
@@ -71,7 +70,6 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   useEffect(() => {
     if (open) {
       const initial = GROUPS.map(group => {
-        // Look for yearly budget (month 0 or null)
         const existing = existingBudgets.find(b => b.category_name === group && (b.month === 0 || b.month === null));
         return {
           category_name: group,
@@ -182,7 +180,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         category_name: b.category_name,
         amount: parseFloat(b.amount) || 0,
         year,
-        month: 0, // Use 0 for yearly budgets to ensure unique constraint works
+        month: 0,
         updated_at: new Date().toISOString()
       }));
 
@@ -223,6 +221,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+        {/* Header Section - Fixed */}
         <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6 shrink-0">
           <DialogHeader className="mb-6">
             <div className="flex items-center justify-between">
@@ -303,7 +302,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
           </Card>
         </div>
         
-        <div className="px-6 flex items-center justify-between mb-4 shrink-0">
+        {/* Sub-header - Fixed */}
+        <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b bg-background">
           <div className="flex items-center gap-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
@@ -329,55 +329,55 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-6">
-          <div className="space-y-4 py-2 pb-8">
-            {formBudgets.map((budget, i) => {
-              const suggestion = adjustedSuggestions.adjusted[budget.category_name] || 0;
-              const historicalAnnual = (historicalData.groupTotals[budget.category_name] || 0) * (12 / historicalData.monthsOfData);
-              const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
+          {formBudgets.map((budget, i) => {
+            const suggestion = adjustedSuggestions.adjusted[budget.category_name] || 0;
+            const historicalAnnual = (historicalData.groupTotals[budget.category_name] || 0) * (12 / historicalData.monthsOfData);
+            const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
 
-              return (
-                <div key={budget.category_name} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
-                  <div className="flex items-center justify-between mb-3">
-                    <Label className="font-black uppercase text-[10px] tracking-widest text-muted-foreground">
-                      {budget.category_name}
-                    </Label>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Current Annualized</p>
-                        <p className="text-xs font-black">{formatCurrency(historicalAnnual)}</p>
-                      </div>
-                      <button 
-                        onClick={() => applySuggestion(budget.category_name)}
-                        className={cn(
-                          "flex flex-col items-end p-1.5 rounded-lg border transition-all",
-                          isDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
-                        )}
-                      >
-                        <span className="text-[8px] font-black uppercase">Suggested</span>
-                        <span className="text-xs font-black">{formatCurrency(suggestion)}</span>
-                      </button>
+            return (
+              <div key={budget.category_name} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <Label className="font-black uppercase text-[10px] tracking-widest text-muted-foreground">
+                    {budget.category_name}
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase">Current Annualized</p>
+                      <p className="text-xs font-black">{formatCurrency(historicalAnnual)}</p>
                     </div>
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">$</span>
-                    <Input 
-                      type="number" 
-                      value={budget.amount} 
-                      onChange={(e) => {
-                        const next = [...formBudgets];
-                        next[i].amount = e.target.value;
-                        setFormBudgets(next);
-                      }}
-                      className="h-12 pl-8 rounded-xl font-black text-lg bg-muted/30 border-transparent focus:bg-background focus:border-primary/30 transition-all"
-                    />
+                    <button 
+                      onClick={() => applySuggestion(budget.category_name)}
+                      className={cn(
+                        "flex flex-col items-end p-1.5 rounded-lg border transition-all",
+                        isDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
+                      )}
+                    >
+                      <span className="text-[8px] font-black uppercase">Suggested</span>
+                      <span className="text-xs font-black">{formatCurrency(suggestion)}</span>
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">$</span>
+                  <Input 
+                    type="number" 
+                    value={budget.amount} 
+                    onChange={(e) => {
+                      const next = [...formBudgets];
+                      next[i].amount = e.target.value;
+                      setFormBudgets(next);
+                    }}
+                    className="h-12 pl-8 rounded-xl font-black text-lg bg-muted/30 border-transparent focus:bg-background focus:border-primary/30 transition-all"
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
+        {/* Footer Section - Fixed */}
         <div className="p-6 border-t bg-muted/10 shrink-0">
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl">Cancel</Button>
