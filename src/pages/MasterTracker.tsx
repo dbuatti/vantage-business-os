@@ -17,7 +17,11 @@ import {
   LayoutGrid,
   List,
   CalendarDays,
-  CalendarRange
+  CalendarRange,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap
 } from 'lucide-react';
 import { format, startOfYear, endOfYear, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -33,7 +37,7 @@ const EXPENSE_GROUPS = [
   { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-rose-600', bg: 'bg-rose-50' },
 ];
 
-export type TrackerView = 'daily' | 'weekly' | 'monthly';
+export type TrackerView = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 const MasterTracker = () => {
   const { session } = useAuth();
@@ -93,7 +97,7 @@ const MasterTracker = () => {
         .reduce((s, t) => s + Math.abs(t.amount), 0);
       
       const groupBudget = budgets
-        .filter(b => b.category_name === group.name)
+        .filter(b => b.category_name === group.name && (b.month === 0 || b.month === null))
         .reduce((s, b) => s + b.amount, 0);
 
       return {
@@ -219,7 +223,7 @@ const MasterTracker = () => {
               <div>
                 <CardTitle className="text-xl font-black tracking-tight">The Matrix</CardTitle>
                 <CardDescription className="text-xs font-bold uppercase tracking-wider">
-                  {view === 'monthly' ? 'Monthly breakdown by category' : view === 'weekly' ? 'Last 12 weeks by category' : 'Daily breakdown for current month'}
+                  {view === 'monthly' ? 'Monthly breakdown by category' : view === 'weekly' ? 'Last 12 weeks by category' : view === 'daily' ? 'Daily breakdown for current month' : 'Full year summary'}
                 </CardDescription>
               </div>
             </div>
@@ -248,6 +252,14 @@ const MasterTracker = () => {
                 className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
               >
                 <Calendar className="w-3.5 h-3.5" /> Monthly
+              </Button>
+              <Button 
+                variant={view === 'yearly' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setView('yearly')}
+                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+              >
+                <Zap className="w-3.5 h-3.5" /> Yearly
               </Button>
             </div>
           </div>
