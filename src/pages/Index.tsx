@@ -122,10 +122,17 @@ const Index = () => {
   const fetchBusinessStats = async () => {
     try {
       const { data: clients } = await supabase.from('clients').select('*');
-      const { data: invoices } = await supabase
+      
+      let invoicesQuery = supabase
         .from('invoices')
         .select('*')
         .order('invoice_date', { ascending: false });
+
+      if (selectedYear !== 'All') {
+        invoicesQuery = invoicesQuery.gte('invoice_date', `${selectedYear}-01-01`).lte('invoice_date', `${selectedYear}-12-31`);
+      }
+
+      const { data: invoices } = await invoicesQuery;
       
       setAllClients(clients || []);
       setAllInvoices(invoices || []);
@@ -157,9 +164,14 @@ const Index = () => {
       
       const runway = burnRate > 0 ? (latestSavings?.amount || 0) / burnRate : 0;
 
+      // Calculate outstanding amount only for the selected period's invoices
+      const outstanding = (invoices || [])
+        .filter(inv => inv.status !== 'Paid' && inv.status !== 'Cancelled')
+        .reduce((s, inv) => s + (inv.total_amount || 0), 0);
+
       setBusinessStats({
         totalClients: clients?.length || 0,
-        outstandingAmount: clients?.reduce((s, c) => s + (c.total_receivable || 0), 0) || 0,
+        outstandingAmount: outstanding,
         recentInvoices: (invoices || []).slice(0, 3),
         taxReadiness: readiness,
         burnRate,
@@ -224,7 +236,7 @@ const Index = () => {
                         formatter={(val) => formatCurrency(val)} 
                       />
                     </p>
-                    <p className="text-sm font-medium opacity-80">Total Outstanding Receivables</p>
+                    <p className="text-sm font-medium opacity-80">Outstanding Receivables ({selectedYear})</p>
                   </div>
                   <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
                     <Briefcase className="w-10 h-10" />
