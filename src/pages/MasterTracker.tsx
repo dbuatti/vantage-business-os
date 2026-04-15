@@ -23,7 +23,8 @@ import {
   ArrowDownRight,
   Zap,
   Thermometer,
-  Clock
+  Clock,
+  Brain
 } from 'lucide-react';
 import { 
   format, 
@@ -42,6 +43,7 @@ import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
 import MasterTrackerMatrix from '@/components/MasterTrackerMatrix';
 import BudgetDialog from '@/components/BudgetDialog';
+import TrackerAIInsights from '@/components/TrackerAIInsights';
 
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -184,8 +186,18 @@ const MasterTracker = () => {
         </div>
       </header>
 
+      {/* AI Insights Section */}
+      <section className="animate-slide-up">
+        <TrackerAIInsights 
+          transactions={transactions}
+          categoryGroups={categoryGroups}
+          budgets={budgets}
+          year={year}
+        />
+      </section>
+
       {/* Financial Thermostat Section */}
-      <section className="space-y-6 animate-slide-up">
+      <section className="space-y-6 animate-slide-up stagger-1">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -277,7 +289,7 @@ const MasterTracker = () => {
       </section>
 
       {/* Matrix Section */}
-      <section className="space-y-6 animate-slide-up stagger-1">
+      <section className="space-y-6 animate-slide-up stagger-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
