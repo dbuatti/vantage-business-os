@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { showSuccess, showError } from '@/utils/toast';
@@ -24,14 +25,15 @@ import {
   Save, 
   Loader2, 
   Sparkles, 
-  History, 
   TrendingUp, 
   Percent, 
   DollarSign,
   ArrowDown,
-  Calculator
+  Calculator,
+  TrendingDown,
+  History
 } from 'lucide-react';
-import { format, subYears } from 'date-fns';
+import { format, subYears, differenceInMonths, parseISO } from 'date-fns';
 
 interface BudgetDialogProps {
   open: boolean;
@@ -55,16 +57,15 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   const [analyzing, setAnalyzing] = useState(false);
   const [formBudgets, setFormBudgets] = useState<any[]>([]);
   
-  // Savings Strategy State
   const [savingsType, setSavingsType] = useState<'percent' | 'dollar'>('percent');
   const [savingsValue, setSavingsValue] = useState<string>('20');
   
-  // Historical Data State
   const [historicalData, setHistoricalData] = useState<{
     groupTotals: Record<string, number>;
     totalIncome: number;
     totalExpenses: number;
-  }>({ groupTotals: {}, totalIncome: 0, totalExpenses: 0 });
+    monthsOfData: number;
+  }>({ groupTotals: {}, totalIncome: 0, totalExpenses: 0, monthsOfData: 0 });
 
   useEffect(() => {
     if (open) {
@@ -105,6 +106,10 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       const groupTotals: Record<string, number> = {};
       GROUPS.forEach(g => groupTotals[g] = 0);
 
+      const dates = txnsRes.data?.map(t => parseISO(t.transaction_date)) || [];
+      const minDate = dates.length > 0 ? new Date(Math.min(...dates.map(d => d.getTime()))) : new Date();
+      const monthsOfData = Math.max(1, differenceInMonths(new Date(), minDate));
+
       txnsRes.data?.forEach(t => {
         if (t.amount > 0) {
           totalIncome += t.amount;
@@ -118,7 +123,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         }
       });
 
-      setHistoricalData({ groupTotals, totalIncome, totalExpenses });
+      setHistoricalData({ groupTotals, totalIncome, totalExpenses, monthsOfData });
     } catch (error) {
       console.error("Error fetching historical data:", error);
     } finally {
@@ -126,30 +131,33 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
     }
   };
 
-  // Calculate Adjusted Suggestions based on Savings Goal
   const adjustedSuggestions = useMemo(() => {
-    const { totalIncome, groupTotals, totalExpenses } = historicalData;
+    const { totalIncome, groupTotals, totalExpenses, monthsOfData } = historicalData;
     
-    if (totalIncome === 0) return {
+    // Annualize the data
+    const annualFactor = 12 / monthsOfData;
+    const annualizedIncome = totalIncome * annualFactor;
+    const annualizedExpenses = totalExpenses * annualFactor;
+    
+    if (annualizedIncome === 0) return {
       adjusted: groupTotals,
       targetSavings: 0,
       availableForExpenses: 0,
       isScaling: false,
-      scaleFactor: 1
+      scaleFactor: 1,
+      annualizedIncome: 0
     };
 
     const targetSavings = savingsType === 'percent' 
-      ? (totalIncome * (parseFloat(savingsValue) || 0) / 100)
+      ? (annualizedIncome * (parseFloat(savingsValue) || 0) / 100)
       : (parseFloat(savingsValue) || 0);
 
-    const availableForExpenses = Math.max(0, totalIncome - targetSavings);
-    
-    // If we need to cut spending to hit the goal, calculate the scale factor
-    const scaleFactor = totalExpenses > 0 ? availableForExpenses / totalExpenses : 1;
+    const availableForExpenses = Math.max(0, annualizedIncome - targetSavings);
+    const scaleFactor = annualizedExpenses > 0 ? availableForExpenses / annualizedExpenses : 1;
 
     const adjusted: Record<string, number> = {};
     GROUPS.forEach(g => {
-      adjusted[g] = Math.round((groupTotals[g] || 0) * scaleFactor);
+      adjusted[g] = Math.round((groupTotals[g] || 0) * annualFactor * scaleFactor);
     });
 
     return {
@@ -157,7 +165,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       targetSavings,
       availableForExpenses,
       isScaling: scaleFactor < 1,
-      scaleFactor
+      scaleFactor,
+      annualizedIncome
     };
   }, [historicalData, savingsType, savingsValue]);
 
@@ -170,7 +179,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         category_name: b.category_name,
         amount: parseFloat(b.amount) || 0,
         year,
-        month: null, // Explicitly set to null for yearly budgets
+        month: null,
         updated_at: new Date().toISOString()
       }));
 
@@ -226,7 +235,6 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
             </div>
           </DialogHeader>
 
-          {/* Savings Goal Section */}
           <Card className="border-0 shadow-lg bg-primary text-white overflow-hidden relative mb-8">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
             <CardContent className="p-6 relative">
@@ -280,8 +288,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                     <span>{formatCurrency(adjustedSuggestions.availableForExpenses)}</span>
                   </div>
                   <div className="pt-2 border-t border-white/10 flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-60">Historical Income</span>
-                    <span className="font-black">{formatCurrency(historicalData.totalIncome)}</span>
+                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-60">Annualized Income</span>
+                    <span className="font-black">{formatCurrency(adjustedSuggestions.annualizedIncome)}</span>
                   </div>
                 </div>
               </div>
@@ -289,9 +297,19 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
           </Card>
           
           <div className="flex items-center justify-between mb-4 px-1">
-            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
-            </h3>
+            <div className="flex items-center gap-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
+              </h3>
+              {adjustedSuggestions.scaleFactor !== 1 && (
+                <Badge variant="outline" className={cn(
+                  "text-[10px] font-black uppercase",
+                  adjustedSuggestions.scaleFactor < 1 ? "text-rose-600 border-rose-200 bg-rose-50" : "text-emerald-600 border-emerald-200 bg-emerald-50"
+                )}>
+                  {adjustedSuggestions.scaleFactor < 1 ? 'Spending Cut Required' : 'Spending Increase Possible'}
+                </Badge>
+              )}
+            </div>
             <Button 
               variant="outline" 
               size="sm" 
@@ -308,7 +326,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
             <div className="space-y-4 py-2">
               {formBudgets.map((budget, i) => {
                 const suggestion = adjustedSuggestions.adjusted[budget.category_name] || 0;
-                const historical = historicalData.groupTotals[budget.category_name] || 0;
+                const historical = (historicalData.groupTotals[budget.category_name] || 0) * (12 / historicalData.monthsOfData);
                 const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
 
                 return (
@@ -319,7 +337,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                       </Label>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">Avg Spend</p>
+                          <p className="text-[9px] font-bold text-muted-foreground uppercase">Annualized Spend</p>
                           <p className="text-xs font-black">{formatCurrency(historical)}</p>
                         </div>
                         <button 
