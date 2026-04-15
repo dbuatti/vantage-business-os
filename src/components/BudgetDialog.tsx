@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { showSuccess, showError } from '@/utils/toast';
+import { formatCurrency } from '@/utils/format';
 import { Target, Save, Loader2, Plus, Trash2 } from 'lucide-react';
 
 interface BudgetDialogProps {
