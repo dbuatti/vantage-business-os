@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Target, 
   Settings as SettingsIcon, 
@@ -29,7 +31,9 @@ import {
   Search,
   Filter,
   Calculator,
-  TrendingDown
+  TrendingDown,
+  Download,
+  AlertCircle
 } from 'lucide-react';
 import { 
   format, 
@@ -42,7 +46,8 @@ import {
   isSameDay, 
   isSameWeek, 
   isSameMonth, 
-  parseISO 
+  parseISO,
+  differenceInDays
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
@@ -50,6 +55,7 @@ import MasterTrackerMatrix from '@/components/MasterTrackerMatrix';
 import BudgetDialog from '@/components/BudgetDialog';
 import TrackerAIInsights from '@/components/TrackerAIInsights';
 import TrackerDrilldown from '@/components/TrackerDrilldown';
+import { showSuccess } from '@/utils/toast';
 
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -72,6 +78,7 @@ const MasterTracker = () => {
   const [matrixView, setMatrixView] = useState<TrackerView>('monthly');
   const [thermostatView, setThermostatView] = useState<TrackerView>('monthly');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showOverBudgetOnly, setShowOverBudgetOnly] = useState(false);
   
   // Drilldown state
   const [drilldown, setDrilldown] = useState<{
@@ -138,14 +145,26 @@ const MasterTracker = () => {
         .reduce((s, b) => s + b.amount, 0);
 
       let periodBudget = yearlyBudget;
-      if (thermostatView === 'monthly') periodBudget = yearlyBudget / 12;
-      if (thermostatView === 'weekly') periodBudget = yearlyBudget / 52;
-      if (thermostatView === 'daily') periodBudget = yearlyBudget / 365;
+      let daysRemaining = 1;
+
+      if (thermostatView === 'monthly') {
+        periodBudget = yearlyBudget / 12;
+        daysRemaining = Math.max(1, differenceInDays(endOfMonth(today), today));
+      } else if (thermostatView === 'weekly') {
+        periodBudget = yearlyBudget / 52;
+        daysRemaining = Math.max(1, differenceInDays(endOfWeek(today, { weekStartsOn: 1 }), today));
+      } else if (thermostatView === 'daily') {
+        periodBudget = yearlyBudget / 365;
+        daysRemaining = 1;
+      } else {
+        daysRemaining = Math.max(1, differenceInDays(endOfYear(today), today));
+      }
 
       const remaining = periodBudget - spent;
       const percent = periodBudget > 0 ? (spent / periodBudget) * 100 : 0;
+      const dailyBurn = remaining > 0 ? remaining / daysRemaining : 0;
 
-      return { ...group, spent, budget: periodBudget, remaining, percent };
+      return { ...group, spent, budget: periodBudget, remaining, percent, dailyBurn };
     });
   }, [transactions, budgets, categoryGroups, thermostatView]);
 
@@ -168,6 +187,29 @@ const MasterTracker = () => {
     setDrilldown({ open: true, category, periodLabel, txns, budget });
   };
 
+  const exportMatrix = () => {
+    // This is a simplified export of the current transactions in the matrix view
+    const headers = ['Date', 'Description', 'Category', 'Amount', 'Notes'];
+    const rows = transactions.map(t => [
+      t.transaction_date,
+      t.description,
+      t.category_1,
+      t.amount.toString(),
+      t.notes || ''
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Master_Tracker_${year}_${matrixView}.csv`;
+    link.click();
+    showSuccess('Matrix data exported to CSV');
+  };
+
   if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
@@ -184,6 +226,9 @@ const MasterTracker = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={exportMatrix} className="rounded-xl gap-2">
+            <Download className="w-4 h-4" /> Export
+          </Button>
           <Button variant="outline" onClick={() => setShowBudgetDialog(true)} className="rounded-xl gap-2">
             <SettingsIcon className="w-4 h-4" /> Set Budgets
           </Button>
@@ -305,6 +350,12 @@ const MasterTracker = () => {
                       {formatCurrency(group.remaining)}
                     </span>
                   </div>
+                  {group.remaining > 0 && thermostatView !== 'daily' && (
+                    <div className="pt-2 border-t border-dashed flex justify-between items-center">
+                      <span className="text-[9px] font-bold text-muted-foreground uppercase">Daily Allowance:</span>
+                      <span className="text-[10px] font-black text-primary">{formatCurrency(group.dailyBurn)}/day</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -327,7 +378,19 @@ const MasterTracker = () => {
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2 bg-muted/50 px-3 py-1.5 rounded-xl border">
+              <Switch 
+                id="over-budget" 
+                checked={showOverBudgetOnly} 
+                onCheckedChange={setShowOverBudgetOnly} 
+              />
+              <Label htmlFor="over-budget" className="text-xs font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1.5">
+                <AlertCircle className="w-3 h-3 text-rose-500" />
+                Over Budget Only
+              </Label>
+            </div>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input 
