@@ -92,6 +92,7 @@ const Index = () => {
 
   const fetchTransactionSummary = async () => {
     try {
+      // Fetch ALL transactions for the period to get accurate totals
       let query = supabase
         .from('finance_transactions')
         .select('id, description, amount, transaction_date, category_1, is_work, notes')
@@ -101,7 +102,7 @@ const Index = () => {
         query = query.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
       }
 
-      const { data, error } = await query.limit(500);
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -116,7 +117,9 @@ const Index = () => {
         recentTransactions: (data || []).slice(0, 5),
         allTransactions: data || []
       });
-    } catch (error: any) {}
+    } catch (error: any) {
+      console.error("Error fetching transactions:", error);
+    }
   };
 
   const fetchBusinessStats = async () => {
@@ -137,6 +140,12 @@ const Index = () => {
       setAllClients(clients || []);
       setAllInvoices(invoices || []);
 
+      // Calculate outstanding amount ONLY from the filtered invoices
+      const outstanding = (invoices || [])
+        .filter(inv => inv.status !== 'Paid' && inv.status !== 'Cancelled')
+        .reduce((s, inv) => s + (inv.total_amount || 0), 0);
+
+      // Calculate tax readiness and burn rate
       let txnsQuery = supabase.from('finance_transactions').select('is_work, notes, category_1, amount, transaction_date');
       if (selectedYear !== 'All') {
         txnsQuery = txnsQuery.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
@@ -164,11 +173,6 @@ const Index = () => {
       
       const runway = burnRate > 0 ? (latestSavings?.amount || 0) / burnRate : 0;
 
-      // Calculate outstanding amount only for the selected period's invoices
-      const outstanding = (invoices || [])
-        .filter(inv => inv.status !== 'Paid' && inv.status !== 'Cancelled')
-        .reduce((s, inv) => s + (inv.total_amount || 0), 0);
-
       setBusinessStats({
         totalClients: clients?.length || 0,
         outstandingAmount: outstanding,
@@ -177,7 +181,9 @@ const Index = () => {
         burnRate,
         runway
       });
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error fetching business stats:", error);
+    }
   };
 
   const getGreeting = () => {
@@ -294,7 +300,7 @@ const Index = () => {
                     </div>
                     <div>
                       <h3 className="font-black text-xl tracking-tight">Transaction Pulse</h3>
-                      <p className="text-xs text-muted-foreground">Real-time activity from your linked accounts</p>
+                      <p className="text-xs text-muted-foreground">Activity for {selectedYear}</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" asChild className="rounded-xl font-bold">
