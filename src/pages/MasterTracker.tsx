@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Target, 
   Settings as SettingsIcon, 
@@ -34,7 +35,8 @@ import {
   TrendingDown,
   Download,
   AlertCircle,
-  Navigation
+  Navigation,
+  PieChart
 } from 'lucide-react';
 import { 
   format, 
@@ -53,6 +55,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
 import MasterTrackerMatrix from '@/components/MasterTrackerMatrix';
+import MasterTrackerGraphs from '@/components/MasterTrackerGraphs';
 import BudgetDialog from '@/components/BudgetDialog';
 import TrackerAIInsights from '@/components/TrackerAIInsights';
 import TrackerDrilldown from '@/components/TrackerDrilldown';
@@ -195,7 +198,6 @@ const MasterTracker = () => {
     const container = matrixContainerRef.current.querySelector('.overflow-x-auto');
     if (!container) return;
 
-    // This is a heuristic: scroll to the right based on current month/week
     const today = new Date();
     const totalWidth = container.scrollWidth;
     const visibleWidth = container.clientWidth;
@@ -298,185 +300,199 @@ const MasterTracker = () => {
         </Card>
       </div>
 
-      {/* AI Insights Section */}
-      <section className="animate-slide-up stagger-1">
-        <TrackerAIInsights 
-          transactions={transactions}
-          categoryGroups={categoryGroups}
-          budgets={budgets}
-          year={year}
-        />
-      </section>
+      <Tabs defaultValue="matrix" className="space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <TabsList className="bg-muted/50 p-1 rounded-xl h-auto gap-1">
+            <TabsTrigger value="matrix" className="rounded-lg gap-2 py-2 px-4">
+              <TableIcon className="w-4 h-4" /> Matrix
+            </TabsTrigger>
+            <TabsTrigger value="visuals" className="rounded-lg gap-2 py-2 px-4">
+              <PieChart className="w-4 h-4" /> Visuals
+            </TabsTrigger>
+            <TabsTrigger value="coach" className="rounded-lg gap-2 py-2 px-4">
+              <Brain className="w-4 h-4" /> AI Coach
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Financial Thermostat Section */}
-      <section className="space-y-6 animate-slide-up stagger-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Thermometer className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black tracking-tight">Financial Thermostat</h2>
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Real-time tracking status</p>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-xl border">
+              <Thermometer className="w-4 h-4 text-primary" />
+              <select 
+                value={thermostatView} 
+                onChange={(e) => setThermostatView(e.target.value as TrackerView)}
+                className="bg-transparent text-xs font-bold uppercase tracking-tighter outline-none"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center bg-muted rounded-xl p-1">
-            {['daily', 'weekly', 'monthly', 'yearly'].map((v) => (
-              <Button 
-                key={v}
-                variant={thermostatView === v ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => setThermostatView(v as TrackerView)}
-                className="rounded-lg h-8 px-4 text-xs font-bold capitalize"
-              >
-                {v.replace('ly', '')}
-              </Button>
+        <TabsContent value="matrix" className="space-y-8 animate-fade-in">
+          {/* Financial Thermostat Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {thermostatData.map((group) => (
+              <Card key={group.name} className="border-0 shadow-xl hover:shadow-2xl transition-all group overflow-hidden">
+                <CardContent className="p-6 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div className={cn("p-3 rounded-2xl shadow-sm", group.bg, group.color)}>
+                      <span className="text-2xl">{group.icon}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className={cn(
+                        "text-lg font-black",
+                        group.percent > 100 ? "text-rose-600" : "text-emerald-600"
+                      )}>
+                        {Math.round(group.percent)}%
+                      </p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Utilized</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{group.name}</p>
+                    <p className="text-2xl font-black tracking-tight">{formatCurrency(group.spent)}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">of {formatCurrency(group.budget)} target</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Progress 
+                      value={group.percent} 
+                      className={cn("h-2", group.percent > 100 ? "[&>div]:bg-rose-500" : "[&>div]:bg-emerald-500")} 
+                    />
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tighter">
+                      <span className="text-muted-foreground">Left:</span>
+                      <span className={cn(group.remaining >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                        {formatCurrency(group.remaining)}
+                      </span>
+                    </div>
+                    {group.remaining > 0 && thermostatView !== 'daily' && (
+                      <div className="pt-2 border-t border-dashed flex justify-between items-center">
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase">Daily Allowance:</span>
+                        <span className="text-[10px] font-black text-primary">{formatCurrency(group.dailyBurn)}/day</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {thermostatData.map((group) => (
-            <Card key={group.name} className="border-0 shadow-xl hover:shadow-2xl transition-all group overflow-hidden">
-              <CardContent className="p-6 space-y-5">
-                <div className="flex items-center justify-between">
-                  <div className={cn("p-3 rounded-2xl shadow-sm", group.bg, group.color)}>
-                    <span className="text-2xl">{group.icon}</span>
-                  </div>
-                  <div className="text-right">
-                    <p className={cn(
-                      "text-lg font-black",
-                      group.percent > 100 ? "text-rose-600" : "text-emerald-600"
-                    )}>
-                      {Math.round(group.percent)}%
-                    </p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Utilized</p>
-                  </div>
+          {/* Matrix Section */}
+          <div className="space-y-6" ref={matrixContainerRef}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                  <TableIcon className="w-6 h-6" />
                 </div>
-
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{group.name}</p>
-                  <p className="text-2xl font-black tracking-tight">{formatCurrency(group.spent)}</p>
-                  <p className="text-[10px] text-muted-foreground font-bold">of {formatCurrency(group.budget)} target</p>
+                  <CardTitle className="text-xl font-black tracking-tight">The Matrix</CardTitle>
+                  <CardDescription className="text-xs font-bold uppercase tracking-wider">
+                    Historical breakdown by category
+                  </CardDescription>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="outline" size="sm" onClick={jumpToCurrent} className="rounded-xl gap-2 h-9 text-xs font-bold">
+                  <Navigation className="w-3.5 h-3.5" /> Jump to Current
+                </Button>
+
+                <div className="flex items-center space-x-2 bg-muted/50 px-3 py-1.5 rounded-xl border">
+                  <Switch 
+                    id="over-budget" 
+                    checked={showOverBudgetOnly} 
+                    onCheckedChange={setShowOverBudgetOnly} 
+                  />
+                  <Label htmlFor="over-budget" className="text-xs font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1.5">
+                    <AlertCircle className="w-3 h-3 text-rose-500" />
+                    Over Budget Only
+                  </Label>
                 </div>
 
-                <div className="space-y-2">
-                  <Progress 
-                    value={group.percent} 
-                    className={cn("h-2", group.percent > 100 ? "[&>div]:bg-rose-500" : "[&>div]:bg-emerald-500")} 
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search categories..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9 rounded-xl w-48 bg-muted/50 border-0 text-xs font-bold"
                   />
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tighter">
-                    <span className="text-muted-foreground">Left:</span>
-                    <span className={cn(group.remaining >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                      {formatCurrency(group.remaining)}
-                    </span>
-                  </div>
-                  {group.remaining > 0 && thermostatView !== 'daily' && (
-                    <div className="pt-2 border-t border-dashed flex justify-between items-center">
-                      <span className="text-[9px] font-bold text-muted-foreground uppercase">Daily Allowance:</span>
-                      <span className="text-[10px] font-black text-primary">{formatCurrency(group.dailyBurn)}/day</span>
-                    </div>
-                  )}
                 </div>
+                <div className="flex items-center bg-muted rounded-xl p-1">
+                  <Button 
+                    variant={matrixView === 'daily' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    onClick={() => setMatrixView('daily')}
+                    className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5" /> Daily
+                  </Button>
+                  <Button 
+                    variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    onClick={() => setMatrixView('weekly')}
+                    className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                  >
+                    <CalendarRange className="w-3.5 h-3.5" /> Weekly
+                  </Button>
+                  <Button 
+                    variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    onClick={() => setMatrixView('monthly')}
+                    className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                  >
+                    <Calendar className="w-3.5 h-3.5" /> Monthly
+                  </Button>
+                  <Button 
+                    variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
+                    size="sm" 
+                    onClick={() => setMatrixView('yearly')}
+                    className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                  >
+                    <Zap className="w-3.5 h-3.5" /> Yearly
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Card className="border-0 shadow-2xl bg-card overflow-hidden">
+              <CardContent className="p-0">
+                <MasterTrackerMatrix 
+                  transactions={transactions} 
+                  budgets={budgets} 
+                  categoryGroups={categoryGroups}
+                  year={year}
+                  view={matrixView}
+                  searchQuery={searchQuery}
+                  onCellClick={handleCellClick}
+                />
               </CardContent>
             </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Matrix Section */}
-      <section className="space-y-6 animate-slide-up stagger-3" ref={matrixContainerRef}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
-              <TableIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <CardTitle className="text-xl font-black tracking-tight">The Matrix</CardTitle>
-              <CardDescription className="text-xs font-bold uppercase tracking-wider">
-                Historical breakdown by category
-              </CardDescription>
-            </div>
           </div>
-          
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" size="sm" onClick={jumpToCurrent} className="rounded-xl gap-2 h-9 text-xs font-bold">
-              <Navigation className="w-3.5 h-3.5" /> Jump to Current
-            </Button>
+        </TabsContent>
 
-            <div className="flex items-center space-x-2 bg-muted/50 px-3 py-1.5 rounded-xl border">
-              <Switch 
-                id="over-budget" 
-                checked={showOverBudgetOnly} 
-                onCheckedChange={setShowOverBudgetOnly} 
-              />
-              <Label htmlFor="over-budget" className="text-xs font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1.5">
-                <AlertCircle className="w-3 h-3 text-rose-500" />
-                Over Budget Only
-              </Label>
-            </div>
+        <TabsContent value="visuals" className="animate-fade-in">
+          <MasterTrackerGraphs 
+            transactions={transactions}
+            budgets={budgets}
+            categoryGroups={categoryGroups}
+            year={year}
+          />
+        </TabsContent>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <Input 
-                placeholder="Search categories..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 rounded-xl w-48 bg-muted/50 border-0 text-xs font-bold"
-              />
-            </div>
-            <div className="flex items-center bg-muted rounded-xl p-1">
-              <Button 
-                variant={matrixView === 'daily' ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => setMatrixView('daily')}
-                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-              >
-                <CalendarDays className="w-3.5 h-3.5" /> Daily
-              </Button>
-              <Button 
-                variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => setMatrixView('weekly')}
-                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-              >
-                <CalendarRange className="w-3.5 h-3.5" /> Weekly
-              </Button>
-              <Button 
-                variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => setMatrixView('monthly')}
-                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-              >
-                <Calendar className="w-3.5 h-3.5" /> Monthly
-              </Button>
-              <Button 
-                variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
-                size="sm" 
-                onClick={() => setMatrixView('yearly')}
-                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-              >
-                <Zap className="w-3.5 h-3.5" /> Yearly
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <Card className="border-0 shadow-2xl bg-card overflow-hidden">
-          <CardContent className="p-0">
-            <MasterTrackerMatrix 
-              transactions={transactions} 
-              budgets={budgets} 
-              categoryGroups={categoryGroups}
-              year={year}
-              view={matrixView}
-              searchQuery={searchQuery}
-              onCellClick={handleCellClick}
-            />
-          </CardContent>
-        </Card>
-      </section>
+        <TabsContent value="coach" className="animate-fade-in">
+          <TrackerAIInsights 
+            transactions={transactions}
+            categoryGroups={categoryGroups}
+            budgets={budgets}
+            year={year}
+          />
+        </TabsContent>
+      </Tabs>
 
       <BudgetDialog 
         open={showBudgetDialog} 
