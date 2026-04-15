@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -33,7 +33,8 @@ import {
   Calculator,
   TrendingDown,
   Download,
-  AlertCircle
+  AlertCircle,
+  Navigation
 } from 'lucide-react';
 import { 
   format, 
@@ -80,6 +81,8 @@ const MasterTracker = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showOverBudgetOnly, setShowOverBudgetOnly] = useState(false);
   
+  const matrixContainerRef = useRef<HTMLDivElement>(null);
+
   // Drilldown state
   const [drilldown, setDrilldown] = useState<{
     open: boolean;
@@ -187,8 +190,27 @@ const MasterTracker = () => {
     setDrilldown({ open: true, category, periodLabel, txns, budget });
   };
 
+  const jumpToCurrent = () => {
+    if (!matrixContainerRef.current) return;
+    const container = matrixContainerRef.current.querySelector('.overflow-x-auto');
+    if (!container) return;
+
+    // This is a heuristic: scroll to the right based on current month/week
+    const today = new Date();
+    const totalWidth = container.scrollWidth;
+    const visibleWidth = container.clientWidth;
+    
+    if (matrixView === 'monthly') {
+      const monthIndex = today.getMonth();
+      const scrollPos = (totalWidth / 12) * monthIndex - (visibleWidth / 2);
+      container.scrollTo({ left: scrollPos, behavior: 'smooth' });
+    } else if (matrixView === 'weekly') {
+      container.scrollTo({ left: totalWidth, behavior: 'smooth' });
+    }
+    showSuccess('Jumped to current period');
+  };
+
   const exportMatrix = () => {
-    // This is a simplified export of the current transactions in the matrix view
     const headers = ['Date', 'Description', 'Category', 'Amount', 'Notes'];
     const rows = transactions.map(t => [
       t.transaction_date,
@@ -364,7 +386,7 @@ const MasterTracker = () => {
       </section>
 
       {/* Matrix Section */}
-      <section className="space-y-6 animate-slide-up stagger-3">
+      <section className="space-y-6 animate-slide-up stagger-3" ref={matrixContainerRef}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
@@ -378,7 +400,11 @@ const MasterTracker = () => {
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" size="sm" onClick={jumpToCurrent} className="rounded-xl gap-2 h-9 text-xs font-bold">
+              <Navigation className="w-3.5 h-3.5" /> Jump to Current
+            </Button>
+
             <div className="flex items-center space-x-2 bg-muted/50 px-3 py-1.5 rounded-xl border">
               <Switch 
                 id="over-budget" 
