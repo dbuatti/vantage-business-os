@@ -129,7 +129,14 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   // Calculate Adjusted Suggestions based on Savings Goal
   const adjustedSuggestions = useMemo(() => {
     const { totalIncome, groupTotals, totalExpenses } = historicalData;
-    if (totalIncome === 0) return groupTotals;
+    
+    if (totalIncome === 0) return {
+      adjusted: groupTotals,
+      targetSavings: 0,
+      availableForExpenses: 0,
+      isScaling: false,
+      scaleFactor: 1
+    };
 
     const targetSavings = savingsType === 'percent' 
       ? (totalIncome * (parseFloat(savingsValue) || 0) / 100)
@@ -138,13 +145,11 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
     const availableForExpenses = Math.max(0, totalIncome - targetSavings);
     
     // If we need to cut spending to hit the goal, calculate the scale factor
-    // We only scale groups that have historical spending
     const scaleFactor = totalExpenses > 0 ? availableForExpenses / totalExpenses : 1;
 
     const adjusted: Record<string, number> = {};
     GROUPS.forEach(g => {
-      // We suggest the historical amount scaled by our savings requirement
-      adjusted[g] = Math.round(groupTotals[g] * scaleFactor);
+      adjusted[g] = Math.round((groupTotals[g] || 0) * scaleFactor);
     });
 
     return {
