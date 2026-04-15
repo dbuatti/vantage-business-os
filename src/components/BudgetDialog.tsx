@@ -170,6 +170,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         category_name: b.category_name,
         amount: parseFloat(b.amount) || 0,
         year,
+        month: null, // Explicitly set to null for yearly budgets
         updated_at: new Date().toISOString()
       }));
 
