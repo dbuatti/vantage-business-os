@@ -93,9 +93,11 @@ const Index = () => {
   const fetchTransactionSummary = async () => {
     try {
       // Fetch ALL transactions for the period to get accurate totals
+      // CRITICAL: Filter out 'Account' category as these are internal transfers
       let query = supabase
         .from('finance_transactions')
         .select('id, description, amount, transaction_date, category_1, is_work, notes')
+        .neq('category_1', 'Account')
         .order('transaction_date', { ascending: false });
 
       if (selectedYear !== 'All') {
@@ -146,7 +148,11 @@ const Index = () => {
         .reduce((s, inv) => s + (inv.total_amount || 0), 0);
 
       // Calculate tax readiness and burn rate
-      let txnsQuery = supabase.from('finance_transactions').select('is_work, notes, category_1, amount, transaction_date');
+      let txnsQuery = supabase
+        .from('finance_transactions')
+        .select('is_work, notes, category_1, amount, transaction_date')
+        .neq('category_1', 'Account');
+
       if (selectedYear !== 'All') {
         txnsQuery = txnsQuery.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
       }
