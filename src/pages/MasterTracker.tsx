@@ -148,7 +148,7 @@ const MasterTracker = () => {
           <CardContent className="p-6 relative">
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Year Budget</p>
             <p className="text-3xl font-black">{formatCurrency(stats.totalBudget)}</p>
-            <p className="text-xs opacity-70 mt-2">Total planned for {year}</p>
+            <p className="text-xs opacity-70 mt-2">~{formatCurrency(stats.totalBudget / 12)} / month</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-xl bg-rose-600 text-white overflow-hidden relative">

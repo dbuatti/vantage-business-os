@@ -31,7 +31,8 @@ import {
   ArrowDown,
   Calculator,
   TrendingDown,
-  History
+  History,
+  Calendar
 } from 'lucide-react';
 import { format, subYears, differenceInMonths, parseISO } from 'date-fns';
 
@@ -108,7 +109,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
 
       const dates = txnsRes.data?.map(t => parseISO(t.transaction_date)) || [];
       const minDate = dates.length > 0 ? new Date(Math.min(...dates.map(d => d.getTime()))) : new Date();
-      const monthsOfData = Math.max(1, differenceInMonths(new Date(), minDate));
+      // Calculate months of data, minimum 1 to avoid division by zero
+      const monthsOfData = Math.max(1, differenceInMonths(new Date(), minDate) + (new Date().getDate() / 30));
 
       txnsRes.data?.forEach(t => {
         if (t.amount > 0) {
@@ -134,7 +136,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   const adjustedSuggestions = useMemo(() => {
     const { totalIncome, groupTotals, totalExpenses, monthsOfData } = historicalData;
     
-    // Annualize the data
+    // Annualize the data (Project what a full year looks like based on current data)
     const annualFactor = 12 / monthsOfData;
     const annualizedIncome = totalIncome * annualFactor;
     const annualizedExpenses = totalExpenses * annualFactor;
@@ -145,7 +147,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       availableForExpenses: 0,
       isScaling: false,
       scaleFactor: 1,
-      annualizedIncome: 0
+      annualizedIncome: 0,
+      annualizedExpenses: 0
     };
 
     const targetSavings = savingsType === 'percent' 
@@ -166,7 +169,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       availableForExpenses,
       isScaling: scaleFactor < 1,
       scaleFactor,
-      annualizedIncome
+      annualizedIncome,
+      annualizedExpenses
     };
   }, [historicalData, savingsType, savingsValue]);
 
@@ -219,8 +223,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
-        <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6">
+      <DialogContent className="sm:max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6 shrink-0">
           <DialogHeader className="mb-6">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -228,14 +232,17 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                   <Calculator className="w-5 h-5 text-primary" />
                   Savings Strategy ({year})
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="flex items-center gap-2">
                   Set a savings goal to see how your budgets should be adjusted.
+                  <Badge variant="secondary" className="text-[10px] font-bold">
+                    Based on {historicalData.monthsOfData.toFixed(1)} months of data
+                  </Badge>
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <Card className="border-0 shadow-lg bg-primary text-white overflow-hidden relative mb-8">
+          <Card className="border-0 shadow-lg bg-primary text-white overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
             <CardContent className="p-6 relative">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -288,90 +295,92 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                     <span>{formatCurrency(adjustedSuggestions.availableForExpenses)}</span>
                   </div>
                   <div className="pt-2 border-t border-white/10 flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-60">Annualized Income</span>
+                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-60">Projected Annual Income</span>
                     <span className="font-black">{formatCurrency(adjustedSuggestions.annualizedIncome)}</span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
-          <div className="flex items-center justify-between mb-4 px-1">
-            <div className="flex items-center gap-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
-              </h3>
-              {adjustedSuggestions.scaleFactor !== 1 && (
-                <Badge variant="outline" className={cn(
-                  "text-[10px] font-black uppercase",
-                  adjustedSuggestions.scaleFactor < 1 ? "text-rose-600 border-rose-200 bg-rose-50" : "text-emerald-600 border-emerald-200 bg-emerald-50"
-                )}>
-                  {adjustedSuggestions.scaleFactor < 1 ? 'Spending Cut Required' : 'Spending Increase Possible'}
-                </Badge>
-              )}
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={applyAllSuggestions}
-              disabled={analyzing}
-              className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-black uppercase"
-            >
-              {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              Apply All Suggestions
-            </Button>
+        </div>
+        
+        <div className="px-6 flex items-center justify-between mb-4 shrink-0">
+          <div className="flex items-center gap-4">
+            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+              <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
+            </h3>
+            {adjustedSuggestions.scaleFactor !== 1 && (
+              <Badge variant="outline" className={cn(
+                "text-[10px] font-black uppercase",
+                adjustedSuggestions.scaleFactor < 1 ? "text-rose-600 border-rose-200 bg-rose-50" : "text-emerald-600 border-emerald-200 bg-emerald-50"
+              )}>
+                {adjustedSuggestions.scaleFactor < 1 ? 'Spending Cut Required' : 'Spending Increase Possible'}
+              </Badge>
+            )}
           </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={applyAllSuggestions}
+            disabled={analyzing}
+            className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-black uppercase"
+          >
+            {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+            Apply All Suggestions
+          </Button>
+        </div>
 
-          <ScrollArea className="max-h-[40vh] pr-4 -mr-4">
-            <div className="space-y-4 py-2">
-              {formBudgets.map((budget, i) => {
-                const suggestion = adjustedSuggestions.adjusted[budget.category_name] || 0;
-                const historical = (historicalData.groupTotals[budget.category_name] || 0) * (12 / historicalData.monthsOfData);
-                const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
+        <ScrollArea className="flex-1 px-6">
+          <div className="space-y-4 py-2 pb-8">
+            {formBudgets.map((budget, i) => {
+              const suggestion = adjustedSuggestions.adjusted[budget.category_name] || 0;
+              const historicalAnnual = (historicalData.groupTotals[budget.category_name] || 0) * (12 / historicalData.monthsOfData);
+              const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
 
-                return (
-                  <div key={budget.category_name} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <Label className="font-black uppercase text-[10px] tracking-widest text-muted-foreground">
-                        {budget.category_name}
-                      </Label>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-[9px] font-bold text-muted-foreground uppercase">Annualized Spend</p>
-                          <p className="text-xs font-black">{formatCurrency(historical)}</p>
-                        </div>
-                        <button 
-                          onClick={() => applySuggestion(budget.category_name)}
-                          className={cn(
-                            "flex flex-col items-end p-1.5 rounded-lg border transition-all",
-                            isDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
-                          )}
-                        >
-                          <span className="text-[8px] font-black uppercase">Suggested</span>
-                          <span className="text-xs font-black">{formatCurrency(suggestion)}</span>
-                        </button>
+              return (
+                <div key={budget.category_name} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="font-black uppercase text-[10px] tracking-widest text-muted-foreground">
+                      {budget.category_name}
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase">Current Annualized</p>
+                        <p className="text-xs font-black">{formatCurrency(historicalAnnual)}</p>
                       </div>
-                    </div>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">$</span>
-                      <Input 
-                        type="number" 
-                        value={budget.amount} 
-                        onChange={(e) => {
-                          const next = [...formBudgets];
-                          next[i].amount = e.target.value;
-                          setFormBudgets(next);
-                        }}
-                        className="h-12 pl-8 rounded-xl font-black text-lg bg-muted/30 border-transparent focus:bg-background focus:border-primary/30 transition-all"
-                      />
+                      <button 
+                        onClick={() => applySuggestion(budget.category_name)}
+                        className={cn(
+                          "flex flex-col items-end p-1.5 rounded-lg border transition-all",
+                          isDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
+                        )}
+                      >
+                        <span className="text-[8px] font-black uppercase">Suggested</span>
+                        <span className="text-xs font-black">{formatCurrency(suggestion)}</span>
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">$</span>
+                    <Input 
+                      type="number" 
+                      value={budget.amount} 
+                      onChange={(e) => {
+                        const next = [...formBudgets];
+                        next[i].amount = e.target.value;
+                        setFormBudgets(next);
+                      }}
+                      className="h-12 pl-8 rounded-xl font-black text-lg bg-muted/30 border-transparent focus:bg-background focus:border-primary/30 transition-all"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
 
-          <DialogFooter className="gap-2 mt-8">
+        <div className="p-6 border-t bg-muted/10 shrink-0">
+          <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl">Cancel</Button>
             <Button onClick={handleSave} disabled={loading} className="rounded-xl px-10 h-12 font-black text-base gap-2 shadow-xl shadow-primary/20">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
