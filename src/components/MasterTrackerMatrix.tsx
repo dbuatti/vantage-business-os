@@ -44,7 +44,6 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
         end: endOfYear(new Date(year, 0, 1))
       });
     } else if (view === 'daily') {
-      // Show days of the current month
       const now = new Date();
       const targetMonth = now.getFullYear() === year ? now : new Date(year, 0, 1);
       return eachDayOfInterval({
@@ -52,7 +51,6 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
         end: endOfMonth(targetMonth)
       });
     } else {
-      // Weekly: Show last 12 weeks
       const now = new Date();
       const targetEnd = now.getFullYear() === year ? now : endOfYear(new Date(year, 0, 1));
       return eachWeekOfInterval({
@@ -79,9 +77,9 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
 
         const spent = intervalTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
         
-        // Budget logic
+        // Budget logic: Look for specific month budget or yearly budget (month 0)
         const specificBudget = budgets.find(b => b.category_name === cat && b.month === interval.getMonth() + 1);
-        const yearlyBudget = budgets.find(b => b.category_name === cat && !b.month);
+        const yearlyBudget = budgets.find(b => b.category_name === cat && (b.month === 0 || b.month === null));
         
         let budget = 0;
         if (view === 'monthly') {
@@ -104,7 +102,7 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
       const totalSpent = intervalStats.reduce((s, m) => s + m.spent, 0);
       const totalBudget = view === 'monthly' 
         ? intervalStats.reduce((s, m) => s + m.budget, 0)
-        : (budgets.find(b => b.category_name === cat && !b.month)?.amount || 0);
+        : (budgets.find(b => b.category_name === cat && (b.month === 0 || b.month === null))?.amount || 0);
 
       return {
         category: cat,

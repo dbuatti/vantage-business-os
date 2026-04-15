@@ -71,7 +71,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   useEffect(() => {
     if (open) {
       const initial = GROUPS.map(group => {
-        const existing = existingBudgets.find(b => b.category_name === group && !b.month);
+        // Look for yearly budget (month 0 or null)
+        const existing = existingBudgets.find(b => b.category_name === group && (b.month === 0 || b.month === null));
         return {
           category_name: group,
           amount: existing?.amount || 0,
@@ -181,7 +182,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         category_name: b.category_name,
         amount: parseFloat(b.amount) || 0,
         year,
-        month: null,
+        month: 0, // Use 0 for yearly budgets to ensure unique constraint works
         updated_at: new Date().toISOString()
       }));
 
@@ -241,7 +242,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
           </DialogHeader>
 
           <Card className="border-0 shadow-lg bg-primary text-white overflow-hidden relative">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div className="space-y-4">
