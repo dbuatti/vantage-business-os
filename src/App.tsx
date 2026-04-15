@@ -24,6 +24,7 @@ import TimeGlance from "./pages/TimeGlance";
 import WeeklyLog from "./pages/WeeklyLog";
 import SubscriptionAudit from "./pages/SubscriptionAudit";
 import ExpenseStory from "./pages/ExpenseStory";
+import MasterTracker from "./pages/MasterTracker";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="/portal/:token" element={<AccountantPortal />} />
               
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/master-tracker" element={<ProtectedRoute><MasterTracker /></ProtectedRoute>} />
               <Route path="/weekly-routine" element={<ProtectedRoute><WeeklyLog /></ProtectedRoute>} />
               <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
               <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
