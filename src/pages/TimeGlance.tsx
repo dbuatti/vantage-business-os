@@ -56,7 +56,13 @@ import {
   eachDayOfInterval,
   isSameDay,
   parseISO,
-  differenceInDays
+  differenceInDays,
+  startOfYear,
+  endOfYear,
+  addYears,
+  subYears,
+  eachMonthOfInterval,
+  isSameMonth
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
@@ -88,7 +94,7 @@ const TimeGlance = () => {
   const { session } = useAuth();
   const { selectedYear } = useSettings();
   const navigate = useNavigate();
-  const [view, setView] = useState<'day' | 'week' | 'month'>('week');
+  const [view, setView] = useState<'day' | 'week' | 'month' | 'year'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,8 +117,10 @@ const TimeGlance = () => {
       return { start: startOfDay(currentDate), end: endOfDay(currentDate) };
     } else if (view === 'week') {
       return { start: startOfWeek(currentDate, { weekStartsOn: 1 }), end: endOfWeek(currentDate, { weekStartsOn: 1 }) };
-    } else {
+    } else if (view === 'month') {
       return { start: startOfMonth(currentDate), end: endOfMonth(currentDate) };
+    } else {
+      return { start: startOfYear(currentDate), end: endOfYear(currentDate) };
     }
   }, [currentDate, view]);
 
@@ -197,15 +205,28 @@ const TimeGlance = () => {
     const avgDailySpend = expenses / daysInPeriod;
 
     // Chart Data
-    const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
-    const chartData = days.map(day => {
-      const dayTxns = transactions.filter(t => isSameDay(parseISO(t.transaction_date), day));
-      return {
-        name: format(day, view === 'week' ? 'EEE' : 'dd'),
-        income: dayTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
-        expenses: dayTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
-      };
-    });
+    let chartData = [];
+    if (view === 'year') {
+      const months = eachMonthOfInterval({ start: dateRange.start, end: dateRange.end });
+      chartData = months.map(month => {
+        const monthTxns = transactions.filter(t => isSameMonth(parseISO(t.transaction_date), month));
+        return {
+          name: format(month, 'MMM'),
+          income: monthTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+          expenses: monthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+        };
+      });
+    } else {
+      const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+      chartData = days.map(day => {
+        const dayTxns = transactions.filter(t => isSameDay(parseISO(t.transaction_date), day));
+        return {
+          name: format(day, view === 'week' ? 'EEE' : 'dd'),
+          income: dayTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0),
+          expenses: dayTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+        };
+      });
+    }
 
     return { 
       income, 
@@ -254,7 +275,9 @@ const TimeGlance = () => {
     let nextDate;
     if (view === 'day') nextDate = addDays(currentDate, amount);
     else if (view === 'week') nextDate = addWeeks(currentDate, amount);
-    else nextDate = addMonths(currentDate, amount);
+    else if (view === 'month') nextDate = addMonths(currentDate, amount);
+    else nextDate = addYears(currentDate, amount);
+    
     if (selectedYear !== 'All' && nextDate.getFullYear() !== parseInt(selectedYear)) return;
     setCurrentDate(nextDate);
   };
@@ -267,7 +290,8 @@ const TimeGlance = () => {
   const getTitle = () => {
     if (view === 'day') return format(currentDate, 'EEEE, MMMM dd');
     if (view === 'week') return `${format(dateRange.start, 'MMM dd')} — ${format(dateRange.end, 'MMM dd, yyyy')}`;
-    return format(currentDate, 'MMMM yyyy');
+    if (view === 'month') return format(currentDate, 'MMMM yyyy');
+    return format(currentDate, 'yyyy');
   };
 
   const renderTransactionList = (items: Transaction[]) => (
@@ -309,6 +333,7 @@ const TimeGlance = () => {
             <Button variant={view === 'day' ? 'default' : 'ghost'} size="sm" onClick={() => setView('day')} className="rounded-lg h-8 px-4 text-xs font-bold">Day</Button>
             <Button variant={view === 'week' ? 'default' : 'ghost'} size="sm" onClick={() => setView('week')} className="rounded-lg h-8 px-4 text-xs font-bold">Week</Button>
             <Button variant={view === 'month' ? 'default' : 'ghost'} size="sm" onClick={() => setView('month')} className="rounded-lg h-8 px-4 text-xs font-bold">Month</Button>
+            <Button variant={view === 'year' ? 'default' : 'ghost'} size="sm" onClick={() => setView('year')} className="rounded-lg h-8 px-4 text-xs font-bold">Year</Button>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigatePeriod('today')} className="rounded-xl h-9 font-bold">Today</Button>
@@ -482,7 +507,7 @@ const TimeGlance = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-primary" />
-                  {view === 'week' ? 'Daily Activity' : 'Monthly Trend'}
+                  {view === 'week' ? 'Daily Activity' : view === 'month' ? 'Monthly Trend' : 'Yearly Trend'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
