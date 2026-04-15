@@ -37,6 +37,8 @@ interface MasterTrackerMatrixProps {
   categoryGroups: any[];
   year: number;
   view: TrackerView;
+  searchQuery: string;
+  onCellClick: (category: string, periodLabel: string, txns: any[], budget: number) => void;
 }
 
 const EXPENSE_GROUPS = [
@@ -47,7 +49,15 @@ const EXPENSE_GROUPS = [
   { name: 'Lifestyle & Discretionary', icon: '🎭' },
 ];
 
-const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view }: MasterTrackerMatrixProps) => {
+const MasterTrackerMatrix = ({ 
+  transactions, 
+  budgets, 
+  categoryGroups, 
+  year, 
+  view, 
+  searchQuery,
+  onCellClick 
+}: MasterTrackerMatrixProps) => {
   const intervals = useMemo(() => {
     if (view === 'monthly') {
       return eachMonthOfInterval({
@@ -69,7 +79,6 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
         end: targetEnd
       }, { weekStartsOn: 1 });
     } else {
-      // Yearly view just has one interval representing the whole year
       return [startOfYear(new Date(year, 0, 1))];
     }
   }, [year, view]);
@@ -89,7 +98,11 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
     const today = new Date();
 
     return EXPENSE_GROUPS.map(group => {
-      const groupCategories = categories.filter(cat => catToGroup[cat] === group.name);
+      const groupCategories = categories.filter(cat => {
+        const matchesGroup = catToGroup[cat] === group.name;
+        const matchesSearch = !searchQuery || cat.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesGroup && matchesSearch;
+      });
       
       const categoryRows = groupCategories.map(cat => {
         const intervalStats = intervals.map(interval => {
@@ -141,7 +154,12 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
             budget,
             buffer,
             dailyBurn,
-            percent: budget > 0 ? (spent / budget) * 100 : 0
+            percent: budget > 0 ? (spent / budget) * 100 : 0,
+            txns: intervalTxns,
+            label: view === 'monthly' ? format(interval, 'MMMM') : 
+                   view === 'daily' ? format(interval, 'MMM dd') : 
+                   view === 'weekly' ? `Week of ${format(interval, 'MMM dd')}` :
+                   `Year ${year}`
           };
         });
 
@@ -157,14 +175,14 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
         categoryRows
       };
     }).filter(g => g.categoryRows.length > 0);
-  }, [categories, intervals, transactions, budgets, view, catToGroup]);
+  }, [categories, intervals, transactions, budgets, view, catToGroup, searchQuery, year]);
 
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="sticky left-0 bg-muted/50 z-20 min-w-[200px] font-black uppercase text-[10px] tracking-widest">Category</TableHead>
+            <TableHead className="sticky left-0 bg-muted/50 z-30 min-w-[200px] font-black uppercase text-[10px] tracking-widest border-r">Category</TableHead>
             {intervals.map((interval, i) => (
               <TableHead key={i} className="text-center min-w-[180px] font-black uppercase text-[10px] tracking-widest">
                 {view === 'monthly' ? format(interval, 'MMMM') : 
@@ -180,7 +198,7 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
             <React.Fragment key={group.groupName}>
               {/* Group Header Row */}
               <TableRow className="bg-primary/5 hover:bg-primary/5 border-y-2 border-primary/10">
-                <TableCell className="sticky left-0 bg-primary/5 z-10 font-black text-xs uppercase tracking-widest text-primary flex items-center gap-2">
+                <TableCell className="sticky left-0 bg-primary/5 z-20 font-black text-xs uppercase tracking-widest text-primary flex items-center gap-2 border-r">
                   <span className="text-lg">{group.icon}</span>
                   {group.groupName}
                 </TableCell>
@@ -209,11 +227,15 @@ const MasterTrackerMatrix = ({ transactions, budgets, categoryGroups, year, view
               {/* Category Rows */}
               {group.categoryRows.map((row) => (
                 <TableRow key={row.category} className="hover:bg-muted/30 transition-colors group">
-                  <TableCell className="sticky left-0 bg-background z-10 font-bold text-sm border-r pl-8">
+                  <TableCell className="sticky left-0 bg-background z-20 font-bold text-sm border-r pl-8">
                     {row.category}
                   </TableCell>
                   {row.intervalStats.map((stat, i) => (
-                    <TableCell key={i} className="p-4 border-r last:border-r-0">
+                    <TableCell 
+                      key={i} 
+                      className="p-4 border-r last:border-r-0 cursor-pointer hover:bg-primary/[0.03] transition-colors"
+                      onClick={() => onCellClick(row.category, stat.label, stat.txns, stat.budget)}
+                    >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className={cn("font-black tabular-nums text-sm", stat.spent > 0 ? "text-foreground" : "text-muted-foreground/30")}>

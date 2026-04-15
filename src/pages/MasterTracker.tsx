@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from '@/components/ui/input';
 import { 
   Target, 
   Settings as SettingsIcon, 
@@ -24,7 +25,11 @@ import {
   Zap,
   Thermometer,
   Clock,
-  Brain
+  Brain,
+  Search,
+  Filter,
+  Calculator,
+  TrendingDown
 } from 'lucide-react';
 import { 
   format, 
@@ -44,6 +49,7 @@ import { formatCurrency } from '@/utils/format';
 import MasterTrackerMatrix from '@/components/MasterTrackerMatrix';
 import BudgetDialog from '@/components/BudgetDialog';
 import TrackerAIInsights from '@/components/TrackerAIInsights';
+import TrackerDrilldown from '@/components/TrackerDrilldown';
 
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -65,6 +71,16 @@ const MasterTracker = () => {
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const [matrixView, setMatrixView] = useState<TrackerView>('monthly');
   const [thermostatView, setThermostatView] = useState<TrackerView>('monthly');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Drilldown state
+  const [drilldown, setDrilldown] = useState<{
+    open: boolean;
+    category: string;
+    periodLabel: string;
+    txns: any[];
+    budget: number;
+  }>({ open: false, category: '', periodLabel: '', txns: [], budget: 0 });
 
   const year = parseInt(selectedYear === 'All' ? new Date().getFullYear().toString() : selectedYear);
   const yearStart = startOfYear(new Date(year, 0, 1));
@@ -105,7 +121,6 @@ const MasterTracker = () => {
     categoryGroups.forEach(cg => { catToGroup[cg.category_name] = cg.group_name; });
 
     return EXPENSE_GROUPS.map(group => {
-      // Filter transactions for this group and period
       const groupTxns = transactions.filter(t => {
         const tDate = parseISO(t.transaction_date);
         const isGroup = catToGroup[t.category_1] === group.name;
@@ -118,13 +133,10 @@ const MasterTracker = () => {
       });
 
       const spent = groupTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
-      
-      // Get yearly budget for this group
       const yearlyBudget = budgets
         .filter(b => b.category_name === group.name && (b.month === 0 || b.month === null))
         .reduce((s, b) => s + b.amount, 0);
 
-      // Scale budget based on view
       let periodBudget = yearlyBudget;
       if (thermostatView === 'monthly') periodBudget = yearlyBudget / 12;
       if (thermostatView === 'weekly') periodBudget = yearlyBudget / 52;
@@ -133,13 +145,7 @@ const MasterTracker = () => {
       const remaining = periodBudget - spent;
       const percent = periodBudget > 0 ? (spent / periodBudget) * 100 : 0;
 
-      return {
-        ...group,
-        spent,
-        budget: periodBudget,
-        remaining,
-        percent
-      };
+      return { ...group, spent, budget: periodBudget, remaining, percent };
     });
   }, [transactions, budgets, categoryGroups, thermostatView]);
 
@@ -157,6 +163,10 @@ const MasterTracker = () => {
 
     return { totalSpent, totalBudget, remaining, percentUtilized, avgSpend };
   }, [transactions, budgets, selectedYear]);
+
+  const handleCellClick = (category: string, periodLabel: string, txns: any[], budget: number) => {
+    setDrilldown({ open: true, category, periodLabel, txns, budget });
+  };
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
@@ -186,8 +196,43 @@ const MasterTracker = () => {
         </div>
       </header>
 
+      {/* YTD Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+          <CardContent className="p-5 relative">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">YTD Total Spent</p>
+            <p className="text-2xl font-black">{formatCurrency(matrixStats.totalSpent)}</p>
+            <p className="text-[10px] opacity-60 mt-1">Across all categories</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-xl bg-card overflow-hidden">
+          <CardContent className="p-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">YTD Budget Target</p>
+            <p className="text-2xl font-black">{formatCurrency(matrixStats.totalBudget)}</p>
+            <p className="text-[10px] text-muted-foreground font-bold mt-1">Annual strategy total</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-xl bg-card overflow-hidden">
+          <CardContent className="p-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Remaining Buffer</p>
+            <p className={cn("text-2xl font-black", matrixStats.remaining >= 0 ? "text-emerald-600" : "text-rose-600")}>
+              {formatCurrency(matrixStats.remaining)}
+            </p>
+            <p className="text-[10px] text-muted-foreground font-bold mt-1">For the rest of {year}</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-xl bg-card overflow-hidden">
+          <CardContent className="p-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Avg Daily Burn</p>
+            <p className="text-2xl font-black text-primary">{formatCurrency(matrixStats.avgSpend)}</p>
+            <p className="text-[10px] text-muted-foreground font-bold mt-1">Actual spending velocity</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* AI Insights Section */}
-      <section className="animate-slide-up">
+      <section className="animate-slide-up stagger-1">
         <TrackerAIInsights 
           transactions={transactions}
           categoryGroups={categoryGroups}
@@ -197,7 +242,7 @@ const MasterTracker = () => {
       </section>
 
       {/* Financial Thermostat Section */}
-      <section className="space-y-6 animate-slide-up stagger-1">
+      <section className="space-y-6 animate-slide-up stagger-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -210,38 +255,17 @@ const MasterTracker = () => {
           </div>
 
           <div className="flex items-center bg-muted rounded-xl p-1">
-            <Button 
-              variant={thermostatView === 'daily' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setThermostatView('daily')}
-              className="rounded-lg h-8 px-4 text-xs font-bold"
-            >
-              Day
-            </Button>
-            <Button 
-              variant={thermostatView === 'weekly' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setThermostatView('weekly')}
-              className="rounded-lg h-8 px-4 text-xs font-bold"
-            >
-              Week
-            </Button>
-            <Button 
-              variant={thermostatView === 'monthly' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setThermostatView('monthly')}
-              className="rounded-lg h-8 px-4 text-xs font-bold"
-            >
-              Month
-            </Button>
-            <Button 
-              variant={thermostatView === 'yearly' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setThermostatView('yearly')}
-              className="rounded-lg h-8 px-4 text-xs font-bold"
-            >
-              Year
-            </Button>
+            {['daily', 'weekly', 'monthly', 'yearly'].map((v) => (
+              <Button 
+                key={v}
+                variant={thermostatView === v ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setThermostatView(v as TrackerView)}
+                className="rounded-lg h-8 px-4 text-xs font-bold capitalize"
+              >
+                {v.replace('ly', '')}
+              </Button>
+            ))}
           </div>
         </div>
 
@@ -289,7 +313,7 @@ const MasterTracker = () => {
       </section>
 
       {/* Matrix Section */}
-      <section className="space-y-6 animate-slide-up stagger-2">
+      <section className="space-y-6 animate-slide-up stagger-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
@@ -303,39 +327,50 @@ const MasterTracker = () => {
             </div>
           </div>
           
-          <div className="flex items-center bg-muted rounded-xl p-1">
-            <Button 
-              variant={matrixView === 'daily' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setMatrixView('daily')}
-              className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-            >
-              <CalendarDays className="w-3.5 h-3.5" /> Daily
-            </Button>
-            <Button 
-              variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setMatrixView('weekly')}
-              className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-            >
-              <CalendarRange className="w-3.5 h-3.5" /> Weekly
-            </Button>
-            <Button 
-              variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setMatrixView('monthly')}
-              className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-            >
-              <Calendar className="w-3.5 h-3.5" /> Monthly
-            </Button>
-            <Button 
-              variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
-              size="sm" 
-              onClick={() => setMatrixView('yearly')}
-              className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-            >
-              <Zap className="w-3.5 h-3.5" /> Yearly
-            </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input 
+                placeholder="Search categories..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 rounded-xl w-48 bg-muted/50 border-0 text-xs font-bold"
+              />
+            </div>
+            <div className="flex items-center bg-muted rounded-xl p-1">
+              <Button 
+                variant={matrixView === 'daily' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setMatrixView('daily')}
+                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+              >
+                <CalendarDays className="w-3.5 h-3.5" /> Daily
+              </Button>
+              <Button 
+                variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setMatrixView('weekly')}
+                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+              >
+                <CalendarRange className="w-3.5 h-3.5" /> Weekly
+              </Button>
+              <Button 
+                variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setMatrixView('monthly')}
+                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+              >
+                <Calendar className="w-3.5 h-3.5" /> Monthly
+              </Button>
+              <Button 
+                variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setMatrixView('yearly')}
+                className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+              >
+                <Zap className="w-3.5 h-3.5" /> Yearly
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -347,6 +382,8 @@ const MasterTracker = () => {
               categoryGroups={categoryGroups}
               year={year}
               view={matrixView}
+              searchQuery={searchQuery}
+              onCellClick={handleCellClick}
             />
           </CardContent>
         </Card>
@@ -358,6 +395,15 @@ const MasterTracker = () => {
         year={year}
         onSuccess={fetchData}
         existingBudgets={budgets}
+      />
+
+      <TrackerDrilldown 
+        open={drilldown.open}
+        onOpenChange={(open) => setDrilldown(prev => ({ ...prev, open }))}
+        category={drilldown.category}
+        periodLabel={drilldown.periodLabel}
+        transactions={drilldown.txns}
+        budget={drilldown.budget}
       />
     </div>
   );
