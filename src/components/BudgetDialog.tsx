@@ -109,7 +109,6 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
 
       const dates = txnsRes.data?.map(t => parseISO(t.transaction_date)) || [];
       const minDate = dates.length > 0 ? new Date(Math.min(...dates.map(d => d.getTime()))) : new Date();
-      // Calculate months of data, minimum 1 to avoid division by zero
       const monthsOfData = Math.max(1, differenceInMonths(new Date(), minDate) + (new Date().getDate() / 30));
 
       txnsRes.data?.forEach(t => {
@@ -136,7 +135,6 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   const adjustedSuggestions = useMemo(() => {
     const { totalIncome, groupTotals, totalExpenses, monthsOfData } = historicalData;
     
-    // Annualize the data (Project what a full year looks like based on current data)
     const annualFactor = 12 / monthsOfData;
     const annualizedIncome = totalIncome * annualFactor;
     const annualizedExpenses = totalExpenses * annualFactor;
@@ -232,12 +230,12 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                   <Calculator className="w-5 h-5 text-primary" />
                   Savings Strategy ({year})
                 </DialogTitle>
-                <DialogDescription className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   Set a savings goal to see how your budgets should be adjusted.
                   <Badge variant="secondary" className="text-[10px] font-bold">
-                    Based on {historicalData.monthsOfData.toFixed(1)} months of data
+                    Based on {historicalData.monthsOfData.toFixed(1)} months
                   </Badge>
-                </DialogDescription>
+                </div>
               </div>
             </div>
           </DialogHeader>
