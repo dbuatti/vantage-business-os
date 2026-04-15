@@ -20,6 +20,7 @@ import Insights from "./pages/Insights";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import Productivity from "./pages/Productivity";
+import ProjectROI from "./pages/ProjectROI";
 import TimeGlance from "./pages/TimeGlance";
 import WeeklyLog from "./pages/WeeklyLog";
 import SubscriptionAudit from "./pages/SubscriptionAudit";
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/subscriptions" element={<ProtectedRoute><SubscriptionAudit /></ProtectedRoute>} />
               <Route path="/expense-story" element={<ProtectedRoute><ExpenseStory /></ProtectedRoute>} />
               <Route path="/productivity" element={<ProtectedRoute><Productivity /></ProtectedRoute>} />
+              <Route path="/project-roi" element={<ProtectedRoute><ProjectROI /></ProtectedRoute>} />
               <Route path="/time-glance" element={<ProtectedRoute><TimeGlance /></ProtectedRoute>} />
               <Route path="/accountant-report" element={<ProtectedRoute><AccountantReport /></ProtectedRoute>} />
               <Route path="/accountant-portal" element={<ProtectedRoute><AccountantPortal /></ProtectedRoute>} />

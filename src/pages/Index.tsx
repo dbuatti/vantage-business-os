@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import CashFlowForecast from '@/components/CashFlowForecast';
 import AnimatedNumber from '@/components/AnimatedNumber';
+import SmartAlerts from '@/components/SmartAlerts';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { 
   TrendingUp, 
@@ -22,7 +23,8 @@ import {
   CreditCard,
   CalendarCheck,
   ChevronRight,
-  Loader2
+  Loader2,
+  Target
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -66,6 +68,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] = useState<TransactionSummary | null>(null);
   const [businessStats, setBusinessStats] = useState<BusinessStats | null>(null);
+  const [allInvoices, setAllInvoices] = useState<any[]>([]);
+  const [allClients, setAllClients] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,7 +94,7 @@ const Index = () => {
     try {
       let query = supabase
         .from('finance_transactions')
-        .select('id, description, amount, transaction_date, category_1')
+        .select('id, description, amount, transaction_date, category_1, is_work, notes')
         .order('transaction_date', { ascending: false });
 
       if (selectedYear !== 'All') {
@@ -117,13 +121,15 @@ const Index = () => {
 
   const fetchBusinessStats = async () => {
     try {
-      const { data: clients } = await supabase.from('clients').select('total_receivable');
+      const { data: clients } = await supabase.from('clients').select('*');
       const { data: invoices } = await supabase
         .from('invoices')
         .select('*')
-        .order('invoice_date', { ascending: false })
-        .limit(3);
+        .order('invoice_date', { ascending: false });
       
+      setAllClients(clients || []);
+      setAllInvoices(invoices || []);
+
       let txnsQuery = supabase.from('finance_transactions').select('is_work, notes, category_1, amount, transaction_date');
       if (selectedYear !== 'All') {
         txnsQuery = txnsQuery.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
@@ -154,7 +160,7 @@ const Index = () => {
       setBusinessStats({
         totalClients: clients?.length || 0,
         outstandingAmount: clients?.reduce((s, c) => s + (c.total_receivable || 0), 0) || 0,
-        recentInvoices: invoices || [],
+        recentInvoices: (invoices || []).slice(0, 3),
         taxReadiness: readiness,
         burnRate,
         runway
@@ -191,6 +197,15 @@ const Index = () => {
           </Badge>
         </div>
       </header>
+
+      {/* Proactive Smart Alerts */}
+      {transactionSummary && businessStats && (
+        <SmartAlerts 
+          transactions={transactionSummary.allTransactions} 
+          invoices={allInvoices} 
+          clients={allClients} 
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Column */}
@@ -358,6 +373,30 @@ const Index = () => {
 
         {/* Sidebar Column */}
         <div className="space-y-8">
+          {/* Project ROI Reminder */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white overflow-hidden relative group animate-slide-up">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+            <CardContent className="p-6 relative space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-white/20 rounded-xl">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest opacity-80">Profitability</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black">Project ROI Engine</h3>
+                <p className="text-sm font-medium opacity-80 leading-relaxed">
+                  See your real hourly rate per project. Identify your most profitable work.
+                </p>
+              </div>
+              <Button variant="secondary" asChild className="w-full rounded-xl font-bold gap-2 shadow-lg group-hover:scale-[1.02] transition-transform">
+                <Link to="/project-roi">
+                  Analyze ROI <ChevronRight className="w-4 h-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Weekly Routine Reminder */}
           <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative group animate-slide-up">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
