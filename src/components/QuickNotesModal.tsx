@@ -46,6 +46,16 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
     const cat = (t.category_1 || '').toLowerCase();
     const account = (t.account_label || '').toLowerCase();
 
+    // High School Logic
+    if (
+      desc.includes('carey baptist') || 
+      desc.includes('john paul college') || 
+      desc.includes('careygramm') ||
+      cat.includes('carey')
+    ) {
+      return 'Teaching / Performance / Accompaniment at high school';
+    }
+
     // Square specific logic
     if (
       (desc.includes('square australia') || desc.includes('square au pty lt') || account.includes('square')) && 
@@ -54,6 +64,13 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
       return 'Teaching work from home';
     }
 
+    // Music Industry Logic
+    if (desc.includes('walt di') || desc.includes('mermaid')) return 'Musical Theatre / Gig Income';
+    if (desc.includes('opera')) return 'Opera Performance Income';
+    if (desc.includes('exam') || cat.includes('ameb')) return 'Exam Accompaniment';
+    if (desc.includes('vocal coaching') || desc.includes('lesson')) return 'Private Teaching Income';
+
+    // General Expense Logic
     if (cat.includes('fuel')) return 'Fuel / Travel';
     if (['utilities', 'bills', 'electricity', 'gas', 'internet'].some(k => cat.includes(k) || desc.includes(k))) return 'Utilities';
     
