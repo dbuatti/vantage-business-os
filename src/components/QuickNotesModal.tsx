@@ -56,6 +56,11 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
       return 'Teaching / Performance / Accompaniment at high school';
     }
 
+    // VCASS Logic
+    if (cat.includes('vcass') || desc.includes('victorian co')) {
+      return 'VCASS Teaching Work';
+    }
+
     // Square specific logic
     if (
       (desc.includes('square australia') || desc.includes('square au pty lt') || account.includes('square')) && 
