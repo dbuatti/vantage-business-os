@@ -126,7 +126,6 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
       .map(([id, note]) => ({ id, notes: note }));
 
     if (updates.length === 0) {
-      onOpenChange(false);
       return;
     }
 
@@ -140,7 +139,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
       }
       showSuccess(`Saved ${updates.length} notes`);
       onSuccess();
-      onOpenChange(false);
+      // Modal stays open as requested
     } catch (error: any) {
       showError(error.message);
     } finally {
@@ -240,7 +239,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
 
         <div className="p-6 border-t bg-muted/10 shrink-0">
           <DialogFooter className="gap-3">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl font-bold">Cancel</Button>
+            <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl font-bold">Close</Button>
             <Button 
               onClick={handleSave} 
               disabled={saving} 
