@@ -72,7 +72,13 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
     // Music Industry Logic
     if (desc.includes('walt di') || desc.includes('mermaid')) return 'Musical Theatre / Gig Income';
     if (desc.includes('opera')) return 'Opera Performance Income';
-    if (desc.includes('exam') || cat.includes('ameb')) return 'Exam Accompaniment';
+    
+    // AMEB Specific Logic
+    if (desc.includes('ameb') || cat.includes('ameb')) return 'AMEB Accompaniment Exams';
+    
+    // General Exam Logic
+    if (desc.includes('exam')) return 'Exam Accompaniment';
+    
     if (desc.includes('vocal coaching') || desc.includes('lesson')) return 'Private Teaching Income';
 
     // Subscription Logic
