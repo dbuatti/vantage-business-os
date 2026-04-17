@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Zap, 
   CheckCircle2, 
@@ -111,7 +110,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-4xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl h-[90vh] flex flex-col">
         <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6 shrink-0 border-b">
           <DialogHeader>
             <div className="flex items-center justify-between">
@@ -138,7 +137,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
           </DialogHeader>
         </div>
 
-        <ScrollArea className="flex-1 p-6">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           <div className="space-y-4">
             {transactions.map((t, index) => {
               const suggestion = getSuggestion(t);
@@ -185,7 +184,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
               );
             })}
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="p-6 border-t bg-muted/10 shrink-0">
           <DialogFooter className="gap-3">
