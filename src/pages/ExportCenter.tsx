@@ -26,6 +26,7 @@ import {
 import { format, startOfYear, endOfYear, parseISO, isWithinInterval } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
 import { generateExcel, prepareAccountantData } from '@/utils/excelExport';
+import { cn } from '@/lib/utils';
 
 const ExportCenter = () => {
   const { session } = useAuth();
