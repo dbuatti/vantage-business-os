@@ -70,6 +70,9 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
     if (desc.includes('exam') || cat.includes('ameb')) return 'Exam Accompaniment';
     if (desc.includes('vocal coaching') || desc.includes('lesson')) return 'Private Teaching Income';
 
+    // Subscription Logic
+    if (desc.includes('notion labs')) return 'Notion subscription for business organization and project management';
+
     // General Expense Logic
     if (cat.includes('fuel')) return 'Fuel / Travel';
     if (['utilities', 'bills', 'electricity', 'gas', 'internet'].some(k => cat.includes(k) || desc.includes(k))) return 'Utilities';
