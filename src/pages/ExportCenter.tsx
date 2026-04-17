@@ -21,12 +21,15 @@ import {
   Loader2, 
   ArrowRight,
   ShieldCheck,
-  Info
+  Info,
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
 import { format, startOfYear, endOfYear, parseISO, isWithinInterval } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
 import { generateExcel, prepareAccountantData } from '@/utils/excelExport';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 const ExportCenter = () => {
   const { session } = useAuth();
@@ -86,6 +89,20 @@ const ExportCenter = () => {
     });
     return { txns, invs };
   }, [data, reportInterval]);
+
+  const checklist = useMemo(() => {
+    const workTxns = filteredData.txns.filter(t => t.is_work);
+    const missingNotes = workTxns.filter(t => !t.notes && Math.abs(t.amount) > 50);
+    const missingCategories = workTxns.filter(t => !t.category_1);
+
+    return {
+      workIdentified: workTxns.length > 0,
+      allNotes: missingNotes.length === 0,
+      allCategories: missingCategories.length === 0,
+      missingNotesCount: missingNotes.length,
+      missingCategoriesCount: missingCategories.length
+    };
+  }, [filteredData]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -217,32 +234,55 @@ const ExportCenter = () => {
             <CardHeader>
               <CardTitle className="text-sm font-black uppercase tracking-widest opacity-70">Export Checklist</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
-                <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", filteredData.txns.filter(t => t.is_work).length > 0 ? "bg-emerald-500 border-emerald-500" : "border-white/20")}>
-                  {filteredData.txns.filter(t => t.is_work).length > 0 && <CheckCircle2 className="w-3.5 h-3.5" />}
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", checklist.workIdentified ? "bg-emerald-500 border-emerald-500" : "border-white/20")}>
+                      {checklist.workIdentified && <CheckCircle2 className="w-3.5 h-3.5" />}
+                    </div>
+                    <span className="font-medium">Work items identified</span>
+                  </div>
                 </div>
-                <span className="font-medium">Work items identified</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", filteredData.txns.filter(t => t.is_work && !t.notes).length === 0 ? "bg-emerald-500 border-emerald-500" : "border-white/20")}>
-                  {filteredData.txns.filter(t => t.is_work && !t.notes).length === 0 && <CheckCircle2 className="w-3.5 h-3.5" />}
+
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", checklist.allNotes ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
+                      {checklist.allNotes ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                    </div>
+                    <span className="font-medium">Notes for large items</span>
+                  </div>
+                  {!checklist.allNotes && (
+                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-400">
+                      {checklist.missingNotesCount} missing
+                    </Badge>
+                  )}
                 </div>
-                <span className="font-medium">All work items have notes</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", filteredData.txns.filter(t => t.is_work && !t.category_1).length === 0 ? "bg-emerald-500 border-emerald-500" : "border-white/20")}>
-                  {filteredData.txns.filter(t => t.is_work && !t.category_1).length === 0 && <CheckCircle2 className="w-3.5 h-3.5" />}
+
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", checklist.allCategories ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
+                      {checklist.allCategories ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                    </div>
+                    <span className="font-medium">Categories assigned</span>
+                  </div>
+                  {!checklist.allCategories && (
+                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-400">
+                      {checklist.missingCategoriesCount} missing
+                    </Badge>
+                  )}
                 </div>
-                <span className="font-medium">Categories assigned</span>
               </div>
 
               <div className="pt-4 border-t border-white/10">
-                <Button variant="link" asChild className="text-emerald-400 p-0 h-auto font-bold hover:text-emerald-300">
-                  <a href="/accountant-report" className="flex items-center gap-2">
-                    Review data before export <ArrowRight className="w-4 h-4" />
-                  </a>
+                <Button variant="secondary" asChild className="w-full rounded-xl font-bold gap-2">
+                  <Link to="/accountant-report">
+                    Review & Fix Data <ChevronRight className="w-4 h-4" />
+                  </Link>
                 </Button>
+                <p className="text-[10px] text-slate-400 mt-3 text-center leading-relaxed">
+                  Accountants require categories and notes (for items {'>'}$50) to maximize your tax deductions.
+                </p>
               </div>
             </CardContent>
           </Card>

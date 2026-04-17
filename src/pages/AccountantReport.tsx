@@ -50,7 +50,9 @@ import {
   Wand2,
   FileText,
   PieChart,
-  ShieldAlert
+  ShieldAlert,
+  AlertTriangle,
+  ChevronRight
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -97,12 +99,17 @@ const AccountantReport = () => {
       let hasMore = true;
 
       while (hasMore) {
-        const { data, error } = await supabase
+        let query = supabase
           .from('finance_transactions')
           .select('*')
           .order('transaction_date', { ascending: false })
-          .order('id', { ascending: false })
-          .range(from, from + step - 1);
+          .order('id', { ascending: false });
+
+        if (selectedYear !== 'All') {
+          query = query.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
+        }
+
+        const { data, error } = await query.range(from, from + step - 1);
 
         if (error) throw error;
         
@@ -204,7 +211,7 @@ const AccountantReport = () => {
     });
 
     const missingNotes = workTransactions.filter(t => !t.notes && Math.abs(t.amount) > 50);
-    const unmapped = filteredTransactions.filter(t => !t.category_1 && Math.abs(t.amount) > 0);
+    const unmapped = workTransactions.filter(t => !t.category_1);
     const estimatedTax = net > 0 ? net * (taxRate / 100) : 0;
 
     return { income, expenses, net, categoryBreakdown, missingNotes, unmapped, estimatedTax };
@@ -228,6 +235,8 @@ const AccountantReport = () => {
   };
 
   if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+
+  const needsAttention = stats.missingNotes.length > 0 || stats.unmapped.length > 0;
 
   return (
     <div className="min-h-screen bg-background pb-20 print:bg-white print:pb-0">
@@ -285,6 +294,53 @@ const AccountantReport = () => {
           <Card className="border-0 shadow-lg bg-amber-500 text-white relative overflow-hidden"><div className="absolute -right-4 -bottom-4 opacity-10"><ShieldAlert className="w-24 h-24" /></div><CardContent className="p-6 relative"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Est. Tax Liability</p><div className="flex items-center gap-1 bg-white/20 rounded px-1.5 py-0.5"><Input type="number" value={taxRate} onChange={(e) => setTaxRate(parseInt(e.target.value) || 0)} className="w-8 h-5 p-0 bg-transparent border-0 text-white text-xs font-bold text-center focus-visible:ring-0" /><span className="text-[10px] font-bold">%</span></div></div><p className="text-3xl font-black">{formatCurrency(stats.estimatedTax)}</p><p className="text-[10px] opacity-70 mt-1 italic">Based on {taxRate}% flat rate</p></CardContent></Card>
         </div>
 
+        {/* Data Quality Audit Section */}
+        {needsAttention && (
+          <Card className="border-0 shadow-xl bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900 print:hidden">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-black flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                  Data Quality Audit
+                </CardTitle>
+                <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
+                  {stats.missingNotes.length + stats.unmapped.length} Items Need Attention
+                </Badge>
+              </div>
+              <CardDescription className="text-amber-700 dark:text-amber-300">
+                These work items are missing critical information for your tax return.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-amber-200/50 dark:divide-amber-900/50">
+                {[...stats.unmapped, ...stats.missingNotes].map((t) => (
+                  <div key={t.id} className="p-4 flex items-center justify-between hover:bg-amber-100/30 transition-colors group">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                        {!t.category_1 ? <PieChart className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">{t.description}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-bold text-amber-700 uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</span>
+                          {!t.category_1 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-amber-300 text-amber-700">Missing Category</Badge>}
+                          {!t.notes && Math.abs(t.amount) > 50 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-amber-300 text-amber-700">Missing Note</Badge>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <p className="text-sm font-black tabular-nums text-amber-900">{formatCurrency(t.amount)}</p>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="h-8 w-8 rounded-lg hover:bg-amber-200/50 text-amber-700">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="border-0 shadow-lg overflow-hidden">
           <CardHeader className="bg-muted/30"><CardTitle className="text-lg flex items-center gap-2"><PieChart className="w-5 h-5 text-primary" />Tax Category Summary</CardTitle><CardDescription>Grouped expenses for your tax return</CardDescription></CardHeader>
           <CardContent className="p-0">
@@ -300,6 +356,66 @@ const AccountantReport = () => {
         </Card>
 
         <WorkWizard transactions={transactions} open={showWizard} onOpenChange={setShowWizard} onComplete={fetchTransactions} />
+
+        <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader><DialogTitle>Edit Transaction</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-xl">
+                📅 {editingTransaction && format(parseISO(editingTransaction.transaction_date), 'MMMM dd, yyyy')}
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input value={editForm.description} onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label>Amount ($)</Label>
+                <Input type="number" step="0.01" value={editForm.amount} onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))} className="rounded-xl text-lg font-semibold" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select value={editForm.category_1} onValueChange={(v) => setEditForm(prev => ({ ...prev, category_1: v }))}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Subcategory</Label>
+                  <Select value={editForm.category_2} onValueChange={(v) => setEditForm(prev => ({ ...prev, category_2: v }))}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {subcategories.map(sub => (
+                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="is_work" checked={editForm.is_work} onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_work: !!checked }))} />
+                <Label htmlFor="is_work" className="font-normal">Work-related expense</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Notes</Label>
+                <Input value={editForm.notes} onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))} className="rounded-xl" placeholder="Optional notes..." />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setEditingTransaction(null)} className="rounded-xl">Cancel</Button>
+              <Button onClick={handleSaveEdit} className="rounded-xl">Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
