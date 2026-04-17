@@ -82,7 +82,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
     if (desc.includes('ameb') || cat.includes('ameb')) return 'AMEB Accompaniment Exams';
     
     // AMTC Logic
-    if (desc.includes('amtc')) return 'AMTC Choir Work';
+    if (desc.includes('amtc') || desc.includes('bertram robert andrew')) return 'AMTC Choir Work';
     
     // General Exam Logic
     if (desc.includes('exam')) return 'Exam Accompaniment';
