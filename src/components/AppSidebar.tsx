@@ -35,7 +35,8 @@ import {
   CalendarRange,
   CalendarCheck,
   Repeat,
-  Table as TableIcon
+  Table as TableIcon,
+  FileSpreadsheet
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -58,8 +59,8 @@ const AppSidebar = () => {
     { title: "Invoices", icon: FileText, url: "/invoices" },
     { title: "Project ROI", icon: TrendingUp, url: "/project-roi" },
     { title: "Catalog", icon: Package, url: "/products" },
+    { title: "Export Center", icon: FileSpreadsheet, url: "/export" },
     { title: "Accountant Portal", icon: ShieldCheck, url: "/accountant-portal" },
-    { title: "Tax Report", icon: Calculator, url: "/accountant-report" },
   ];
 
   const financeItems = [

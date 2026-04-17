@@ -26,6 +26,7 @@ import WeeklyLog from "./pages/WeeklyLog";
 import SubscriptionAudit from "./pages/SubscriptionAudit";
 import ExpenseStory from "./pages/ExpenseStory";
 import MasterTracker from "./pages/MasterTracker";
+import ExportCenter from "./pages/ExportCenter";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
 
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="/productivity" element={<ProtectedRoute><Productivity /></ProtectedRoute>} />
               <Route path="/project-roi" element={<ProtectedRoute><ProjectROI /></ProtectedRoute>} />
               <Route path="/time-glance" element={<ProtectedRoute><TimeGlance /></ProtectedRoute>} />
+              <Route path="/export" element={<ProtectedRoute><ExportCenter /></ProtectedRoute>} />
               <Route path="/accountant-report" element={<ProtectedRoute><AccountantReport /></ProtectedRoute>} />
               <Route path="/accountant-portal" element={<ProtectedRoute><AccountantPortal /></ProtectedRoute>} />
               <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
