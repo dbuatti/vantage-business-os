@@ -75,6 +75,11 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
       return 'Internal teaching work';
     }
 
+    // Piano Backings Logic
+    if (cat.includes('piano backing')) {
+      return 'Piano Backings By Daniele backing tracks';
+    }
+
     // Music Industry Logic
     if (desc.includes('walt di') || desc.includes('mermaid')) return 'Musical Theatre / Gig Income';
     if (desc.includes('opera')) return 'Opera Performance Income';
