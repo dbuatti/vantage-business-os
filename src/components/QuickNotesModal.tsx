@@ -46,7 +46,14 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
     const cat = (t.category_1 || '').toLowerCase();
     const account = (t.account_label || '').toLowerCase();
 
-    if (account.includes('square') && t.amount > 0) return 'Teaching Income';
+    // Square specific logic
+    if (
+      (desc.includes('square australia') || desc.includes('square au pty lt') || account.includes('square')) && 
+      t.amount > 0
+    ) {
+      return 'Teaching work from home';
+    }
+
     if (cat.includes('fuel')) return 'Fuel / Travel';
     if (['utilities', 'bills', 'electricity', 'gas', 'internet'].some(k => cat.includes(k) || desc.includes(k))) return 'Utilities';
     
