@@ -61,6 +61,11 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
       return 'VCASS Teaching Work';
     }
 
+    // Ministry of Dance Logic
+    if (desc.includes('matthew godbold') || cat.includes('ministry')) {
+      return 'MINISTRY OF DANCE Teaching Work';
+    }
+
     // Square specific logic
     if (
       (desc.includes('square australia') || desc.includes('square au pty lt') || account.includes('square')) && 
