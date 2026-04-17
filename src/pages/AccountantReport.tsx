@@ -52,12 +52,14 @@ import {
   PieChart,
   ShieldAlert,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from 'lucide-react';
 import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showSuccess, showError } from '@/utils/toast';
 import WorkWizard from '@/components/WorkWizard';
+import QuickNotesModal from '@/components/QuickNotesModal';
 import { Transaction } from '@/types/finance';
 
 const AccountantReport = () => {
@@ -69,6 +71,7 @@ const AccountantReport = () => {
   const [selectedYear, setSelectedYear] = useState<string>(globalYear === 'All' ? new Date().getFullYear().toString() : globalYear);
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   const [showWizard, setShowWizard] = useState(false);
+  const [showQuickNotes, setShowQuickNotes] = useState(false);
   const [taxRate, setTaxRate] = useState<number>(30);
   
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -82,7 +85,6 @@ const AccountantReport = () => {
     }
   }, [globalYear]);
 
-  // Calculate the interval first so we can use it for fetching
   const reportInterval = useMemo(() => {
     const year = parseInt(selectedYear);
     if (reportType === 'cy') {
@@ -91,7 +93,6 @@ const AccountantReport = () => {
         end: new Date(year, 11, 31, 23, 59, 59) 
       };
     } else {
-      // Financial Year (e.g. FY25 ends June 2025, starts July 2024)
       return { 
         start: new Date(year - 1, 6, 1), 
         end: new Date(year, 5, 30, 23, 59, 59) 
@@ -209,7 +210,13 @@ const AccountantReport = () => {
       categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + Math.abs(t.amount);
     });
 
-    const missingNotes = workTransactions.filter(t => !t.notes && Math.abs(t.amount) > 50);
+    // NEW LOGIC: Exclude 'Phone' from missing notes requirement
+    const missingNotes = workTransactions.filter(t => 
+      !t.notes && 
+      Math.abs(t.amount) > 50 && 
+      (t.category_1 || '').toLowerCase() !== 'phone'
+    );
+    
     const unmapped = workTransactions.filter(t => !t.category_1);
     const estimatedTax = net > 0 ? net * (taxRate / 100) : 0;
 
@@ -319,17 +326,27 @@ const AccountantReport = () => {
           <Card className="border-0 shadow-xl bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900 print:hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-black flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                  <AlertTriangle className="w-5 h-5 text-amber-600" />
-                  Data Quality Audit
-                </CardTitle>
-                <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">
-                  {stats.missingNotes.length + stats.unmapped.length} Items Need Attention
-                </Badge>
+                <div className="space-y-1">
+                  <CardTitle className="text-lg font-black flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                    Data Quality Audit
+                  </CardTitle>
+                  <CardDescription className="text-amber-700 dark:text-amber-300">
+                    These work items are missing critical information for your tax return.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200 font-bold">
+                    {stats.missingNotes.length + stats.unmapped.length} Items
+                  </Badge>
+                  <Button 
+                    onClick={() => setShowQuickNotes(true)}
+                    className="rounded-xl gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-200"
+                  >
+                    <Zap className="w-4 h-4" /> Power Entry
+                  </Button>
+                </div>
               </div>
-              <CardDescription className="text-amber-700 dark:text-amber-300">
-                These work items are missing critical information for your tax return.
-              </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-amber-200/50 dark:divide-amber-900/50">
@@ -376,6 +393,13 @@ const AccountantReport = () => {
         </Card>
 
         <WorkWizard transactions={transactions} open={showWizard} onOpenChange={setShowWizard} onComplete={fetchTransactions} />
+        
+        <QuickNotesModal 
+          open={showQuickNotes} 
+          onOpenChange={setShowQuickNotes} 
+          transactions={[...stats.unmapped, ...stats.missingNotes]} 
+          onSuccess={fetchTransactions} 
+        />
 
         <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
           <DialogContent className="sm:max-w-md rounded-2xl">
