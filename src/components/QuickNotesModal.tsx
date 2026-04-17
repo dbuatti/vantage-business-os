@@ -68,10 +68,11 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
 
     // Square specific logic
     if (
-      (desc.includes('square australia') || desc.includes('square au pty lt') || account.includes('square')) && 
-      t.amount > 0
+      desc.includes('square australia') || 
+      desc.includes('square au pty lt') || 
+      account.includes('square')
     ) {
-      return 'Teaching work from home';
+      return 'Internal teaching work';
     }
 
     // Music Industry Logic
