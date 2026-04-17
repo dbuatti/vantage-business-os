@@ -54,7 +54,7 @@ import {
   AlertTriangle,
   ChevronRight
 } from 'lucide-react';
-import { format, isWithinInterval, parseISO } from 'date-fns';
+import { format, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { showSuccess, showError } from '@/utils/toast';
 import WorkWizard from '@/components/WorkWizard';
@@ -82,13 +82,30 @@ const AccountantReport = () => {
     }
   }, [globalYear]);
 
+  // Calculate the interval first so we can use it for fetching
+  const reportInterval = useMemo(() => {
+    const year = parseInt(selectedYear);
+    if (reportType === 'cy') {
+      return { 
+        start: new Date(year, 0, 1), 
+        end: new Date(year, 11, 31, 23, 59, 59) 
+      };
+    } else {
+      // Financial Year (e.g. FY25 ends June 2025, starts July 2024)
+      return { 
+        start: new Date(year - 1, 6, 1), 
+        end: new Date(year, 5, 30, 23, 59, 59) 
+      };
+    }
+  }, [selectedYear, reportType]);
+
   useEffect(() => {
     if (!authLoading && !session) {
       navigate('/login');
     } else if (session) {
       fetchTransactions();
     }
-  }, [session, authLoading, navigate]);
+  }, [session, authLoading, navigate, reportInterval]);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -98,18 +115,17 @@ const AccountantReport = () => {
       const step = 1000;
       let hasMore = true;
 
+      const startDateStr = format(reportInterval.start, 'yyyy-MM-dd');
+      const endDateStr = format(reportInterval.end, 'yyyy-MM-dd');
+
       while (hasMore) {
-        let query = supabase
+        const { data, error } = await supabase
           .from('finance_transactions')
           .select('*')
+          .gte('transaction_date', startDateStr)
+          .lte('transaction_date', endDateStr)
           .order('transaction_date', { ascending: false })
-          .order('id', { ascending: false });
-
-        if (selectedYear !== 'All') {
-          query = query.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
-        }
-
-        const { data, error } = await query.range(from, from + step - 1);
+          .range(from, from + step - 1);
 
         if (error) throw error;
         
@@ -165,7 +181,7 @@ const AccountantReport = () => {
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    return Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
+    return Array.from({ length: 5 }, (_, i) => (currentYear - i + 1).toString());
   }, []);
 
   const categories = useMemo(() => {
@@ -178,26 +194,9 @@ const AccountantReport = () => {
     return Array.from(subs).sort();
   }, [transactions]);
 
-  const reportInterval = useMemo(() => {
-    const year = parseInt(selectedYear);
-    if (reportType === 'cy') {
-      return { start: new Date(year, 0, 1), end: new Date(year, 11, 31) };
-    } else {
-      return { start: new Date(year - 1, 6, 1), end: new Date(year, 5, 30) };
-    }
-  }, [selectedYear, reportType]);
-
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => {
-      const date = parseISO(t.transaction_date);
-      if (t.category_1 === 'Account') return false;
-      return isWithinInterval(date, reportInterval);
-    });
-  }, [transactions, reportInterval]);
-
   const workTransactions = useMemo(() => {
-    return filteredTransactions.filter(t => t.is_work);
-  }, [filteredTransactions]);
+    return transactions.filter(t => t.is_work && t.category_1 !== 'Account');
+  }, [transactions]);
 
   const stats = useMemo(() => {
     const income = workTransactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
@@ -215,7 +214,7 @@ const AccountantReport = () => {
     const estimatedTax = net > 0 ? net * (taxRate / 100) : 0;
 
     return { income, expenses, net, categoryBreakdown, missingNotes, unmapped, estimatedTax };
-  }, [workTransactions, filteredTransactions, taxRate]);
+  }, [workTransactions, taxRate]);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
@@ -271,10 +270,24 @@ const AccountantReport = () => {
           <CardContent className="p-6 flex flex-wrap items-end gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
-              <Select value={reportType} onValueChange={(v: any) => setReportType(v)}>
-                <SelectTrigger className="w-48 rounded-xl"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="fy">Financial Year (Jul-Jun)</SelectItem><SelectItem value="cy">Calendar Year (Jan-Dec)</SelectItem></SelectContent>
-              </Select>
+              <div className="flex p-1 bg-muted rounded-xl">
+                <Button 
+                  variant={reportType === 'fy' ? 'secondary' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => setReportType('fy')}
+                  className="rounded-lg font-bold px-4"
+                >
+                  Financial Year
+                </Button>
+                <Button 
+                  variant={reportType === 'cy' ? 'secondary' : 'ghost'} 
+                  size="sm" 
+                  onClick={() => setReportType('cy')}
+                  className="rounded-lg font-bold px-4"
+                >
+                  Calendar Year
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Year Ending</label>
@@ -283,7 +296,14 @@ const AccountantReport = () => {
                 <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="flex-1 text-right"><p className="text-sm text-muted-foreground">Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span></p></div>
+            <div className="flex-1 text-right">
+              <p className="text-sm text-muted-foreground">
+                Period: <span className="font-bold text-foreground">{format(reportInterval.start, 'MMM dd, yyyy')}</span> to <span className="font-bold text-foreground">{format(reportInterval.end, 'MMM dd, yyyy')}</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Found <span className="font-bold">{transactions.length}</span> total transactions in this range.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
