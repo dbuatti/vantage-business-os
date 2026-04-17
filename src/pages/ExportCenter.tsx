@@ -38,7 +38,11 @@ const ExportCenter = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   
-  const [data, setData] = useState<{ transactions: any[], invoices: any[] }>({ transactions: [], invoices: [] });
+  const [data, setData] = useState<{ transactions: any[], invoices: any[], settings: any }>({ 
+    transactions: [], 
+    invoices: [],
+    settings: null
+  });
 
   useEffect(() => {
     if (session) fetchAllData();
@@ -47,15 +51,16 @@ const ExportCenter = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      // Fetch all transactions and invoices to filter locally for any year
-      const [txnsRes, invsRes] = await Promise.all([
+      const [txnsRes, invsRes, settingsRes] = await Promise.all([
         supabase.from('finance_transactions').select('*').order('transaction_date', { ascending: false }),
-        supabase.from('invoices').select('*').order('invoice_date', { ascending: false })
+        supabase.from('invoices').select('*').order('invoice_date', { ascending: false }),
+        supabase.from('settings').select('*').eq('owner_user_id', session?.user.id).single()
       ]);
 
       setData({
         transactions: txnsRes.data || [],
-        invoices: invsRes.data || []
+        invoices: invsRes.data || [],
+        settings: settingsRes.data || null
       });
     } catch (error: any) {
       showError(error.message);
@@ -107,7 +112,13 @@ const ExportCenter = () => {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const exportPayload = prepareAccountantData(filteredData.txns, filteredData.invs, periodLabel);
+      const exportPayload = prepareAccountantData(
+        filteredData.txns, 
+        filteredData.invs, 
+        periodLabel, 
+        data.settings,
+        reportInterval
+      );
       generateExcel(exportPayload);
       showSuccess(`Excel report generated for ${periodLabel}`);
     } catch (error: any) {
@@ -210,7 +221,7 @@ const ExportCenter = () => {
                 <div className="space-y-1">
                   <p className="text-xs font-black uppercase text-blue-900">What's included?</p>
                   <p className="text-xs text-blue-800 leading-relaxed">
-                    Summary P&L, Category Totals, Detailed Transaction Log, and Invoice History.
+                    Summary P&L, Monthly Matrix, Category Totals, and Invoice History.
                   </p>
                 </div>
               </CardContent>
