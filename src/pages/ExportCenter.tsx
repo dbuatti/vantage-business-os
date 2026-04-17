@@ -44,37 +44,12 @@ const ExportCenter = () => {
     settings: null
   });
 
-  useEffect(() => {
-    if (session) fetchAllData();
-  }, [session]);
-
-  const fetchAllData = async () => {
-    setLoading(true);
-    try {
-      const [txnsRes, invsRes, settingsRes] = await Promise.all([
-        supabase.from('finance_transactions').select('*').order('transaction_date', { ascending: false }),
-        supabase.from('invoices').select('*').order('invoice_date', { ascending: false }),
-        supabase.from('settings').select('*').eq('owner_user_id', session?.user.id).single()
-      ]);
-
-      setData({
-        transactions: txnsRes.data || [],
-        invoices: invsRes.data || [],
-        settings: settingsRes.data || null
-      });
-    } catch (error: any) {
-      showError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const reportInterval = useMemo(() => {
     const year = parseInt(selectedYear);
     if (reportType === 'cy') {
-      return { start: new Date(year, 0, 1), end: new Date(year, 11, 31) };
+      return { start: new Date(year, 0, 1), end: new Date(year, 11, 31, 23, 59, 59) };
     } else {
-      return { start: new Date(year - 1, 6, 1), end: new Date(year, 5, 30) };
+      return { start: new Date(year - 1, 6, 1), end: new Date(year, 5, 30, 23, 59, 59) };
     }
   }, [selectedYear, reportType]);
 
@@ -83,38 +58,92 @@ const ExportCenter = () => {
     return `Financial Year ${parseInt(selectedYear) - 1}-${selectedYear}`;
   }, [selectedYear, reportType]);
 
-  const filteredData = useMemo(() => {
-    const txns = data.transactions.filter(t => {
-      const date = parseISO(t.transaction_date);
-      return isWithinInterval(date, reportInterval);
-    });
-    const invs = data.invoices.filter(i => {
-      const date = parseISO(i.invoice_date);
-      return isWithinInterval(date, reportInterval);
-    });
-    return { txns, invs };
-  }, [data, reportInterval]);
+  useEffect(() => {
+    if (session) fetchAllData();
+  }, [session, reportInterval]);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const startDateStr = format(reportInterval.start, 'yyyy-MM-dd');
+      const endDateStr = format(reportInterval.end, 'yyyy-MM-dd');
+
+      // Fetch transactions with pagination to ensure we get everything in the range
+      let allTransactions: any[] = [];
+      let from = 0;
+      const step = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data: txns, error: txnsError } = await supabase
+          .from('finance_transactions')
+          .select('*')
+          .gte('transaction_date', startDateStr)
+          .lte('transaction_date', endDateStr)
+          .order('transaction_date', { ascending: false })
+          .range(from, from + step - 1);
+
+        if (txnsError) throw txnsError;
+        
+        if (txns && txns.length > 0) {
+          allTransactions = [...allTransactions, ...txns];
+          if (txns.length < step) hasMore = false;
+          else from += step;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      // Fetch invoices for the same range
+      const { data: invoices, error: invsError } = await supabase
+        .from('invoices')
+        .select('*')
+        .gte('invoice_date', startDateStr)
+        .lte('invoice_date', endDateStr)
+        .order('invoice_date', { ascending: false });
+
+      if (invsError) throw invsError;
+
+      // Fetch settings
+      const { data: settings, error: settingsError } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('owner_user_id', session?.user.id)
+        .single();
+
+      setData({
+        transactions: allTransactions,
+        invoices: invoices || [],
+        settings: settings || null
+      });
+    } catch (error: any) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const checklist = useMemo(() => {
-    const workTxns = filteredData.txns.filter(t => t.is_work);
-    const missingNotes = workTxns.filter(t => !t.notes && Math.abs(t.amount) > 50);
+    const workTxns = data.transactions.filter(t => t.is_work);
+    const missingNotes = workTxns.filter(t => !t.notes && Math.abs(t.amount) > 50 && (t.category_1 || '').toLowerCase() !== 'phone');
     const missingCategories = workTxns.filter(t => !t.category_1);
 
     return {
+      hasTransactions: data.transactions.length > 0,
       workIdentified: workTxns.length > 0,
       allNotes: missingNotes.length === 0,
       allCategories: missingCategories.length === 0,
       missingNotesCount: missingNotes.length,
       missingCategoriesCount: missingCategories.length
     };
-  }, [filteredData]);
+  }, [data.transactions]);
 
   const handleExport = async () => {
     setExporting(true);
     try {
       const exportPayload = prepareAccountantData(
-        filteredData.txns, 
-        filteredData.invs, 
+        data.transactions, 
+        data.invoices, 
         periodLabel, 
         data.settings,
         reportInterval
@@ -199,13 +228,13 @@ const ExportCenter = () => {
                   </div>
                 </div>
                 <Badge className="bg-emerald-600 text-white border-0">
-                  {filteredData.txns.length} Items Found
+                  {data.transactions.length} Items Found
                 </Badge>
               </div>
 
               <Button 
                 onClick={handleExport} 
-                disabled={exporting || filteredData.txns.length === 0}
+                disabled={exporting || data.transactions.length === 0}
                 className="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl shadow-xl shadow-emerald-200 gap-3 transition-all active:scale-[0.98]"
               >
                 {exporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Download className="w-6 h-6" />}
@@ -258,12 +287,12 @@ const ExportCenter = () => {
 
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", checklist.allNotes ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
-                      {checklist.allNotes ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", (checklist.allNotes || !checklist.hasTransactions) ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
+                      {(checklist.allNotes || !checklist.hasTransactions) ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                     </div>
                     <span className="font-medium">Notes for large items</span>
                   </div>
-                  {!checklist.allNotes && (
+                  {!checklist.allNotes && checklist.hasTransactions && (
                     <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-400">
                       {checklist.missingNotesCount} missing
                     </Badge>
@@ -272,12 +301,12 @@ const ExportCenter = () => {
 
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", checklist.allCategories ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
-                      {checklist.allCategories ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", (checklist.allCategories || !checklist.hasTransactions) ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
+                      {(checklist.allCategories || !checklist.hasTransactions) ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                     </div>
                     <span className="font-medium">Categories assigned</span>
                   </div>
-                  {!checklist.allCategories && (
+                  {!checklist.allCategories && checklist.hasTransactions && (
                     <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-400">
                       {checklist.missingCategoriesCount} missing
                     </Badge>
