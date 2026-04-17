@@ -2,7 +2,6 @@
 
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
-import { formatCurrency } from './format';
 
 interface ExportData {
   filename: string;
@@ -20,7 +19,7 @@ export const generateExcel = ({ filename, sheets }: ExportData) => {
     const ws = XLSX.utils.json_to_sheet(sheet.data, { header: sheet.headers });
     
     // Set column widths (approximate)
-    const maxWidths = sheet.headers.map(h => ({ wch: h.length + 5 }));
+    const maxWidths = sheet.headers.map(h => ({ wch: h.length + 10 }));
     ws['!cols'] = maxWidths;
 
     XLSX.utils.book_append_sheet(wb, ws, sheet.name);
@@ -45,16 +44,28 @@ export const prepareAccountantData = (transactions: any[], invoices: any[], peri
     { Item: 'Net Position', Value: income - expenses },
   ];
 
-  // 2. Category Totals
-  const catTotals: Record<string, number> = {};
+  // 2. Category & Subcategory Totals (Gianna needs this detail)
+  const breakdownData: any[] = [];
+  const catTotals: Record<string, { total: number, subs: Record<string, number> }> = {};
+
   workTxns.filter(t => t.amount < 0).forEach(t => {
     const cat = t.category_1 || 'Uncategorized';
-    catTotals[cat] = (catTotals[cat] || 0) + Math.abs(t.amount);
+    const sub = t.category_2 || 'General';
+    
+    if (!catTotals[cat]) catTotals[cat] = { total: 0, subs: {} };
+    catTotals[cat].total += Math.abs(t.amount);
+    catTotals[cat].subs[sub] = (catTotals[cat].subs[sub] || 0) + Math.abs(t.amount);
   });
 
-  const categoryData = Object.entries(catTotals)
-    .sort((a, b) => b[1] - a[1])
-    .map(([Category, Amount]) => ({ Category, Amount }));
+  Object.entries(catTotals)
+    .sort((a, b) => b[1].total - a[1].total)
+    .forEach(([cat, data]) => {
+      breakdownData.push({ Category: cat, Subcategory: 'TOTAL', Amount: data.total });
+      Object.entries(data.subs).forEach(([sub, amt]) => {
+        breakdownData.push({ Category: '', Subcategory: sub, Amount: amt });
+      });
+      breakdownData.push({ Category: '', Subcategory: '', Amount: '' }); // Spacer
+    });
 
   // 3. Detailed Transactions
   const detailedData = workTxns.map(t => ({
@@ -80,8 +91,8 @@ export const prepareAccountantData = (transactions: any[], invoices: any[], peri
     filename: `Financial_Report_${periodLabel.replace(/ /g, '_')}`,
     sheets: [
       { name: 'Summary', data: summaryData, headers: ['Item', 'Value'] },
-      { name: 'Category Totals', data: categoryData, headers: ['Category', 'Amount'] },
-      { name: 'Transactions', data: detailedData, headers: ['Date', 'Description', 'Category', 'Subcategory', 'Amount', 'Notes', 'Account'] },
+      { name: 'Category Breakdown', data: breakdownData, headers: ['Category', 'Subcategory', 'Amount'] },
+      { name: 'Transaction Log', data: detailedData, headers: ['Date', 'Description', 'Category', 'Subcategory', 'Amount', 'Notes', 'Account'] },
       { name: 'Invoices', data: invoiceData, headers: ['Number', 'Date', 'Client', 'Status', 'Amount'] }
     ]
   };
