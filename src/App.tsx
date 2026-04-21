@@ -26,6 +26,7 @@ import WeeklyLog from "./pages/WeeklyLog";
 import SubscriptionAudit from "./pages/SubscriptionAudit";
 import ExpenseStory from "./pages/ExpenseStory";
 import MasterTracker from "./pages/MasterTracker";
+import TaxAveraging from "./pages/TaxAveraging";
 import ExportCenter from "./pages/ExportCenter";
 import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
@@ -65,6 +66,7 @@ const App = () => (
               
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/master-tracker" element={<ProtectedRoute><MasterTracker /></ProtectedRoute>} />
+              <Route path="/tax-averaging" element={<ProtectedRoute><TaxAveraging /></ProtectedRoute>} />
               <Route path="/weekly-routine" element={<ProtectedRoute><WeeklyLog /></ProtectedRoute>} />
               <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
               <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />

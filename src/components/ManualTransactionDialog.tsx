@@ -20,11 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, DollarSign, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, DollarSign, Calendar as CalendarIcon, Music, Sparkles, HelpCircle } from 'lucide-react';
 import { format, startOfMonth } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { showSuccess, showError } from '@/utils/toast';
+import { BusinessStreamSelector } from './BusinessStreamSelector';
 
 interface ManualTransactionDialogProps {
   open: boolean;
@@ -45,7 +46,8 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, su
     category_2: '',
     is_work: false,
     notes: '',
-    account_label: 'Manual Entry'
+    account_label: 'Manual Entry',
+    business_stream: 'Other' as 'Music' | 'Kinesiology' | 'Other'
   });
 
   const handleSave = async () => {
@@ -72,7 +74,8 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, su
           mmm_yyyy: format(date, 'MMM yyyy'),
           month_name: format(date, 'MMMM'),
           month_code: format(date, 'MM'),
-          week: Math.ceil(date.getDate() / 7)
+          week: Math.ceil(date.getDate() / 7),
+          business_stream: form.business_stream
         }]);
 
       if (error) throw error;
@@ -88,7 +91,8 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, su
         category_2: '',
         is_work: false,
         notes: '',
-        account_label: 'Manual Entry'
+        account_label: 'Manual Entry',
+        business_stream: 'Other'
       });
     } catch (error: any) {
       showError(error.message);
@@ -181,12 +185,17 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, su
 
           <div className="space-y-2">
             <Label>Account Label</Label>
-            <Input 
+            <Input
               value={form.account_label}
               onChange={(e) => setForm(prev => ({ ...prev, account_label: e.target.value }))}
               className="rounded-xl"
             />
           </div>
+
+          <BusinessStreamSelector
+            value={form.business_stream}
+            onChange={(v) => setForm(prev => ({ ...prev, business_stream: v }))}
+          />
 
           <div className="flex items-center gap-2 pt-2">
             <Checkbox 

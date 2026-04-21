@@ -65,6 +65,7 @@ import TransactionAnalyticsTab from '@/components/TransactionAnalyticsTab';
 import TransactionPlanningTab from '@/components/TransactionPlanningTab';
 import UndoToast from '@/components/UndoToast';
 import { Transaction } from '@/types/finance';
+import { BusinessStreamSelector } from '@/components/BusinessStreamSelector';
 
 const ITEMS_PER_PAGE = 25;
 
@@ -101,7 +102,14 @@ const Transactions = () => {
 
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editForm, setEditForm] = useState({
-    description: '', amount: '', category_1: '', category_2: '', is_work: false, notes: '', invoice_id: ''
+    description: '',
+    amount: '',
+    category_1: '',
+    category_2: '',
+    is_work: false,
+    notes: '',
+    invoice_id: '',
+    business_stream: 'Other' as 'Music' | 'Kinesiology' | 'Other'
   });
 
   const [showBulkDelete, setShowBulkDelete] = useState(false);
@@ -226,7 +234,8 @@ const Transactions = () => {
       category_2: transaction.category_2,
       is_work: transaction.is_work,
       notes: transaction.notes || '',
-      invoice_id: transaction.invoice_id || ''
+      invoice_id: transaction.invoice_id || '',
+      business_stream: transaction.business_stream || 'Other'
     });
   };
 
@@ -241,7 +250,8 @@ const Transactions = () => {
         is_work: editForm.is_work,
         is_reviewed: true,
         notes: editForm.notes,
-        invoice_id: editForm.invoice_id === 'none' ? null : (editForm.invoice_id || null)
+        invoice_id: editForm.invoice_id === 'none' ? null : (editForm.invoice_id || null),
+        business_stream: editForm.business_stream
       }).eq('id', editingTransaction.id);
       if (error) throw error;
       showSuccess('Transaction updated');
@@ -791,6 +801,12 @@ const Transactions = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
+              <BusinessStreamSelector
+                value={editForm.business_stream}
+                onChange={(v) => setEditForm(prev => ({ ...prev, business_stream: v }))}
+              />
+
               <div className="flex items-center gap-2">
                 <Checkbox id="is_work" checked={editForm.is_work} onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, is_work: !!checked }))} />
                 <Label htmlFor="is_work" className="font-normal">Work-related expense</Label>

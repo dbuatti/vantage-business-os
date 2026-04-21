@@ -37,6 +37,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { subMonths, format } from 'date-fns';
 import { formatCurrency } from '@/utils/format';
+import { Music, Calculator } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -51,6 +52,8 @@ interface TransactionSummary {
   net: number;
   recentTransactions: any[];
   allTransactions: any[];
+  musicNet: number;
+  kineNet: number;
 }
 
 interface BusinessStats {
@@ -96,7 +99,7 @@ const Index = () => {
       // CRITICAL: Filter out 'Account' category as these are internal transfers
       let query = supabase
         .from('finance_transactions')
-        .select('id, description, amount, transaction_date, category_1, is_work, notes')
+        .select('id, description, amount, transaction_date, category_1, is_work, notes, business_stream')
         .neq('category_1', 'Account')
         .order('transaction_date', { ascending: false });
 
@@ -111,13 +114,23 @@ const Index = () => {
       const totalIncome = (data || []).filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
       const totalExpenses = (data || []).filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
 
+      const musicNet = (data || [])
+        .filter(t => t.business_stream === 'Music')
+        .reduce((s, t) => s + t.amount, 0);
+      
+      const kineNet = (data || [])
+        .filter(t => t.business_stream === 'Kinesiology')
+        .reduce((s, t) => s + t.amount, 0);
+
       setTransactionSummary({
         totalTransactions: data?.length || 0,
         totalIncome,
         totalExpenses,
         net: totalIncome - totalExpenses,
         recentTransactions: (data || []).slice(0, 5),
-        allTransactions: data || []
+        allTransactions: data || [],
+        musicNet,
+        kineNet
       });
     } catch (error: any) {
       console.error("Error fetching transactions:", error);
@@ -293,6 +306,53 @@ const Index = () => {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Business Streams Summary */}
+          {transactionSummary && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up stagger-1">
+              <Card className="border-0 shadow-xl bg-white overflow-hidden group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600">
+                      <Music className="w-6 h-6" />
+                    </div>
+                    <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-bold">Music Stream</Badge>
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Net Professional Income</p>
+                  <p className="text-3xl font-black text-indigo-600">{formatCurrency(transactionSummary.musicNet)}</p>
+                  <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">Averagable Income</span>
+                    <Button variant="ghost" size="sm" asChild className="h-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold gap-1">
+                      <Link to="/tax-averaging">
+                        Tax Averaging <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-xl bg-white overflow-hidden group">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold">Kinesiology</Badge>
+                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Net Business Income</p>
+                  <p className="text-3xl font-black text-emerald-600">{formatCurrency(transactionSummary.kineNet)}</p>
+                  <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">New Business Stream</span>
+                    <Button variant="ghost" size="sm" asChild className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold gap-1">
+                      <Link to="/tax-averaging?tab=kinesiology">
+                        View Details <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* Transaction Pulse */}

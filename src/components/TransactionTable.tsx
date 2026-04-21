@@ -115,6 +115,17 @@ const TransactionTable = ({
                       {t.is_work && (
                         <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-amber-50 text-amber-700 border-amber-200">Work</Badge>
                       )}
+                      {t.business_stream && t.business_stream !== 'Other' && (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "rounded-lg text-[9px] font-black uppercase tracking-tighter",
+                            t.business_stream === 'Music' ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          )}
+                        >
+                          {t.business_stream}
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className={cn("text-right font-black tabular-nums", t.amount > 0 ? "text-emerald-600" : t.amount < 0 ? "text-rose-600" : "")}>
@@ -237,6 +248,17 @@ const TransactionTable = ({
                     {t.is_work && (
                       <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-amber-50 text-amber-700 border-amber-200">
                         <Briefcase className="w-2 h-2 mr-1" /> Work
+                      </Badge>
+                    )}
+                    {t.business_stream && t.business_stream !== 'Other' && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "rounded-lg text-[9px] font-black uppercase tracking-tighter",
+                          t.business_stream === 'Music' ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        )}
+                      >
+                        {t.business_stream}
                       </Badge>
                     )}
                   </div>

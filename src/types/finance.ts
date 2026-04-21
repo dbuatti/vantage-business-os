@@ -32,4 +32,13 @@ export interface Transaction {
   notes: string;
   mmm_yyyy: string;
   invoice_id?: string; // Link to an invoice
+  business_stream?: 'Music' | 'Kinesiology' | 'Other';
+}
+
+export interface TaxAveragingHistory {
+  id?: string;
+  user_id?: string;
+  year: number;
+  amount: number;
+  created_at?: string;
 }

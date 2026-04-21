@@ -57,6 +57,7 @@ const AppSidebar = () => {
   const businessItems = [
     { title: "Clients", icon: Users, url: "/clients" },
     { title: "Invoices", icon: FileText, url: "/invoices" },
+    { title: "Tax Averaging", icon: Calculator, url: "/tax-averaging" },
     { title: "Project ROI", icon: TrendingUp, url: "/project-roi" },
     { title: "Catalog", icon: Package, url: "/products" },
     { title: "Export Center", icon: FileSpreadsheet, url: "/export" },
