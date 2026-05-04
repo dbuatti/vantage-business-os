@@ -39,32 +39,24 @@ import SubscriptionAudit from '@/components/SubscriptionAudit';
 
 interface Insight {
   title: string;
-  description: string;
+  advice?: string;
+  description?: string;
   type: 'opportunity' | 'warning' | 'success' | 'tip';
   impact: 'high' | 'medium' | 'low';
-  actionable: string;
-}
-
-interface TimeInvestment {
-  area: string;
-  advice: string;
-  potentialImpact: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
-interface SpendingPattern {
-  pattern: string;
-  recommendation: string;
+  actionable?: string;
 }
 
 interface AIInsights {
-  headline: string;
-  score: number;
-  scoreLabel: string;
-  insights: Insight[];
-  timeInvestmentAdvice: TimeInvestment[];
-  spendingPatterns: SpendingPattern[];
-  quickWins: string[];
+  headline?: string;
+  summary?: string;
+  score?: number;
+  scoreLabel?: string;
+  status?: string;
+  insights?: Insight[];
+  predictions?: any[];
+  tacticalAdvice?: any[];
+  quickWins?: string[];
+  coachingNote?: string;
 }
 
 const Insights = () => {
@@ -94,8 +86,12 @@ const Insights = () => {
     if (cached && cachedTime) {
       const age = Date.now() - new Date(cachedTime).getTime();
       if (age < 30 * 60 * 1000) {
-        setInsights(JSON.parse(cached));
-        setLastGenerated(new Date(cachedTime));
+        try {
+          setInsights(JSON.parse(cached));
+          setLastGenerated(new Date(cachedTime));
+        } catch (e) {
+          setInsights(null);
+        }
       } else {
         setInsights(null);
         setLastGenerated(null);
@@ -229,6 +225,9 @@ const Insights = () => {
 
   if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
+  const displayScore = insights?.score || 0;
+  const displayHeadline = insights?.headline || insights?.summary || "Financial Analysis Ready";
+
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
@@ -290,14 +289,14 @@ const Insights = () => {
                 <div className="relative w-40 h-40 mx-auto mb-4">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
-                    <circle cx="60" cy="60" r="52" fill="none" className={getScoreColor(insights.score).ring} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${(insights.score / 100) * 327} 327`} />
+                    <circle cx="60" cy="60" r="52" fill="none" className={getScoreColor(displayScore).ring} strokeWidth="10" strokeLinecap="round" strokeDasharray={`${(displayScore / 100) * 327} 327`} />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className={cn("text-4xl font-black", getScoreColor(insights.score).color)}>{insights.score}</span>
+                    <span className={cn("text-4xl font-black", getScoreColor(displayScore).color)}>{displayScore || '—'}</span>
                     <span className="text-xs text-muted-foreground font-medium">/ 100</span>
                   </div>
                 </div>
-                <Badge className={cn("rounded-full px-4 py-1 text-sm font-bold", getScoreColor(insights.score).badge)}>{insights.scoreLabel}</Badge>
+                <Badge className={cn("rounded-full px-4 py-1 text-sm font-bold", getScoreColor(displayScore).badge)}>{insights.scoreLabel || insights.status || 'Analyzed'}</Badge>
                 <p className="text-sm text-muted-foreground mt-3">Financial Health Score</p>
               </CardContent>
             </Card>
@@ -309,7 +308,7 @@ const Insights = () => {
                     <Sparkles className="w-5 h-5 opacity-80" />
                     <span className="text-sm font-bold uppercase tracking-widest opacity-80">AI Summary</span>
                   </div>
-                  <p className="text-2xl font-black leading-tight">{insights.headline}</p>
+                  <p className="text-2xl font-black leading-tight">{displayHeadline}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-white/20">
                   <div><p className="text-xs opacity-70">Income</p><p className="text-xl font-bold">{formatCurrency(summaryStats.totalIncome)}</p></div>
@@ -323,7 +322,8 @@ const Insights = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-7 space-y-6">
               <div className="grid grid-cols-1 gap-4">
-                {insights.insights.map((insight, i) => {
+                {/* Render insights if they exist */}
+                {insights.insights?.map((insight, i) => {
                   const colors = getInsightColors(insight.type);
                   return (
                     <Card key={i} className={cn("border-0 shadow-lg overflow-hidden transition-all hover:shadow-xl", colors.border)}>
@@ -339,40 +339,90 @@ const Insights = () => {
                             </div>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{insight.description}</p>
-                        <div className={cn("p-3 rounded-xl text-sm", colors.bg)}>
-                          <div className="flex items-start gap-2">
-                            <Zap className={cn("w-4 h-4 shrink-0 mt-0.5", colors.icon)} />
-                            <p className="font-medium">{insight.actionable}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{insight.description || insight.advice}</p>
+                        {(insight.actionable || insight.advice) && (
+                          <div className={cn("p-3 rounded-xl text-sm", colors.bg)}>
+                            <div className="flex items-start gap-2">
+                              <Zap className={cn("w-4 h-4 shrink-0 mt-0.5", colors.icon)} />
+                              <p className="font-medium">{insight.actionable || insight.advice}</p>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </CardContent>
                     </Card>
                   );
                 })}
+
+                {/* Render predictions if insights don't exist */}
+                {!insights.insights && insights.predictions?.map((p, i) => (
+                  <Card key={i} className="border-0 shadow-lg overflow-hidden border-amber-200">
+                    <div className="h-1 bg-amber-500" />
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-amber-50 text-amber-600"><AlertTriangle className="w-5 h-5" /></div>
+                        <div>
+                          <h3 className="font-bold text-sm">{p.category}</h3>
+                          <Badge variant="outline" className="text-[9px] rounded-md bg-amber-100 text-amber-700">{p.severity} severity</Badge>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{p.prediction}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {/* Render tactical advice if insights don't exist */}
+                {!insights.insights && insights.tacticalAdvice?.map((a, i) => (
+                  <Card key={i} className="border-0 shadow-lg overflow-hidden border-blue-200">
+                    <div className="h-1 bg-blue-500" />
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><Zap className="w-5 h-5" /></div>
+                        <h3 className="font-bold text-sm">{a.title}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{a.advice}</p>
+                      <div className="p-3 rounded-xl text-sm bg-blue-50 text-blue-700 font-bold">
+                        Impact: {a.impact}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
 
             <div className="lg:col-span-5 space-y-8">
               <SubscriptionAudit transactions={filteredTransactions} />
               
-              <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden relative">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-                <CardContent className="p-6 relative space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5" />
-                    <span className="text-xs font-black uppercase tracking-widest opacity-80">Quick Wins</span>
-                  </div>
-                  <div className="space-y-3">
-                    {insights.quickWins.map((win, i) => (
-                      <div key={i} className="flex items-start gap-3 text-sm font-medium">
-                        <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-[10px]">{i + 1}</div>
-                        <p>{win}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              {(insights.quickWins?.length || 0) > 0 && (
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden relative">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+                  <CardContent className="p-6 relative space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5" />
+                      <span className="text-xs font-black uppercase tracking-widest opacity-80">Quick Wins</span>
+                    </div>
+                    <div className="space-y-3">
+                      {insights.quickWins?.map((win, i) => (
+                        <div key={i} className="flex items-start gap-3 text-sm font-medium">
+                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-[10px]">{i + 1}</div>
+                          <p>{win}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {insights.coachingNote && (
+                <Card className="border-0 shadow-xl bg-slate-900 text-white overflow-hidden">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-primary" />
+                      <span className="text-xs font-black uppercase tracking-widest opacity-70">Coach's Note</span>
+                    </div>
+                    <p className="text-sm italic leading-relaxed opacity-90">"{insights.coachingNote}"</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>

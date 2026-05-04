@@ -94,20 +94,22 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
               insights.status === 'on_track' ? "bg-emerald-400 text-emerald-950" : 
               insights.status === 'at_risk' ? "bg-amber-400 text-amber-950" : "bg-rose-400 text-rose-950"
             )}>
-              {insights.status.replace('_', ' ')}
+              {(insights.status || 'Analyzed').replace('_', ' ')}
             </Badge>
           </div>
 
-          <p className="text-lg font-medium leading-relaxed border-l-4 border-white/30 pl-6 italic">
-            "{insights.summary}"
-          </p>
+          {(insights.summary || insights.headline) && (
+            <p className="text-lg font-medium leading-relaxed border-l-4 border-white/30 pl-6 italic">
+              "{insights.summary || insights.headline}"
+            </p>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Predictions */}
             <div className="space-y-4">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Trajectory Warnings</p>
               <div className="space-y-3">
-                {insights.predictions.map((p: any, i: number) => (
+                {insights.predictions?.map((p: any, i: number) => (
                   <div key={i} className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-start gap-3">
                     <div className={cn(
                       "p-1.5 rounded-lg shrink-0",
@@ -121,6 +123,9 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
                     </div>
                   </div>
                 ))}
+                {(!insights.predictions || insights.predictions.length === 0) && (
+                  <p className="text-xs opacity-60 italic">No specific warnings detected.</p>
+                )}
               </div>
             </div>
 
@@ -128,7 +133,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
             <div className="space-y-4">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Tactical Adjustments</p>
               <div className="space-y-3">
-                {insights.tacticalAdvice.map((a: any, i: number) => (
+                {insights.tacticalAdvice?.map((a: any, i: number) => (
                   <div key={i} className="p-4 rounded-2xl bg-black/20 border border-white/5 flex items-start gap-3">
                     <div className="p-1.5 bg-emerald-400/20 text-emerald-300 rounded-lg shrink-0">
                       <Zap className="w-4 h-4" />
@@ -136,16 +141,19 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
                     <div>
                       <p className="text-sm font-bold">{a.title}</p>
                       <p className="text-xs opacity-70 mt-0.5">{a.advice}</p>
-                      <p className="text-[10px] font-black text-emerald-300 uppercase mt-2">Impact: {a.impact}</p>
+                      {a.impact && <p className="text-[10px] font-black text-emerald-300 uppercase mt-2">Impact: {a.impact}</p>}
                     </div>
                   </div>
                 ))}
+                {(!insights.tacticalAdvice || insights.tacticalAdvice.length === 0) && (
+                  <p className="text-xs opacity-60 italic">No tactical advice at this time.</p>
+                )}
               </div>
             </div>
           </div>
 
           <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm font-medium opacity-80">{insights.coachingNote}</p>
+            {insights.coachingNote && <p className="text-sm font-medium opacity-80">{insights.coachingNote}</p>}
             <Button 
               variant="ghost" 
               onClick={() => setInsights(null)}
