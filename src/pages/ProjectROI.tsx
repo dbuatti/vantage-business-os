@@ -29,6 +29,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
+import { showError } from '@/utils/toast';
 
 interface ProjectMetric {
   id: string;
@@ -100,6 +101,7 @@ const ProjectROI = () => {
       setMetrics(projectMetrics.sort((a, b) => b.hourlyRate - a.hourlyRate));
     } catch (error) {
       console.error("ROI Fetch Error:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load ROI data');
     } finally {
       setLoading(false);
     }

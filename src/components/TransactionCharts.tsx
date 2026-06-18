@@ -104,7 +104,7 @@ const TransactionCharts = ({ transactions, categoryGroups }: TransactionChartsPr
   }, [transactions, catToGroup]);
 
   const groupTrendData = React.useMemo(() => {
-    const months: Record<string, any> = {};
+    const months: Record<string, Record<string, string | number>> = {};
     
     transactions.filter(t => t.amount < 0).forEach(t => {
       const monthKey = t.mmm_yyyy || new Date(t.transaction_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });

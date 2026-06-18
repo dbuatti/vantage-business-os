@@ -71,7 +71,7 @@ const Tickets = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [tickets, setTickets] = useState<TicketData[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDialog, setShowDialog] = useState(false);
@@ -103,8 +103,8 @@ const Tickets = () => {
         .order('created_at', { ascending: false });
       if (error) throw error;
       setTickets(data || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -133,8 +133,8 @@ const Tickets = () => {
       fetchTickets();
       setShowDialog(false);
       setForm({ title: '', description: '', client_id: '', priority: 'medium', category: 'other', service_tier: 'standard' });
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -143,8 +143,8 @@ const Tickets = () => {
       const { error } = await supabase.from('tickets').update({ status }).eq('id', id);
       if (error) throw error;
       fetchTickets();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

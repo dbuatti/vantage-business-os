@@ -32,7 +32,7 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
     : 0;
   const netChange = savingsChange + creditChange;
 
-  const recentSavings = savingsEntries.slice(0, 4);
+  const recentSavings = savingsEntries.slice(0, 4).reverse();
   const avgSavingsChange = recentSavings.length >= 2
     ? recentSavings.reduce((sum, e, i) => {
         if (i === 0) return sum;
@@ -84,14 +84,14 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
       description: 'Your total financial position (Savings minus Credit).'
     },
     {
-      title: 'Avg Weekly Change',
+      title: 'Avg Change per Entry',
       value: formatChange(avgSavingsChange),
       change: avgSavingsChange,
       icon: BarChart3,
       gradient: 'from-emerald-400 via-emerald-500 to-teal-500',
       iconBg: 'bg-white/20',
       subtitle: `Last ${Math.min(recentSavings.length, 4)} entries`,
-      description: 'The average amount your savings change each week based on recent logs.'
+      description: 'The average amount your savings change between consecutive entries.'
     },
   ];
 

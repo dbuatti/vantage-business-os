@@ -11,7 +11,7 @@ import { Transaction } from '@/types/finance';
 
 interface TransactionAnalyticsTabProps {
   transactions: Transaction[];
-  categoryGroups: any[];
+  categoryGroups: Array<{ category_name: string; group_name: string }>;
 }
 
 const TransactionAnalyticsTab = ({ transactions, categoryGroups }: TransactionAnalyticsTabProps) => {

@@ -167,18 +167,20 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <span className={cn(
-                        "inline-flex items-center gap-1 font-bold text-sm px-2.5 py-1 rounded-lg",
-                        entry.difference > 0 
-                          ? "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950" 
-                          : entry.difference < 0 
-                          ? "text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950" 
-                          : "text-muted-foreground bg-muted"
-                      )}>
-                        {entry.difference > 0 && <ArrowUpRight className="w-3.5 h-3.5" />}
-                        {entry.difference < 0 && <ArrowDownRight className="w-3.5 h-3.5" />}
-                        {formatCurrency(entry.difference)}
-                      </span>
+                      {entry.difference === 0 ? (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      ) : (
+                        <span className={cn(
+                          "inline-flex items-center gap-1 font-bold text-sm px-2.5 py-1 rounded-lg",
+                          entry.difference > 0 
+                            ? "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950" 
+                            : "text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950"
+                        )}>
+                          {entry.difference > 0 && <ArrowUpRight className="w-3.5 h-3.5" />}
+                          {entry.difference < 0 && <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {formatCurrency(entry.difference)}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -281,26 +283,28 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                     </AlertDialog>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xl font-bold">{formatCurrency(entry.amount)}</div>
-                    {entry.creditWas !== undefined && (
-                      <div className="text-xs text-muted-foreground">Was: {formatCurrency(entry.creditWas)}</div>
-                    )}
-                  </div>
-                  <span className={cn(
-                    "inline-flex items-center gap-1 font-bold text-sm px-2.5 py-1 rounded-lg",
-                    entry.difference > 0 
-                      ? "text-emerald-700 bg-emerald-50" 
-                      : entry.difference < 0 
-                      ? "text-rose-700 bg-rose-50" 
-                      : "text-muted-foreground bg-muted"
-                  )}>
-                    {entry.difference > 0 && <ArrowUpRight className="w-3.5 h-3.5" />}
-                    {entry.difference < 0 && <ArrowDownRight className="w-3.5 h-3.5" />}
-                    {formatCurrency(entry.difference)}
-                  </span>
-                </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xl font-bold">{formatCurrency(entry.amount)}</div>
+                        {entry.creditWas !== undefined && (
+                          <div className="text-xs text-muted-foreground">Was: {formatCurrency(entry.creditWas)}</div>
+                        )}
+                      </div>
+                      {entry.difference === 0 ? (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      ) : (
+                        <span className={cn(
+                          "inline-flex items-center gap-1 font-bold text-sm px-2.5 py-1 rounded-lg",
+                          entry.difference > 0 
+                            ? "text-emerald-700 bg-emerald-50" 
+                            : "text-rose-700 bg-rose-50"
+                        )}>
+                          {entry.difference > 0 && <ArrowUpRight className="w-3.5 h-3.5" />}
+                          {entry.difference < 0 && <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {formatCurrency(entry.difference)}
+                        </span>
+                      )}
+                    </div>
               </div>
             ))
           )}

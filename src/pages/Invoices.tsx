@@ -63,7 +63,7 @@ interface Invoice {
   due_date: string;
   status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
   total_amount: number;
-  line_items: any[];
+  line_items: Record<string, unknown>[];
 }
 
 interface Client {
@@ -114,8 +114,8 @@ const Invoices = () => {
         .order('invoice_date', { ascending: false });
       if (error) throw error;
       setInvoices(data || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -145,7 +145,7 @@ const Invoices = () => {
     }));
   };
 
-  const handleLineItemChange = (index: number, field: string, value: any) => {
+  const handleLineItemChange = (index: number, field: string, value: string | number) => {
     const newItems = [...form.line_items];
     newItems[index] = { ...newItems[index], [field]: value };
     setForm(prev => ({ ...prev, line_items: newItems }));
@@ -195,8 +195,8 @@ const Invoices = () => {
         status: 'Draft',
         line_items: [{ description: '', quantity: 1, unit_price: 0 }]
       });
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -206,8 +206,8 @@ const Invoices = () => {
       if (error) throw error;
       showSuccess(`Invoice marked as ${status}`);
       fetchInvoices();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

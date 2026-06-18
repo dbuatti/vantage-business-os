@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
+import { showError } from '@/utils/toast';
 
 interface SettingsContextType {
   selectedYear: string;
@@ -20,14 +21,7 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
   const [availableYears, setAvailableYears] = useState<string[]>(['All', currentYear]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (session) {
-      fetchSettings();
-      fetchAvailableYears();
-    }
-  }, [session]);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('settings')
@@ -41,12 +35,13 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load settings');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
-  const fetchAvailableYears = async () => {
+  const fetchAvailableYears = useCallback(async () => {
     try {
       // Check both tables for unique years
       const [txnsRes, entriesRes] = await Promise.all([
@@ -79,8 +74,16 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       setAvailableYears(sortedYears);
     } catch (error) {
       console.error("Error fetching years:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load years');
     }
-  };
+  }, [currentYear]);
+
+  useEffect(() => {
+    if (session) {
+      fetchSettings();
+      fetchAvailableYears();
+    }
+  }, [session, fetchSettings, fetchAvailableYears]);
 
   const setSelectedYear = async (year: string) => {
     setSelectedYearState(year);
@@ -96,6 +99,7 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
         });
     } catch (error) {
       console.error("Error saving year preference:", error);
+      showError(error instanceof Error ? error.message : 'Failed to save year preference');
     }
   };
 
@@ -106,6 +110,7 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (context === undefined) {

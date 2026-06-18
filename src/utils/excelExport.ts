@@ -1,18 +1,18 @@
 "use client";
 
-import * as XLSX from 'xlsx';
 import { format, parseISO, eachMonthOfInterval, isSameMonth } from 'date-fns';
 
 interface ExportData {
   filename: string;
   sheets: {
     name: string;
-    data: any[];
+    data: Record<string, unknown>[];
     headers: string[];
   }[];
 }
 
-export const generateExcel = ({ filename, sheets }: ExportData) => {
+export const generateExcel = async ({ filename, sheets }: ExportData) => {
+  const XLSX = await import('xlsx');
   const wb = XLSX.utils.book_new();
 
   sheets.forEach(sheet => {
@@ -29,10 +29,10 @@ export const generateExcel = ({ filename, sheets }: ExportData) => {
 };
 
 export const prepareAccountantData = (
-  transactions: any[], 
-  invoices: any[], 
+  transactions: Record<string, unknown>[], 
+  invoices: Record<string, unknown>[], 
   periodLabel: string, 
-  settings: any,
+  settings: Record<string, unknown>,
   reportInterval: { start: Date, end: Date }
 ) => {
   const workTxns = transactions.filter(t => t.is_work);
@@ -67,7 +67,7 @@ export const prepareAccountantData = (
   const categories = Array.from(new Set(workTxns.map(t => t.category_1).filter(Boolean))).sort();
   
   const matrixData = categories.map(cat => {
-    const row: any = { Category: cat };
+    const row: Record<string, unknown> = { Category: cat };
     let catTotal = 0;
     
     months.forEach(month => {
@@ -87,7 +87,7 @@ export const prepareAccountantData = (
   const matrixHeaders = ['Category', ...months.map(m => format(m, 'MMM yy')), 'TOTAL'];
 
   // 3. Category & Subcategory Breakdown
-  const breakdownData: any[] = [];
+  const breakdownData: Record<string, unknown>[] = [];
   const catTotals: Record<string, { total: number, subs: Record<string, number> }> = {};
 
   workTxns.filter(t => t.amount < 0).forEach(t => {

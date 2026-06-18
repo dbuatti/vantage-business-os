@@ -61,7 +61,7 @@ const YearOverview = ({ transactions, categoryGroups, availableMonths }: YearOve
     return map;
   }, [categoryGroups]);
 
-  const allGroups = [...INCOME_GROUPS, ...EXPENSE_GROUPS];
+  const allGroups = useMemo(() => [...INCOME_GROUPS, ...EXPENSE_GROUPS], []);
 
   const yearData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -93,7 +93,7 @@ const YearOverview = ({ transactions, categoryGroups, availableMonths }: YearOve
         hasData: monthTxns.length > 0
       };
     });
-  }, [transactions, selectedYear, categoryToGroup]);
+  }, [transactions, selectedYear, categoryToGroup, allGroups]);
 
   const yearIncome = yearData.reduce((s, m) => s + m.income, 0);
   const yearExpenses = yearData.reduce((s, m) => s + m.expenses, 0);

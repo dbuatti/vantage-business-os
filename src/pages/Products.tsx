@@ -72,8 +72,8 @@ const Products = () => {
         .order('name');
       if (error) throw error;
       setProducts(data || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -107,8 +107,8 @@ const Products = () => {
       fetchProducts();
       setShowDialog(false);
       resetForm();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -119,8 +119,8 @@ const Products = () => {
       if (error) throw error;
       showSuccess('Product deleted');
       fetchProducts();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

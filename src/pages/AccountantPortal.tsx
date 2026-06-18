@@ -132,10 +132,10 @@ const AccountantPortal = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const transactions = data?.transactions || [];
-  const categoryGroups = data?.categoryGroups || [];
-  const profile = data?.profile || null;
-  const accountantSettings = data?.accountantSettings || null;
+  const transactions = useMemo(() => data?.transactions || [], [data]);
+  const categoryGroups = useMemo(() => data?.categoryGroups || [], [data]);
+  const profile = useMemo(() => data?.profile || null, [data]);
+  const accountantSettings = useMemo(() => data?.accountantSettings || null, [data]);
 
   const deductionKeywords = useMemo(() => {
     return accountantSettings?.deduction_keywords || {
@@ -273,7 +273,7 @@ const AccountantPortal = () => {
   }, [workTransactions]);
 
   const fixedCostsData = useMemo(() => {
-    const groups: Record<string, { total: number, items: Transaction[], icon: any, color: string, bg: string }> = {};
+    const groups: Record<string, { total: number, items: Transaction[], icon: React.ComponentType<{ className?: string }>, color: string, bg: string }> = {};
     
     workTransactions.forEach(t => {
       if (t.amount > 0) return;
@@ -535,7 +535,7 @@ const AccountantPortal = () => {
               <div className="flex flex-wrap items-end gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
-                  <Select value={reportType} onValueChange={(v: any) => setReportType(v)}>
+                  <Select value={reportType} onValueChange={(v: string) => setReportType(v as 'fy' | 'cy')}>
                     <SelectTrigger className="w-48 rounded-xl"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="fy">Financial Year (Jul-Jun)</SelectItem>

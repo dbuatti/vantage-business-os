@@ -28,6 +28,25 @@ import {
 } from "@/components/ui/table";
 import ImportCategoryMapper from './ImportCategoryMapper';
 
+interface ParsedTransaction {
+  transaction_date: string;
+  description: string;
+  credit: number | null;
+  debit: number | null;
+  amount: number;
+  account_identifier: string;
+  account_label: string;
+  category_1: string;
+  category_2: string;
+  is_work: boolean;
+  notes: string;
+  week: number;
+  month_code: string;
+  month_name: string;
+  mmm_yyyy: string;
+  _isDuplicate: boolean;
+}
+
 interface ImportResult {
   total: number;
   imported: number;
@@ -36,7 +55,7 @@ interface ImportResult {
 }
 
 interface TransactionImporterProps {
-  onImport: (data: any[], newMappings?: Record<string, string>) => Promise<ImportResult>;
+  onImport: (data: ParsedTransaction[], newMappings?: Record<string, string>) => Promise<ImportResult>;
   existingTransactions?: Array<{ transaction_date: string; description: string; amount: number }>;
   existingCategoryGroups?: Array<{ category_name: string }>;
 }
@@ -47,8 +66,8 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [fileName, setFileName] = useState<string>('');
-  const [preview, setPreview] = useState<any[] | null>(null);
-  const [parsedData, setParsedData] = useState<any[] | null>(null);
+  const [preview, setPreview] = useState<ParsedTransaction[] | null>(null);
+  const [parsedData, setParsedData] = useState<ParsedTransaction[] | null>(null);
   const [unmappedCategories, setUnmappedCategories] = useState<string[]>([]);
   const [showMapper, setShowMapper] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -100,7 +119,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
 
           const mappedCategoryNames = new Set(existingCategoryGroups.map(g => g.category_name));
 
-          const parsedData = results.data.map((row: any) => {
+          const parsedData = results.data.map((row: Record<string, string | undefined>) => {
             const credit = parseAmount(row['Credit'] || row['credit']);
             const debit = parseAmount(row['Debit'] || row['debit']);
             const dollarAmount = parseAmount(row['$'] || row['Amount']);
@@ -150,7 +169,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
           setPreview(parsedData.slice(0, 5));
           setProgress(100);
           setImporting(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
           setImporting(false);
           setResult({
             total: 0,

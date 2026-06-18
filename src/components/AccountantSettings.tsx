@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -29,11 +29,7 @@ const AccountantSettings = () => {
     rent: '', bills: '', phone: '', fuel: ''
   });
 
-  useEffect(() => {
-    if (session) fetchSettings();
-  }, [session]);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('accountant_settings')
@@ -46,12 +42,16 @@ const AccountantSettings = () => {
         business_percents: data.business_percents,
         deduction_keywords: data.deduction_keywords
       });
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (session) fetchSettings();
+  }, [session, fetchSettings]);
 
   const handleSave = async () => {
     if (!session) return;
@@ -66,8 +66,8 @@ const AccountantSettings = () => {
         });
       if (error) throw error;
       showSuccess('Accountant settings saved');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setSaving(false);
     }
@@ -88,7 +88,7 @@ const AccountantSettings = () => {
       ...prev,
       deduction_keywords: {
         ...prev.deduction_keywords,
-        [category]: [...(prev.deduction_keywords as any)[category], word]
+        [category]: [...prev.deduction_keywords[category], word]
       }
     }));
     setNewKeyword(prev => ({ ...prev, [category]: '' }));
@@ -99,7 +99,7 @@ const AccountantSettings = () => {
       ...prev,
       deduction_keywords: {
         ...prev.deduction_keywords,
-        [category]: (prev.deduction_keywords as any)[category].filter((w: string) => w !== word)
+        [category]: prev.deduction_keywords[category].filter((w: string) => w !== word)
       }
     }));
   };

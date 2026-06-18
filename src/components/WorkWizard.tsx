@@ -128,7 +128,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
       });
 
     return Object.values(groups).sort((a, b) => b.transactions.length - a.transactions.length);
-  }, [transactions, open]);
+  }, [transactions]);
 
   const currentGroup = suggestionGroups[currentIndex];
   const progress = suggestionGroups.length > 0 ? ((currentIndex) / suggestionGroups.length) * 100 : 0;
@@ -159,8 +159,8 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
         onComplete();
         onOpenChange(false);
       }
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsProcessing(false);
     }

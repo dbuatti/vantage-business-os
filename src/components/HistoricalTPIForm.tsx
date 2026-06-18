@@ -65,8 +65,8 @@ export const HistoricalTPIForm: React.FC<HistoricalTPIFormProps> = ({ onUpdate }
       
       showSuccess('Historical TPI updated');
       onUpdate();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

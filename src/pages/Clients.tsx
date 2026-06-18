@@ -84,8 +84,8 @@ const Clients = () => {
         .order('display_name');
       if (error) throw error;
       setClients(data || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -111,8 +111,8 @@ const Clients = () => {
       fetchClients();
       setShowDialog(false);
       resetForm();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -123,8 +123,8 @@ const Clients = () => {
       if (error) throw error;
       showSuccess('Client deleted');
       fetchClients();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

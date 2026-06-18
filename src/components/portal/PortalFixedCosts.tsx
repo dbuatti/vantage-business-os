@@ -19,7 +19,7 @@ import { formatCurrency, formatDate } from '@/utils/format';
 import { Transaction } from '@/types/finance';
 
 interface PortalFixedCostsProps {
-  data: Array<[string, { total: number, items: Transaction[], icon: any, color: string, bg: string }]>;
+  data: Array<[string, { total: number, items: Transaction[], icon: React.ComponentType<{ className?: string }>, color: string, bg: string }]>;
   expandedSections: Set<string>;
   onToggleSection: (id: string) => void;
   onExpandAll: () => void;

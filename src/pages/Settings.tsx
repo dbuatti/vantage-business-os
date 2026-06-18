@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -45,11 +45,7 @@ const Settings = () => {
     accountant_share_token: ''
   });
 
-  useEffect(() => {
-    if (session) fetchSettings();
-  }, [session]);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('settings')
@@ -59,12 +55,16 @@ const Settings = () => {
       
       if (error && error.code !== 'PGRST116') throw error;
       if (data) setForm(data);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (session) fetchSettings();
+  }, [session, fetchSettings]);
 
   const handleSave = async () => {
     if (!session) return;
@@ -79,8 +79,8 @@ const Settings = () => {
         });
       if (error) throw error;
       showSuccess('General settings saved');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setSaving(false);
     }

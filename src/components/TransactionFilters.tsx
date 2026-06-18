@@ -45,7 +45,7 @@ const TransactionFiltersComponent = ({
   totalCount,
   filteredCount
 }: TransactionFiltersProps) => {
-  const updateFilter = (key: keyof TransactionFilters, value: any) => {
+  const updateFilter = <K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 

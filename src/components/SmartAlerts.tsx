@@ -27,13 +27,19 @@ interface Alert {
   type: 'warning' | 'opportunity' | 'success' | 'info';
   actionLabel?: string;
   actionUrl?: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface InvoiceLike {
+  status: string;
+  due_date: string;
+  total_amount: number;
 }
 
 interface SmartAlertsProps {
-  transactions: any[];
-  invoices: any[];
-  clients: any[];
+  transactions: Array<{ amount: number; is_work: boolean; notes?: string; category_1: string; description: string }>;
+  invoices: InvoiceLike[];
+  clients: Array<Record<string, unknown>>;
 }
 
 const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
@@ -102,7 +108,7 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
     }
 
     return list.slice(0, 3); // Only show top 3
-  }, [transactions, invoices, clients]);
+  }, [transactions, invoices]);
 
   if (alerts.length === 0) return null;
 

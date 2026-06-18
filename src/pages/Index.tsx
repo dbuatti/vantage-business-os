@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import CashFlowForecast from '@/components/CashFlowForecast';
 import AnimatedNumber from '@/components/AnimatedNumber';
 import SmartAlerts from '@/components/SmartAlerts';
@@ -37,6 +37,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { subMonths, format } from 'date-fns';
 import { formatCurrency } from '@/utils/format';
+import { showError } from '@/utils/toast';
 import { Music, Calculator } from 'lucide-react';
 import {
   Tooltip,
@@ -50,8 +51,8 @@ interface TransactionSummary {
   totalIncome: number;
   totalExpenses: number;
   net: number;
-  recentTransactions: any[];
-  allTransactions: any[];
+  recentTransactions: Record<string, unknown>[];
+  allTransactions: Record<string, unknown>[];
   musicNet: number;
   kineNet: number;
 }
@@ -59,7 +60,7 @@ interface TransactionSummary {
 interface BusinessStats {
   totalClients: number;
   outstandingAmount: number;
-  recentInvoices: any[];
+  recentInvoices: Record<string, unknown>[];
   taxReadiness: number;
   burnRate: number;
   runway: number;
@@ -71,32 +72,12 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] = useState<TransactionSummary | null>(null);
   const [businessStats, setBusinessStats] = useState<BusinessStats | null>(null);
-  const [allInvoices, setAllInvoices] = useState<any[]>([]);
-  const [allClients, setAllClients] = useState<any[]>([]);
+  const [allInvoices, setAllInvoices] = useState<Record<string, unknown>[]>([]);
+  const [allClients, setAllClients] = useState<Record<string, unknown>[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session, selectedYear]);
-
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchTransactionSummary = useCallback(async () => {
     try {
-      await Promise.all([
-        fetchTransactionSummary(),
-        fetchBusinessStats()
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTransactionSummary = async () => {
-    try {
-      // Fetch ALL transactions for the period to get accurate totals
-      // CRITICAL: Filter out 'Account' category as these are internal transfers
       let query = supabase
         .from('finance_transactions')
         .select('id, description, amount, transaction_date, category_1, is_work, notes, business_stream')
@@ -132,12 +113,13 @@ const Index = () => {
         musicNet,
         kineNet
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching transactions:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load transactions');
     }
-  };
+  }, [selectedYear]);
 
-  const fetchBusinessStats = async () => {
+  const fetchBusinessStats = useCallback(async () => {
     try {
       const { data: clients } = await supabase.from('clients').select('*');
       
@@ -155,12 +137,10 @@ const Index = () => {
       setAllClients(clients || []);
       setAllInvoices(invoices || []);
 
-      // Calculate outstanding amount ONLY from the filtered invoices
       const outstanding = (invoices || [])
         .filter(inv => inv.status !== 'Paid' && inv.status !== 'Cancelled')
         .reduce((s, inv) => s + (inv.total_amount || 0), 0);
 
-      // Calculate tax readiness and burn rate
       let txnsQuery = supabase
         .from('finance_transactions')
         .select('is_work, notes, category_1, amount, transaction_date')
@@ -202,8 +182,27 @@ const Index = () => {
       });
     } catch (error) {
       console.error("Error fetching business stats:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load business stats');
     }
-  };
+  }, [selectedYear]);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchTransactionSummary(),
+        fetchBusinessStats()
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchTransactionSummary, fetchBusinessStats]);
+
+  useEffect(() => {
+    if (session) {
+      fetchData();
+    }
+  }, [session, selectedYear, fetchData]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -100,15 +100,7 @@ const AccountantReport = () => {
     }
   }, [selectedYear, reportType]);
 
-  useEffect(() => {
-    if (!authLoading && !session) {
-      navigate('/login');
-    } else if (session) {
-      fetchTransactions();
-    }
-  }, [session, authLoading, navigate, reportInterval]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       let allData: Transaction[] = [];
@@ -140,12 +132,20 @@ const AccountantReport = () => {
       }
       
       setTransactions(allData);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportInterval]);
+
+  useEffect(() => {
+    if (!authLoading && !session) {
+      navigate('/login');
+    } else if (session) {
+      fetchTransactions();
+    }
+  }, [session, authLoading, navigate, reportInterval, fetchTransactions]);
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -175,8 +175,8 @@ const AccountantReport = () => {
       showSuccess('Transaction updated');
       setEditingTransaction(null);
       fetchTransactions();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

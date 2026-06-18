@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ interface BudgetDialogProps {
   onOpenChange: (open: boolean) => void;
   year: number;
   onSuccess: () => void;
-  existingBudgets: any[];
+  existingBudgets: Array<{ category_name: string; amount: number; month: number | null }>;
 }
 
 const GROUPS = [
@@ -55,7 +55,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [formBudgets, setFormBudgets] = useState<any[]>([]);
+  const [formBudgets, setFormBudgets] = useState<Array<{ category_name: string; amount: number | string }>>([]);
   
   const [savingsType, setSavingsType] = useState<'percent' | 'dollar'>('percent');
   const [savingsValue, setSavingsValue] = useState<string>('20');
@@ -67,21 +67,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
     monthsOfData: number;
   }>({ groupTotals: {}, totalIncome: 0, totalExpenses: 0, monthsOfData: 0 });
 
-  useEffect(() => {
-    if (open) {
-      const initial = GROUPS.map(group => {
-        const existing = existingBudgets.find(b => b.category_name === group && (b.month === 0 || b.month === null));
-        return {
-          category_name: group,
-          amount: existing?.amount || 0,
-        };
-      });
-      setFormBudgets(initial);
-      fetchHistoricalData();
-    }
-  }, [open, existingBudgets]);
-
-  const fetchHistoricalData = async () => {
+  const fetchHistoricalData = useCallback(async () => {
     if (!session) return;
     setAnalyzing(true);
     try {
@@ -126,10 +112,25 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       setHistoricalData({ groupTotals, totalIncome, totalExpenses, monthsOfData });
     } catch (error) {
       console.error("Error fetching historical data:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load historical data');
     } finally {
       setAnalyzing(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (open) {
+      const initial = GROUPS.map(group => {
+        const existing = existingBudgets.find(b => b.category_name === group && (b.month === 0 || b.month === null));
+        return {
+          category_name: group,
+          amount: existing?.amount || 0,
+        };
+      });
+      setFormBudgets(initial);
+      fetchHistoricalData();
+    }
+  }, [open, existingBudgets, fetchHistoricalData]);
 
   const adjustedSuggestions = useMemo(() => {
     const { totalIncome, groupTotals, totalExpenses, monthsOfData } = historicalData;
@@ -192,8 +193,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       showSuccess('Budgets updated successfully');
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

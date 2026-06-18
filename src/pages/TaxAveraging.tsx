@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { TaxAveragingCalculator } from '@/components/TaxAveragingCalculator';
 import { HistoricalTPIForm } from '@/components/HistoricalTPIForm';
 import TransactionTable from '@/components/TransactionTable';
 import { formatCurrency } from '@/utils/format';
+import { showError } from '@/utils/toast';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -21,13 +22,7 @@ const TaxAveraging = () => {
   const [loading, setLoading] = useState(true);
   const [financialYear, setFinancialYear] = useState('2024-25');
 
-  useEffect(() => {
-    if (session) {
-      fetchData();
-    }
-  }, [session, financialYear]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch transactions for the selected financial year
@@ -64,10 +59,17 @@ const TaxAveraging = () => {
 
     } catch (error) {
       console.error('Error fetching data:', error);
+      showError(error instanceof Error ? error.message : 'Failed to load data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [financialYear]);
+
+  useEffect(() => {
+    if (session) {
+      fetchData();
+    }
+  }, [session, financialYear, fetchData]);
 
   const musicTransactions = transactions.filter(t => t.business_stream === 'Music');
   const kinesiologyTransactions = transactions.filter(t => t.business_stream === 'Kinesiology');

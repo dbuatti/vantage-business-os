@@ -39,8 +39,8 @@ const Login = () => {
         if (error) throw error;
         showSuccess('Signed in successfully!');
       }
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +56,8 @@ const Login = () => {
         },
       });
       if (error) throw error;
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
       setIsLoading(false);
     }
   };

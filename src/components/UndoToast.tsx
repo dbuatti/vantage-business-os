@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Undo2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,11 @@ interface UndoToastProps {
 const UndoToast = ({ message, onUndo, onDismiss, duration = 6000 }: UndoToastProps) => {
   const [progress, setProgress] = useState(100);
   const [isVisible, setIsVisible] = useState(true);
+
+  const handleDismiss = useCallback(() => {
+    setIsVisible(false);
+    setTimeout(onDismiss, 200);
+  }, [onDismiss]);
 
   useEffect(() => {
     const interval = 50;
@@ -32,12 +37,7 @@ const UndoToast = ({ message, onUndo, onDismiss, duration = 6000 }: UndoToastPro
     }, interval);
 
     return () => clearInterval(timer);
-  }, [duration]);
-
-  const handleDismiss = () => {
-    setIsVisible(false);
-    setTimeout(onDismiss, 200);
-  };
+  }, [duration, handleDismiss]);
 
   const handleUndo = () => {
     onUndo();

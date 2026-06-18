@@ -33,14 +33,30 @@ import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
 
+interface TransactionLike {
+  id?: string;
+  transaction_date: string;
+  amount: number;
+  category_1: string;
+  notes?: string;
+  description?: string;
+  category_2?: string;
+}
+
+interface BudgetLike {
+  category_name: string;
+  amount: number;
+  month: number | null;
+}
+
 interface MasterTrackerMatrixProps {
-  transactions: any[];
-  budgets: any[];
-  categoryGroups: any[];
+  transactions: TransactionLike[];
+  budgets: BudgetLike[];
+  categoryGroups: Array<{ category_name: string; group_name: string }>;
   year: number;
   view: TrackerView;
   searchQuery: string;
-  onCellClick: (category: string, periodLabel: string, txns: any[], budget: number) => void;
+  onCellClick: (category: string, periodLabel: string, txns: TransactionLike[], budget: number) => void;
 }
 
 const EXPENSE_GROUPS = [

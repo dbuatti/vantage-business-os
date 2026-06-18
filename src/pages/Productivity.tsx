@@ -31,8 +31,8 @@ import { showError } from '@/utils/toast';
 
 const Productivity = () => {
   const { session } = useAuth();
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Record<string, unknown>[]>([]);
+  const [invoices, setInvoices] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,8 +48,8 @@ const Productivity = () => {
       ]);
       setTickets(ticketsRes.data || []);
       setInvoices(invoicesRes.data || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }

@@ -94,8 +94,8 @@ const ManualTransactionDialog = ({ open, onOpenChange, onSuccess, categories, su
         account_label: 'Manual Entry',
         business_stream: 'Other'
       });
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

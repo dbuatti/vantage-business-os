@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -48,6 +48,8 @@ import {
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
+import { computeExpenseBreakdown } from '@/utils/expenses';
+import { showError } from '@/utils/toast';
 import { Transaction } from '@/types/finance';
 
 const ExpenseStory = () => {
@@ -56,7 +58,7 @@ const ExpenseStory = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [view, setView] = useState<'day' | 'week' | 'month'>((searchParams.get('view') as any) || 'week');
+  const [view, setView] = useState<'day' | 'week' | 'month'>((searchParams.get('view') as 'day' | 'week' | 'month') ?? 'week');
   const [currentDate, setCurrentDate] = useState(searchParams.get('date') ? new Date(searchParams.get('date')!) : new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,16 +69,7 @@ const ExpenseStory = () => {
     return { start: startOfMonth(currentDate), end: endOfMonth(currentDate) };
   }, [currentDate, view]);
 
-  useEffect(() => {
-    fetchTransactions();
-    // Update URL params
-    setSearchParams({ 
-      view, 
-      date: format(currentDate, 'yyyy-MM-dd') 
-    }, { replace: true });
-  }, [dateRange, view]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -91,43 +84,31 @@ const ExpenseStory = () => {
       setTransactions(data || []);
     } catch (error) {
       console.error("Error:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load transactions');
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchTransactions();
+    // Update URL params
+    setSearchParams({ 
+      view, 
+      date: format(currentDate, 'yyyy-MM-dd') 
+    }, { replace: true });
+  }, [dateRange, view, fetchTransactions, currentDate, setSearchParams]);
 
   const stats = useMemo(() => {
     const expenseTxns = transactions.filter(t => t.amount < 0);
     const expenses = expenseTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
     
-    const bigHits = expenseTxns.filter(t => Math.abs(t.amount) >= 100);
-    const bigHitsTotal = bigHits.reduce((s, t) => s + Math.abs(t.amount), 0);
-    
-    const subscriptions = expenseTxns.filter(t => 
-      (t.category_1?.toLowerCase() === 'subscription' || t.category_2?.toLowerCase() === 'subscription') && 
-      Math.abs(t.amount) < 100
-    );
-    const subscriptionsTotal = subscriptions.reduce((s, t) => s + Math.abs(t.amount), 0);
-    
-    const dailyLife = expenseTxns.filter(t => 
-      Math.abs(t.amount) < 100 && 
-      t.category_1?.toLowerCase() !== 'subscription' && 
-      t.category_2?.toLowerCase() !== 'subscription'
-    );
-    const dailyLifeTotal = dailyLife.reduce((s, t) => s + Math.abs(t.amount), 0);
-
-    const smallStuff = expenseTxns.filter(t => Math.abs(t.amount) < 20);
-    const smallStuffTotal = smallStuff.reduce((s, t) => s + Math.abs(t.amount), 0);
+    const breakdown = computeExpenseBreakdown(transactions);
 
     return { 
       expenses, 
       expenseTxns,
-      breakdown: {
-        bigHits: { items: bigHits, total: bigHitsTotal },
-        subscriptions: { items: subscriptions, total: subscriptionsTotal },
-        dailyLife: { items: dailyLife, total: dailyLifeTotal },
-        smallStuff: { items: smallStuff, total: smallStuffTotal }
-      }
+      breakdown
     };
   }, [transactions]);
 

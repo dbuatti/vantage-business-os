@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface AnimatedNumberProps {
   value: number;
@@ -16,10 +16,12 @@ const AnimatedNumber = ({
   className 
 }: AnimatedNumberProps) => {
   const [displayValue, setDisplayValue] = useState(0);
+  const displayValueRef = useRef(displayValue);
+  displayValueRef.current = displayValue;
 
   useEffect(() => {
     let startTimestamp: number | null = null;
-    const startValue = displayValue;
+    const startValue = displayValueRef.current;
     
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;

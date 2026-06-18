@@ -43,7 +43,7 @@ const SpendingHeatmap = ({ transactions }: SpendingHeatmapProps) => {
     // Build weeks
     const weeks: { date: string; amount: number; dayOfWeek: number }[][] = [];
     const monthLabels: { week: number; label: string }[] = [];
-    let current = new Date(start);
+    const current = new Date(start);
     let weekIndex = 0;
     let lastMonth = -1;
 
@@ -57,7 +57,6 @@ const SpendingHeatmap = ({ transactions }: SpendingHeatmapProps) => {
           dayOfWeek: current.getDay()
         });
 
-        // Track month changes
         if (current.getDay() === 0 && current.getMonth() !== lastMonth) {
           monthLabels.push({
             week: weekIndex,

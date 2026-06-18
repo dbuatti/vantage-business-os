@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,29 +8,31 @@ import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { SettingsProvider } from "./components/SettingsProvider";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import Transactions from "./pages/Transactions";
-import AccountantReport from "./pages/AccountantReport";
-import AccountantPortal from "./pages/AccountantPortal";
-import Clients from "./pages/Clients";
-import ClientDetail from "./pages/ClientDetail";
-import Invoices from "./pages/Invoices";
-import InvoiceDetail from "./pages/InvoiceDetail";
-import Products from "./pages/Products";
-import Settings from "./pages/Settings";
-import Insights from "./pages/Insights";
-import Tickets from "./pages/Tickets";
-import TicketDetail from "./pages/TicketDetail";
-import Productivity from "./pages/Productivity";
-import ProjectROI from "./pages/ProjectROI";
-import TimeGlance from "./pages/TimeGlance";
-import WeeklyLog from "./pages/WeeklyLog";
-import SubscriptionAudit from "./pages/SubscriptionAudit";
-import ExpenseStory from "./pages/ExpenseStory";
-import MasterTracker from "./pages/MasterTracker";
-import TaxAveraging from "./pages/TaxAveraging";
-import ExportCenter from "./pages/ExportCenter";
-import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/DashboardLayout";
+import { Loader2 } from "lucide-react";
+
+const Transactions = lazy(() => import("./pages/Transactions"));
+const AccountantReport = lazy(() => import("./pages/AccountantReport"));
+const AccountantPortal = lazy(() => import("./pages/AccountantPortal"));
+const Clients = lazy(() => import("./pages/Clients"));
+const ClientDetail = lazy(() => import("./pages/ClientDetail"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const InvoiceDetail = lazy(() => import("./pages/InvoiceDetail"));
+const Products = lazy(() => import("./pages/Products"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Insights = lazy(() => import("./pages/Insights"));
+const Tickets = lazy(() => import("./pages/Tickets"));
+const TicketDetail = lazy(() => import("./pages/TicketDetail"));
+const Productivity = lazy(() => import("./pages/Productivity"));
+const ProjectROI = lazy(() => import("./pages/ProjectROI"));
+const TimeGlance = lazy(() => import("./pages/TimeGlance"));
+const WeeklyLog = lazy(() => import("./pages/WeeklyLog"));
+const SubscriptionAudit = lazy(() => import("./pages/SubscriptionAudit"));
+const ExpenseStory = lazy(() => import("./pages/ExpenseStory"));
+const MasterTracker = lazy(() => import("./pages/MasterTracker"));
+const TaxAveraging = lazy(() => import("./pages/TaxAveraging"));
+const ExportCenter = lazy(() => import("./pages/ExportCenter"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Configure QueryClient to disable automatic refetching on window focus
 const queryClient = new QueryClient({
@@ -41,10 +44,16 @@ const queryClient = new QueryClient({
   },
 });
 
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
-  if (loading) return null;
+  if (loading) return <LoadingFallback />;
   if (!session) return <Navigate to="/login" />;
   
   return <DashboardLayout>{children}</DashboardLayout>;
@@ -57,37 +66,37 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<Suspense fallback={<LoadingFallback />}><Login /></Suspense>} />
               
               {/* Public Portal Route */}
-              <Route path="/portal/:token" element={<AccountantPortal />} />
+              <Route path="/portal/:token" element={<Suspense fallback={<LoadingFallback />}><AccountantPortal /></Suspense>} />
               
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/master-tracker" element={<ProtectedRoute><MasterTracker /></ProtectedRoute>} />
-              <Route path="/tax-averaging" element={<ProtectedRoute><TaxAveraging /></ProtectedRoute>} />
-              <Route path="/weekly-routine" element={<ProtectedRoute><WeeklyLog /></ProtectedRoute>} />
-              <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
-              <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
-              <Route path="/subscriptions" element={<ProtectedRoute><SubscriptionAudit /></ProtectedRoute>} />
-              <Route path="/expense-story" element={<ProtectedRoute><ExpenseStory /></ProtectedRoute>} />
-              <Route path="/productivity" element={<ProtectedRoute><Productivity /></ProtectedRoute>} />
-              <Route path="/project-roi" element={<ProtectedRoute><ProjectROI /></ProtectedRoute>} />
-              <Route path="/time-glance" element={<ProtectedRoute><TimeGlance /></ProtectedRoute>} />
-              <Route path="/export" element={<ProtectedRoute><ExportCenter /></ProtectedRoute>} />
-              <Route path="/accountant-report" element={<ProtectedRoute><AccountantReport /></ProtectedRoute>} />
-              <Route path="/accountant-portal" element={<ProtectedRoute><AccountantPortal /></ProtectedRoute>} />
-              <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-              <Route path="/clients/:id" element={<ProtectedRoute><ClientDetail /></ProtectedRoute>} />
-              <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-              <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
-              <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-              <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
-              <Route path="/tickets/:id" element={<ProtectedRoute><TicketDetail /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Index /></Suspense></ProtectedRoute>} />
+              <Route path="/master-tracker" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><MasterTracker /></Suspense></ProtectedRoute>} />
+              <Route path="/tax-averaging" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><TaxAveraging /></Suspense></ProtectedRoute>} />
+              <Route path="/weekly-routine" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><WeeklyLog /></Suspense></ProtectedRoute>} />
+              <Route path="/transactions" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Transactions /></Suspense></ProtectedRoute>} />
+              <Route path="/insights" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Insights /></Suspense></ProtectedRoute>} />
+              <Route path="/subscriptions" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><SubscriptionAudit /></Suspense></ProtectedRoute>} />
+              <Route path="/expense-story" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><ExpenseStory /></Suspense></ProtectedRoute>} />
+              <Route path="/productivity" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Productivity /></Suspense></ProtectedRoute>} />
+              <Route path="/project-roi" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><ProjectROI /></Suspense></ProtectedRoute>} />
+              <Route path="/time-glance" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><TimeGlance /></Suspense></ProtectedRoute>} />
+              <Route path="/export" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><ExportCenter /></Suspense></ProtectedRoute>} />
+              <Route path="/accountant-report" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><AccountantReport /></Suspense></ProtectedRoute>} />
+              <Route path="/accountant-portal" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><AccountantPortal /></Suspense></ProtectedRoute>} />
+              <Route path="/clients" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Clients /></Suspense></ProtectedRoute>} />
+              <Route path="/clients/:id" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><ClientDetail /></Suspense></ProtectedRoute>} />
+              <Route path="/invoices" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Invoices /></Suspense></ProtectedRoute>} />
+              <Route path="/invoices/:id" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><InvoiceDetail /></Suspense></ProtectedRoute>} />
+              <Route path="/products" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Products /></Suspense></ProtectedRoute>} />
+              <Route path="/tickets" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Tickets /></Suspense></ProtectedRoute>} />
+              <Route path="/tickets/:id" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><TicketDetail /></Suspense></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Suspense fallback={<LoadingFallback />}><Settings /></Suspense></ProtectedRoute>} />
               
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<Suspense fallback={<LoadingFallback />}><NotFound /></Suspense>} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

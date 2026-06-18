@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -12,10 +12,12 @@ import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
 import FinanceTable from '@/components/FinanceTable';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
-import { CalendarCheck, ArrowLeft, Info, Sparkles, ShieldCheck, TrendingUp, History } from 'lucide-react';
+import { CalendarCheck, ArrowLeft, Info, Sparkles, ShieldCheck, TrendingUp, TrendingDown, History, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import { formatCurrency } from '@/utils/format';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { cn } from '@/lib/utils';
 
@@ -25,11 +27,7 @@ const WeeklyLog = () => {
   const [entries, setEntries] = useState<FinanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (session) fetchEntries();
-  }, [session, selectedYear]);
-
-  const fetchEntries = async () => {
+  const fetchEntries = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -55,12 +53,16 @@ const WeeklyLog = () => {
       }));
       
       setEntries(mappedData);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedYear]);
+
+  useEffect(() => {
+    if (session) fetchEntries();
+  }, [session, selectedYear, fetchEntries]);
 
   const addEntry = async (entry: FinanceEntry) => {
     if (!session) return;
@@ -79,8 +81,8 @@ const WeeklyLog = () => {
       if (error) throw error;
       fetchEntries();
       showSuccess('Weekly snapshot recorded!');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -94,8 +96,8 @@ const WeeklyLog = () => {
       if (error) throw error;
       fetchEntries();
       showSuccess('Entry deleted');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -112,8 +114,8 @@ const WeeklyLog = () => {
       if (error) throw error;
       fetchEntries();
       showSuccess('Entry updated');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -183,16 +185,48 @@ const WeeklyLog = () => {
             <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Financial Health</h2>
           </div>
           <FinanceSummary entries={calculatedEntries} />
+          {(() => {
+            const creditEntries = calculatedEntries.filter(e => e.account === 'Credit');
+            const latestCredit = creditEntries[0];
+            const prevCredit = creditEntries[1];
+            if (!latestCredit || latestCredit.amount === 0) return null;
+            const creditChange = prevCredit ? latestCredit.amount - prevCredit.amount : 0;
+            return (
+              <Card className="border-0 shadow-md bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Credit Card Debt</p>
+                      <p className="text-xs text-muted-foreground">
+                        {creditEntries.length} entries tracked · Last entry: {format(new Date(latestCredit.date), 'MMM dd')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-black">{formatCurrency(latestCredit.amount)}</p>
+                    {prevCredit && (
+                      <p className={cn(
+                        "text-xs font-bold flex items-center gap-1 justify-end",
+                        creditChange > 0 ? "text-rose-600" : "text-emerald-600"
+                      )}>
+                        {creditChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                        {creditChange > 0 ? '+' : ''}{formatCurrency(creditChange)} since last entry
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Entry Form */}
           <div className="lg:col-span-4 space-y-6">
             <div className="sticky top-24">
-              <div className="flex items-center gap-2 px-2 mb-4">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">New Entry</h2>
-              </div>
               <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
               
               <Card className="mt-6 border-0 shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden relative">

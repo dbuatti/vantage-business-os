@@ -20,7 +20,7 @@ interface TrackerDrilldownProps {
   onOpenChange: (open: boolean) => void;
   category: string;
   periodLabel: string;
-  transactions: any[];
+  transactions: Array<{ id?: string; transaction_date: string; description: string; amount: number; category_2?: string; notes?: string }>;
   budget: number;
 }
 

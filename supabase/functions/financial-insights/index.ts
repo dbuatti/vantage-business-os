@@ -1,4 +1,4 @@
-// @ts-ignore - Deno runtime environment
+// @ts-expect-error - Deno runtime environment
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 
 declare const Deno: {
@@ -24,7 +24,7 @@ serve(async (req: Request) => {
     }
 
     // Filter out internal transfers
-    const filteredTransactions = transactions.filter((t: any) => 
+    const filteredTransactions = transactions.filter((t: Record<string, unknown>) => 
       t.category_1?.toLowerCase() !== 'account'
     )
     
@@ -32,7 +32,7 @@ serve(async (req: Request) => {
     
     // Calculate Category Totals
     const categoryTotals: Record<string, { income: number; expenses: number; count: number }> = {}
-    recentTransactions.forEach((t: any) => {
+    recentTransactions.forEach((t: Record<string, unknown>) => {
       const cat = t.category_1 || 'Uncategorized'
       if (!categoryTotals[cat]) categoryTotals[cat] = { income: 0, expenses: 0, count: 0 }
       categoryTotals[cat].count++
@@ -42,7 +42,7 @@ serve(async (req: Request) => {
 
     // Map categories to groups for budget comparison
     const catToGroup: Record<string, string> = {}
-    categoryGroups.forEach((cg: any) => { catToGroup[cg.category_name] = cg.group_name; });
+    categoryGroups.forEach((cg: Record<string, unknown>) => { catToGroup[cg.category_name] = cg.group_name; });
 
     const groupTotals: Record<string, number> = {}
     Object.entries(categoryTotals).forEach(([cat, data]) => {
@@ -50,7 +50,7 @@ serve(async (req: Request) => {
       groupTotals[group] = (groupTotals[group] || 0) + data.expenses
     })
 
-    const budgetList = budgets?.map((b: any) => `${b.category_name}: $${b.amount}`).join(', ') || 'No budgets set'
+    const budgetList = budgets?.map((b: Record<string, unknown>) => `${b.category_name}: $${b.amount}`).join(', ') || 'No budgets set'
 
     const prompt = `You are a sharp, insightful financial coach. Analyze this user's spending against their budgets for the period: ${period}.
 
@@ -61,7 +61,7 @@ ACTUAL SPENDING BY GROUP:
 ${Object.entries(groupTotals).map(([group, total]) => `- ${group}: $${total.toFixed(2)}`).join('\n')}
 
 RECENT TOP MERCHANTS:
-${recentTransactions.filter((t: any) => t.amount < 0).slice(0, 10).map((t: any) => `- ${t.description}: $${Math.abs(t.amount)}`).join('\n')}
+${recentTransactions.filter((t: Record<string, unknown>) => t.amount < 0).slice(0, 10).map((t: Record<string, unknown>) => `- ${t.description}: $${Math.abs(t.amount)}`).join('\n')}
 
 GOAL: Provide a "Stay on Track" analysis. 
 1. Identify which budgets are at risk of being exceeded.
@@ -100,7 +100,7 @@ Provide your response as a JSON object:
     return new Response(JSON.stringify(insights), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders } })
   }
 })

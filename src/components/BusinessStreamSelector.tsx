@@ -13,7 +13,7 @@ export const BusinessStreamSelector: React.FC<BusinessStreamSelectorProps> = ({ 
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium">Business Stream</Label>
-      <Select value={value} onValueChange={(v: any) => onChange(v)}>
+      <Select value={value} onValueChange={(v) => onChange(v as 'Music' | 'Kinesiology' | 'Other')}>
         <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm border-indigo-100 focus:ring-indigo-500">
           <SelectValue placeholder="Select business stream" />
         </SelectTrigger>

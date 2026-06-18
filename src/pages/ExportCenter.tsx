@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -38,7 +38,7 @@ const ExportCenter = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [reportType, setReportType] = useState<'fy' | 'cy'>('fy');
   
-  const [data, setData] = useState<{ transactions: any[], invoices: any[], settings: any }>({ 
+  const [data, setData] = useState<{ transactions: Record<string, unknown>[], invoices: Record<string, unknown>[], settings: Record<string, unknown> | null }>({ 
     transactions: [], 
     invoices: [],
     settings: null
@@ -58,18 +58,15 @@ const ExportCenter = () => {
     return `Financial Year ${parseInt(selectedYear) - 1}-${selectedYear}`;
   }, [selectedYear, reportType]);
 
-  useEffect(() => {
-    if (session) fetchAllData();
-  }, [session, reportInterval]);
-
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
+    if (!session) return;
     setLoading(true);
     try {
       const startDateStr = format(reportInterval.start, 'yyyy-MM-dd');
       const endDateStr = format(reportInterval.end, 'yyyy-MM-dd');
 
       // Fetch transactions with pagination to ensure we get everything in the range
-      let allTransactions: any[] = [];
+      let allTransactions: Record<string, unknown>[] = [];
       let from = 0;
       const step = 1000;
       let hasMore = true;
@@ -116,12 +113,16 @@ const ExportCenter = () => {
         invoices: invoices || [],
         settings: settings || null
       });
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportInterval, session]);
+
+  useEffect(() => {
+    if (session) fetchAllData();
+  }, [session, reportInterval, fetchAllData]);
 
   const checklist = useMemo(() => {
     const workTxns = data.transactions.filter(t => t.is_work);
@@ -148,10 +149,10 @@ const ExportCenter = () => {
         data.settings,
         reportInterval
       );
-      generateExcel(exportPayload);
+      await generateExcel(exportPayload);
       showSuccess(`Excel report generated for ${periodLabel}`);
-    } catch (error: any) {
-      showError('Failed to generate Excel file');
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'Failed to generate Excel file');
     } finally {
       setExporting(false);
     }

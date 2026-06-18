@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -53,13 +53,13 @@ import {
   differenceInDays
 } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/utils/format';
+import { formatCurrency, downloadCSV } from '@/utils/format';
 import MasterTrackerMatrix from '@/components/MasterTrackerMatrix';
 import MasterTrackerGraphs from '@/components/MasterTrackerGraphs';
 import BudgetDialog from '@/components/BudgetDialog';
 import TrackerAIInsights from '@/components/TrackerAIInsights';
 import TrackerDrilldown from '@/components/TrackerDrilldown';
-import { showSuccess } from '@/utils/toast';
+import { showSuccess, showError } from '@/utils/toast';
 
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -74,9 +74,9 @@ export type TrackerView = 'daily' | 'weekly' | 'monthly' | 'yearly';
 const MasterTracker = () => {
   const { session } = useAuth();
   const { selectedYear } = useSettings();
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [categoryGroups, setCategoryGroups] = useState<any[]>([]);
-  const [budgets, setBudgets] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Record<string, unknown>[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<Record<string, unknown>[]>([]);
+  const [budgets, setBudgets] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const [matrixView, setMatrixView] = useState<TrackerView>('monthly');
@@ -91,7 +91,7 @@ const MasterTracker = () => {
     open: boolean;
     category: string;
     periodLabel: string;
-    txns: any[];
+    txns: Record<string, unknown>[];
     budget: number;
   }>({ open: false, category: '', periodLabel: '', txns: [], budget: 0 });
 
@@ -99,17 +99,12 @@ const MasterTracker = () => {
   const yearStart = startOfYear(new Date(year, 0, 1));
   const yearEnd = endOfYear(new Date(year, 0, 1));
 
-  useEffect(() => {
-    if (session) fetchData();
-  }, [session, selectedYear]);
-
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async () => {
     try {
       const [txnsRes, groupsRes, budgetsRes] = await Promise.all([
         supabase
           .from('finance_transactions')
-          .select('*')
+          .select('transaction_date, amount, category_1, category_2, description, notes')
           .gte('transaction_date', format(yearStart, 'yyyy-MM-dd'))
           .lte('transaction_date', format(yearEnd, 'yyyy-MM-dd'))
           .lt('amount', 0)
@@ -123,10 +118,16 @@ const MasterTracker = () => {
       setBudgets(budgetsRes.data || []);
     } catch (error) {
       console.error("Error fetching master tracker data:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load tracker data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [yearStart, yearEnd, year]);
+
+  useEffect(() => {
+    if (session) fetchData();
+    else setLoading(false);
+  }, [session, selectedYear, fetchData]);
 
   const thermostatData = useMemo(() => {
     const today = new Date();
@@ -187,9 +188,9 @@ const MasterTracker = () => {
     const avgSpend = totalSpent / daysPassed;
 
     return { totalSpent, totalBudget, remaining, percentUtilized, avgSpend };
-  }, [transactions, budgets, selectedYear]);
+  }, [transactions, budgets, selectedYear, yearStart]);
 
-  const handleCellClick = (category: string, periodLabel: string, txns: any[], budget: number) => {
+  const handleCellClick = (category: string, periodLabel: string, txns: Record<string, unknown>[], budget: number) => {
     setDrilldown({ open: true, category, periodLabel, txns, budget });
   };
 
@@ -221,20 +222,24 @@ const MasterTracker = () => {
       t.amount.toString(),
       t.notes || ''
     ]);
-
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Master_Tracker_${year}_${matrixView}.csv`;
-    link.click();
+    downloadCSV(headers, rows, `Master_Tracker_${year}_${matrixView}.csv`);
     showSuccess('Matrix data exported to CSV');
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return (
+    <div className="max-w-7xl mx-auto p-4 sm:p-8 space-y-10 pb-24 animate-pulse">
+      <div className="flex justify-between">
+        <div className="h-10 w-64 bg-muted rounded-xl" />
+        <div className="h-10 w-48 bg-muted rounded-xl" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1,2,3,4].map(i => <div key={i} className="h-32 bg-muted rounded-2xl" />)}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {[1,2,3,4,5].map(i => <div key={i} className="h-52 bg-muted rounded-2xl" />)}
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-8 space-y-10 pb-24">

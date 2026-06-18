@@ -74,7 +74,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 onClick={() => navigate('/transactions')}
               >
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Quick Add</span>
+                <span className="hidden sm:inline">Add Transaction</span>
               </Button>
               <div className="h-4 w-[1px] bg-border" />
               <ThemeToggle />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -84,7 +84,7 @@ interface ClientAsset {
   id: string;
   asset_type: string;
   name: string;
-  details: any;
+  details: Record<string, unknown>;
 }
 
 const ClientDetail = () => {
@@ -104,13 +104,7 @@ const ClientDetail = () => {
     value: ''
   });
 
-  useEffect(() => {
-    if (session && id) {
-      fetchClientData();
-    }
-  }, [session, id]);
-
-  const fetchClientData = async () => {
+  const fetchClientData = useCallback(async () => {
     setLoading(true);
     try {
       const { data: clientData, error: clientError } = await supabase
@@ -145,13 +139,19 @@ const ClientDetail = () => {
         .order('created_at', { ascending: false });
       
       setAssets(assetData || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
       navigate('/clients');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    if (session && id) {
+      fetchClientData();
+    }
+  }, [session, id, fetchClientData]);
 
   const handleAddAsset = async () => {
     if (!session || !id || !assetForm.name) return;
@@ -171,8 +171,8 @@ const ClientDetail = () => {
       setShowAssetDialog(false);
       setAssetForm({ name: '', asset_type: 'Note', value: '' });
       fetchClientData();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -182,8 +182,8 @@ const ClientDetail = () => {
       if (error) throw error;
       setAssets(prev => prev.filter(a => a.id !== assetId));
       showSuccess('Asset removed');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

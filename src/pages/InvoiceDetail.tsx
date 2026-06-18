@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -69,13 +69,7 @@ const InvoiceDetail = () => {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (session && id) {
-      fetchInvoiceData();
-    }
-  }, [session, id]);
-
-  const fetchInvoiceData = async () => {
+  const fetchInvoiceData = useCallback(async () => {
     setLoading(true);
     try {
       const { data: invoiceData, error: invoiceError } = await supabase
@@ -94,13 +88,19 @@ const InvoiceDetail = () => {
         .single();
       
       setSettings(settingsData);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
       navigate('/invoices');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session, id, navigate]);
+
+  useEffect(() => {
+    if (session && id) {
+      fetchInvoiceData();
+    }
+  }, [session, id, fetchInvoiceData]);
 
   const markAsPaid = async () => {
     if (!invoice) return;
@@ -113,8 +113,8 @@ const InvoiceDetail = () => {
       if (error) throw error;
       showSuccess('Invoice marked as paid');
       fetchInvoiceData();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -53,8 +53,8 @@ interface AIInsights {
   scoreLabel?: string;
   status?: string;
   insights?: Insight[];
-  predictions?: any[];
-  tacticalAdvice?: any[];
+  predictions?: Record<string, unknown>[];
+  tacticalAdvice?: Record<string, unknown>[];
   quickWins?: string[];
   coachingNote?: string;
 }
@@ -63,24 +63,15 @@ const Insights = () => {
   const { session, loading: authLoading } = useAuth();
   const { selectedYear } = useSettings();
   const navigate = useNavigate();
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [categoryGroups, setCategoryGroups] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Record<string, unknown>[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [insights, setInsights] = useState<AIInsights | null>(null);
   const [lastGenerated, setLastGenerated] = useState<Date | null>(null);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !session) {
-      navigate('/login');
-    } else if (session) {
-      fetchData();
-      loadCachedInsights();
-    }
-  }, [session, authLoading, navigate, selectedYear]);
-
-  const loadCachedInsights = () => {
+  const loadCachedInsights = useCallback(() => {
     const cached = localStorage.getItem(`ai-insights-${selectedYear}`);
     const cachedTime = localStorage.getItem(`ai-insights-time-${selectedYear}`);
     if (cached && cachedTime) {
@@ -100,12 +91,12 @@ const Insights = () => {
       setInsights(null);
       setLastGenerated(null);
     }
-  };
+  }, [selectedYear]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let allData: any[] = [];
+      let allData: Record<string, unknown>[] = [];
       let from = 0;
       const step = 1000;
       let hasMore = true;
@@ -135,12 +126,21 @@ const Insights = () => {
 
       const { data: groups } = await supabase.from('category_groups').select('*');
       setCategoryGroups(groups || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedYear]);
+
+  useEffect(() => {
+    if (!authLoading && !session) {
+      navigate('/login');
+    } else if (session) {
+      fetchData();
+      loadCachedInsights();
+    }
+  }, [session, authLoading, navigate, selectedYear, fetchData, loadCachedInsights]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => t.category_1?.toLowerCase() !== 'account');
@@ -171,7 +171,8 @@ const Insights = () => {
       });
 
       if (error) {
-        const status = (error as any).status || (error as any).context?.status;
+        const err = error as { status?: number; context?: { status?: number } };
+        const status = err.status || err.context?.status;
         if (status === 429) {
           setRateLimitError('The AI is currently busy. Please wait about 60 seconds and try again.');
           return;
@@ -189,8 +190,8 @@ const Insights = () => {
       localStorage.setItem(`ai-insights-${selectedYear}`, JSON.stringify(data));
       localStorage.setItem(`ai-insights-time-${selectedYear}`, new Date().toISOString());
       showSuccess('Insights generated successfully!');
-    } catch (error: any) {
-      showError(error.message || 'Failed to generate insights');
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'Failed to generate insights');
     } finally {
       setGenerating(false);
     }

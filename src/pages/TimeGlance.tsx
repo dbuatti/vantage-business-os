@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -66,6 +66,8 @@ import {
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
+import { computeExpenseBreakdown } from '@/utils/expenses';
+import { showError } from '@/utils/toast';
 import { Transaction } from '@/types/finance';
 import {
   BarChart,
@@ -110,7 +112,7 @@ const TimeGlance = () => {
         setCurrentDate(new Date(year, 0, 1));
       }
     }
-  }, [selectedYear]);
+  }, [selectedYear, currentDate]);
 
   const dateRange = useMemo(() => {
     if (view === 'day') {
@@ -124,16 +126,12 @@ const TimeGlance = () => {
     }
   }, [currentDate, view]);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [dateRange]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('finance_transactions')
-        .select('*')
+        .select('transaction_date, amount, category_1, description, notes')
         .gte('transaction_date', format(dateRange.start, 'yyyy-MM-dd'))
         .lte('transaction_date', format(dateRange.end, 'yyyy-MM-dd'))
         .neq('category_1', 'Account')
@@ -143,10 +141,15 @@ const TimeGlance = () => {
       setTransactions(data || []);
     } catch (error) {
       console.error("Error fetching transactions:", error);
+      showError(error instanceof Error ? error.message : 'Failed to load transactions');
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [dateRange, fetchTransactions]);
 
   const stats = useMemo(() => {
     const incomeTxns = transactions.filter(t => t.amount > 0);
@@ -161,24 +164,7 @@ const TimeGlance = () => {
       .sort((a, b) => a.amount - b.amount);
 
     // Neurodivergent Breakdown Logic - Mutually Exclusive Buckets
-    const bigHits = expenseTxns.filter(t => Math.abs(t.amount) >= 100);
-    const bigHitsTotal = bigHits.reduce((s, t) => s + Math.abs(t.amount), 0);
-    
-    const subscriptions = expenseTxns.filter(t => 
-      (t.category_1?.toLowerCase() === 'subscription' || t.category_2?.toLowerCase() === 'subscription') && 
-      Math.abs(t.amount) < 100
-    );
-    const subscriptionsTotal = subscriptions.reduce((s, t) => s + Math.abs(t.amount), 0);
-    
-    const dailyLife = expenseTxns.filter(t => 
-      Math.abs(t.amount) < 100 && 
-      t.category_1?.toLowerCase() !== 'subscription' && 
-      t.category_2?.toLowerCase() !== 'subscription'
-    );
-    const dailyLifeTotal = dailyLife.reduce((s, t) => s + Math.abs(t.amount), 0);
-
-    const smallStuff = expenseTxns.filter(t => Math.abs(t.amount) < 20);
-    const smallStuffTotal = smallStuff.reduce((s, t) => s + Math.abs(t.amount), 0);
+    const breakdown = computeExpenseBreakdown(transactions);
 
     // Category Breakdown
     const categoryMap: Record<string, { total: number, count: number, type: 'income' | 'expense' }> = {};
@@ -239,12 +225,7 @@ const TimeGlance = () => {
       daysInPeriod,
       highExpenses,
       expenseTxns,
-      breakdown: {
-        bigHits: { items: bigHits, total: bigHitsTotal },
-        subscriptions: { items: subscriptions, total: subscriptionsTotal },
-        dailyLife: { items: dailyLife, total: dailyLifeTotal },
-        smallStuff: { items: smallStuff, total: smallStuffTotal }
-      }
+      breakdown
     };
   }, [transactions, view, dateRange]);
 
@@ -302,10 +283,10 @@ const TimeGlance = () => {
           <p className="text-[10px] text-muted-foreground italic">No transactions.</p>
         ) : (
           items.map((t, i) => (
-            <div key={i} className="flex items-start justify-between gap-3 border-b border-muted/50 pb-1.5 last:border-0">
+            <div key={t.id ?? i} className="flex items-start justify-between gap-3 border-b border-muted/50 pb-1.5 last:border-0">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold truncate leading-tight">{t.description}</p>
-                <p className="text-[8px] font-medium text-muted-foreground uppercase tracking-tighter">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
+                <p className="text-[8px] font-medium text-muted-foreground uppercase tracking-tighter">{t.transaction_date ? format(parseISO(t.transaction_date), 'MMM dd') : ''}</p>
               </div>
               <p className="text-[10px] font-black tabular-nums shrink-0">{formatCurrency(Math.abs(t.amount))}</p>
             </div>
@@ -569,7 +550,7 @@ const TimeGlance = () => {
                               </div>
                               <span className="font-black tabular-nums text-rose-600">{formatCurrency(cat.total)}</span>
                             </div>
-                            <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as any} />
+                            <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as React.CSSProperties & Record<string, string>} />
                             <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of expenses</span></div>
                           </div>
                         );
@@ -596,7 +577,7 @@ const TimeGlance = () => {
                               </div>
                               <span className="font-black tabular-nums text-emerald-600">{formatCurrency(cat.total)}</span>
                             </div>
-                            <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as any} />
+                            <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as React.CSSProperties & Record<string, string>} />
                             <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of income</span></div>
                           </div>
                         );

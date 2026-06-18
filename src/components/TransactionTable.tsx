@@ -24,7 +24,7 @@ interface TransactionTableProps {
   onToggleExpand: (id: string) => void;
   sortField: string;
   sortOrder: 'asc' | 'desc';
-  onSort: (field: any) => void;
+  onSort: (field: string) => void;
 }
 
 const TransactionTable = ({

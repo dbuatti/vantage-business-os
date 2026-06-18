@@ -27,11 +27,12 @@ import { formatCurrency } from '@/utils/format';
 import { supabase } from '@/lib/supabase';
 import { showSuccess, showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
+import { Transaction } from '@/types/finance';
 
 interface QuickNotesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  transactions: any[];
+  transactions: Transaction[];
   onSuccess: () => void;
 }
 
@@ -41,7 +42,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Smart Pre-fill Logic
-  const getSuggestion = (t: any) => {
+  const getSuggestion = (t: Transaction) => {
     const desc = t.description.toLowerCase();
     const cat = (t.category_1 || '').toLowerCase();
     const account = (t.account_label || '').toLowerCase();
@@ -140,8 +141,8 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
       showSuccess(`Saved ${updates.length} notes`);
       onSuccess();
       // Modal stays open as requested
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setSaving(false);
     }

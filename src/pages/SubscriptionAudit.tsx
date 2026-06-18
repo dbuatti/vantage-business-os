@@ -84,9 +84,9 @@ const SubscriptionAuditPage = () => {
         .replace(/Visa Purchase - Receipt \d+/gi, '')
         .replace(/In [A-Z\s]+ Date \d{1,2} [A-Z]{3} \d{4}/gi, '')
         .replace(/Card \d{4}x+\d{4}/gi, '')
-        .replace(/Foreign Currency Amount: [A-Z\s\d\.]+/gi, '')
+        .replace(/Foreign Currency Amount: [A-Z\s\d.]+/gi, '')
         .replace(/Ref \d+/gi, '')
-        .replace(/[\-\*#]/g, ' ')
+        .replace(/[-*#]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
     };
@@ -131,7 +131,7 @@ const SubscriptionAuditPage = () => {
         const totalSpent = txns.reduce((s, t) => s + Math.abs(t.amount), 0);
         
         // Frequency detection
-        let frequency: any = 'Monthly';
+        let frequency: 'Weekly' | 'Monthly' | 'Yearly' | 'Irregular' = 'Monthly';
         if (txns.length >= 2) {
           const days = Math.abs(differenceInDays(parseISO(sorted[0].transaction_date), parseISO(sorted[1].transaction_date)));
           if (days > 300) frequency = 'Yearly';

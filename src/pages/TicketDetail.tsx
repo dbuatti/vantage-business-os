@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -92,13 +92,7 @@ const TicketDetail = () => {
   const [showTimeDialog, setShowTimeDialog] = useState(false);
   const [timeToLog, setTimeToLog] = useState('');
 
-  useEffect(() => {
-    if (session && id) {
-      fetchTicketData();
-    }
-  }, [session, id]);
-
-  const fetchTicketData = async () => {
+  const fetchTicketData = useCallback(async () => {
     setLoading(true);
     try {
       const { data: ticketData, error: ticketError } = await supabase
@@ -117,13 +111,19 @@ const TicketDetail = () => {
       
       setComments(commentRes.data || []);
       setAiAnalysis(aiRes.data);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
       navigate('/tickets');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    if (session && id) {
+      fetchTicketData();
+    }
+  }, [session, id, fetchTicketData]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,8 +143,8 @@ const TicketDetail = () => {
       setNewComment('');
       fetchTicketData();
       showSuccess('Comment added');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -157,8 +157,8 @@ const TicketDetail = () => {
       if (error) throw error;
       setAiAnalysis(data);
       showSuccess('AI Analysis complete');
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setAnalyzing(false);
     }
@@ -180,8 +180,8 @@ const TicketDetail = () => {
       setShowTimeDialog(false);
       setTimeToLog('');
       fetchTicketData();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -195,8 +195,8 @@ const TicketDetail = () => {
       if (error) throw error;
       showSuccess(`Status updated to ${status}`);
       fetchTicketData();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 

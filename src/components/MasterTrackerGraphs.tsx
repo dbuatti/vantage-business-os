@@ -23,9 +23,9 @@ import { cn } from '@/lib/utils';
 import { TrendingUp, BarChart3, Activity, Target } from 'lucide-react';
 
 interface MasterTrackerGraphsProps {
-  transactions: any[];
-  budgets: any[];
-  categoryGroups: any[];
+  transactions: Array<{ transaction_date: string; amount: number; category_1: string }>;
+  budgets: Array<{ category_name: string; amount: number; month: number | null }>;
+  categoryGroups: Array<{ category_name: string; group_name: string }>;
   year: number;
 }
 
@@ -54,7 +54,7 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
   const chartData = useMemo(() => {
     return months.map(month => {
       const monthTxns = transactions.filter(t => isSameMonth(parseISO(t.transaction_date), month));
-      const data: any = { name: format(month, 'MMM') };
+      const data: Record<string, string | number> = { name: format(month, 'MMM') };
       
       EXPENSE_GROUPS.forEach(group => {
         data[group.name] = monthTxns
@@ -107,13 +107,19 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
     });
   }, [transactions, months, budgets]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  interface CustomTooltipPayload {
+    color: string;
+    name: string;
+    value: number;
+  }
+
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: CustomTooltipPayload[]; label?: string }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border rounded-xl shadow-2xl p-4 space-y-2">
           <p className="font-black text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
           <div className="space-y-1">
-            {payload.map((entry: any, i: number) => (
+            {payload.map((entry: CustomTooltipPayload, i: number) => (
               <div key={i} className="flex items-center justify-between gap-8">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />

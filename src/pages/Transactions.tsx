@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -49,9 +49,10 @@ import {
   Activity 
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
+import { fetchAllPaginated } from '@/utils/supabase';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { formatCurrency, formatDate } from '@/utils/format';
+import { formatCurrency, formatDate, downloadCSV } from '@/utils/format';
 import TransactionImporter from '@/components/TransactionImporter';
 import TransactionBottomBar from '@/components/TransactionBottomBar';
 import CategoryGroupManager from '@/components/CategoryGroupManager';
@@ -74,11 +75,11 @@ const Transactions = () => {
   const { selectedYear } = useSettings();
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categoryGroups, setCategoryGroups] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<Record<string, unknown>[]>([]);
+  const [invoices, setInvoices] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<any>('date');
+  const [sortField, setSortField] = useState<'date' | 'amount' | 'description' | 'category'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -114,57 +115,28 @@ const Transactions = () => {
 
   const [showBulkDelete, setShowBulkDelete] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && !session) {
-      navigate('/login');
-    } else if (session) {
-      fetchTransactions();
-      fetchCategoryGroups();
-      fetchInvoices();
-    }
-  }, [session, authLoading, navigate, selectedYear]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
-      let allData: Transaction[] = [];
-      let from = 0;
-      const step = 1000;
-      let hasMore = true;
-
-      while (hasMore) {
-        let query = supabase
-          .from('finance_transactions')
-          .select('*')
-          .order('transaction_date', { ascending: false })
-          .order('id', { ascending: false });
-
-        if (selectedYear !== 'All') {
-          query = query.gte('transaction_date', `${selectedYear}-01-01`).lte('transaction_date', `${selectedYear}-12-31`);
-        }
-
-        const { data, error } = await query.range(from, from + step - 1);
-
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          allData = [...allData, ...data];
-          if (data.length < step) hasMore = false;
-          else from += step;
-        } else {
-          hasMore = false;
-        }
-      }
-      
-      setTransactions(allData);
-    } catch (error: any) {
-      showError(error.message);
+      const data = await fetchAllPaginated<Transaction>({
+        table: 'finance_transactions',
+        select: '*',
+        order: [
+          { column: 'transaction_date', ascending: false },
+          { column: 'id', ascending: false }
+        ],
+        yearFilter: selectedYear !== 'All' ? { column: 'transaction_date', year: selectedYear } : undefined,
+        pageSize: 1000,
+      });
+      setTransactions(data);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedYear]);
 
-  const fetchCategoryGroups = async () => {
+  const fetchCategoryGroups = useCallback(async () => {
     if (!session) return;
     try {
       const { data, error } = await supabase
@@ -173,10 +145,10 @@ const Transactions = () => {
         .order('group_name');
       if (error) throw error;
       setCategoryGroups(data || []);
-    } catch (error: any) {}
-  };
+    } catch { /* silent - groups are optional */ }
+  }, [session]);
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     if (!session) return;
     try {
       const { data, error } = await supabase
@@ -185,12 +157,22 @@ const Transactions = () => {
         .order('invoice_date', { ascending: false });
       if (error) throw error;
       setInvoices(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching invoices:", error);
     }
-  };
+  }, [session]);
 
-  const handleImport = async (parsedData: any[], newMappings?: Record<string, string>) => {
+  useEffect(() => {
+    if (!authLoading && !session) {
+      navigate('/login');
+    } else if (session) {
+      fetchTransactions();
+      fetchCategoryGroups();
+      fetchInvoices();
+    }
+  }, [session, authLoading, navigate, selectedYear, fetchTransactions, fetchCategoryGroups, fetchInvoices]);
+
+  const handleImport = async (parsedData: Record<string, unknown>[], newMappings?: Record<string, string>) => {
     if (!session) return { total: 0, imported: 0, duplicates: 0, errors: 1 };
     try {
       // 1. Save new category mappings if provided
@@ -219,7 +201,7 @@ const Transactions = () => {
       if (error) throw error;
       await fetchTransactions();
       return { total: parsedData.length, imported: parsedData.length, duplicates: 0, errors: 0 };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Import error:", error);
       return { total: parsedData.length, imported: 0, duplicates: 0, errors: 1 };
     }
@@ -257,8 +239,8 @@ const Transactions = () => {
       showSuccess('Transaction updated');
       setEditingTransaction(null);
       fetchTransactions();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -278,8 +260,8 @@ const Transactions = () => {
       setSelectedIds(new Set());
       setShowBulkCategorize(false);
       fetchTransactions();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -317,8 +299,8 @@ const Transactions = () => {
 
       setSelectedIds(new Set());
       fetchTransactions();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -341,8 +323,8 @@ const Transactions = () => {
 
       setTransactions(prev => prev.filter(t => t.id !== id));
       setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -366,8 +348,8 @@ const Transactions = () => {
       setTransactions(prev => prev.filter(t => !selectedIds.has(t.id!)));
       setSelectedIds(new Set());
       setShowBulkDelete(false);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     }
   };
 
@@ -450,7 +432,7 @@ const Transactions = () => {
     return { count: selected.length, total };
   }, [filteredTransactions, selectedIds]);
 
-  const handleSort = (field: any) => {
+  const handleSort = (field: 'date' | 'amount' | 'description' | 'category') => {
     if (sortField === field) setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortOrder('desc'); }
   };
@@ -462,12 +444,7 @@ const Transactions = () => {
       format(new Date(t.transaction_date), 'yyyy-MM-dd'), t.description, t.category_1, t.category_2,
       t.account_label, t.amount.toString(), t.is_work ? 'Yes' : 'No', t.notes || ''
     ]);
-    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `transactions-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    link.click();
+    downloadCSV(headers, rows, `transactions-${format(new Date(), 'yyyy-MM-dd')}.csv`);
     showSuccess(`Exported ${filteredTransactions.length} transactions`);
   };
 

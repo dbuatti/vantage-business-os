@@ -32,3 +32,15 @@ export const parseNumericInput = (val: string): number => {
   const parsed = parseFloat(val.replace(/[$,\s]/g, ''));
   return isNaN(parsed) ? 0 : parsed;
 };
+
+export function downloadCSV(headers: string[], rows: string[][], filename: string) {
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}

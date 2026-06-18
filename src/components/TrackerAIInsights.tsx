@@ -21,16 +21,37 @@ import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { showError } from '@/utils/toast';
 
+interface Prediction {
+  severity: string;
+  category: string;
+  prediction: string;
+}
+
+interface TacticalAdvice {
+  title: string;
+  advice: string;
+  impact?: string;
+}
+
+interface InsightsData {
+  status: string;
+  summary?: string;
+  headline?: string;
+  predictions?: Prediction[];
+  tacticalAdvice?: TacticalAdvice[];
+  coachingNote?: string;
+}
+
 interface TrackerAIInsightsProps {
-  transactions: any[];
-  categoryGroups: any[];
-  budgets: any[];
+  transactions: Array<{ amount: number; category_1: string; transaction_date: string; description: string }>;
+  categoryGroups: Array<{ category_name: string; group_name: string }>;
+  budgets: Array<{ category_name: string; amount: number; month: number | null }>;
   year: number;
 }
 
 const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: TrackerAIInsightsProps) => {
   const [loading, setLoading] = useState(false);
-  const [insights, setInsights] = useState<any>(null);
+  const [insights, setInsights] = useState<InsightsData | null>(null);
 
   const getInsights = async () => {
     setLoading(true);
@@ -46,7 +67,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
 
       if (error) throw error;
       setInsights(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showError('Failed to get AI advice. Please try again in a minute.');
     } finally {
       setLoading(false);
@@ -109,7 +130,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
             <div className="space-y-4">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Trajectory Warnings</p>
               <div className="space-y-3">
-                {insights.predictions?.map((p: any, i: number) => (
+                {insights.predictions?.map((p: Prediction, i: number) => (
                   <div key={i} className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-start gap-3">
                     <div className={cn(
                       "p-1.5 rounded-lg shrink-0",
@@ -133,7 +154,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
             <div className="space-y-4">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Tactical Adjustments</p>
               <div className="space-y-3">
-                {insights.tacticalAdvice?.map((a: any, i: number) => (
+                {insights.tacticalAdvice?.map((a: TacticalAdvice, i: number) => (
                   <div key={i} className="p-4 rounded-2xl bg-black/20 border border-white/5 flex items-start gap-3">
                     <div className="p-1.5 bg-emerald-400/20 text-emerald-300 rounded-lg shrink-0">
                       <Zap className="w-4 h-4" />

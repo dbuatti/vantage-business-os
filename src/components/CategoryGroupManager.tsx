@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,11 +106,7 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
     return filtered;
   }, [groups, searchQuery, viewMode]);
 
-  useEffect(() => {
-    fetchGroups();
-  }, [session]);
-
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     if (!session) return;
     setLoading(true);
     try {
@@ -120,12 +116,16 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
         .order('group_name');
       if (error) throw error;
       setGroups(data || []);
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, [session, fetchGroups]);
 
   const handleSave = async () => {
     if (!session || !formCategory || !formGroup) return;
@@ -147,8 +147,8 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
       await fetchGroups();
       onGroupsUpdated();
       resetForm();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     }
   };
 
@@ -159,8 +159,8 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
       setGroups(prev => prev.filter(g => g.id !== id));
       showSuccess('Mapping removed');
       onGroupsUpdated();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     }
   };
 
@@ -280,8 +280,8 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
       showSuccess(`Auto-assigned ${toInsert.length} categories`);
       await fetchGroups();
       onGroupsUpdated();
-    } catch (error: any) {
-      showError(error.message);
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : 'An error occurred');
     }
   };
 
