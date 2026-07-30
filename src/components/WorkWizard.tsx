@@ -241,7 +241,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                   <div className="text-right">
                     <div className={cn(
                       "text-xl font-black tabular-nums",
-                      currentGroup.totalAmount > 0 ? "text-emerald-600" : "text-rose-600"
+                      currentGroup.totalAmount > 0 ? "text-profit" : "text-danger"
                     )}>
                       {formatCurrency(currentGroup.totalAmount)}
                     </div>
@@ -253,7 +253,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                   <Badge variant="secondary" className="rounded-lg font-medium">
                     {currentGroup.transactions[0].category_1 || 'Uncategorized'}
                   </Badge>
-                  <div className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 font-medium">
+                  <div className="flex items-center gap-1.5 text-xs text-warning bg-warning-bg px-2.5 py-1 rounded-lg border border-warning-border font-medium">
                     <AlertCircle className="w-3.5 h-3.5" />
                     Suggestion: {currentGroup.reason}
                   </div>
@@ -279,7 +279,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                             </div>
                             <span className={cn(
                               "font-bold tabular-nums ml-2",
-                              t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                              t.amount > 0 ? "text-profit" : "text-danger"
                             )}>
                               {formatCurrency(t.amount)}
                             </span>

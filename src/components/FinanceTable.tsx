@@ -95,13 +95,13 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
             <SelectItem value="All">All Accounts</SelectItem>
             <SelectItem value="Savings">
               <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="w-2 h-2 rounded-full bg-info" />
                 Savings
               </span>
             </SelectItem>
             <SelectItem value="Credit">
               <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="w-2 h-2 rounded-full bg-warning" />
                 Credit
               </span>
             </SelectItem>
@@ -159,8 +159,8 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                         className={cn(
                           "px-2.5 py-1 rounded-lg font-medium text-xs",
                           entry.account === 'Savings' 
-                            ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800" 
-                            : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800"
+                            ? "bg-info-bg text-info border-info-border" 
+                            : "bg-warning-bg text-warning border-warning-border"
                         )}
                       >
                         {entry.account}
@@ -173,8 +173,8 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                         <span className={cn(
                           "inline-flex items-center gap-1 font-bold text-sm px-2.5 py-1 rounded-lg",
                           entry.difference > 0 
-                            ? "text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950" 
-                            : "text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950"
+                            ? "text-profit bg-profit-bg" 
+                            : "text-danger bg-danger-bg"
                         )}>
                           {entry.difference > 0 && <ArrowUpRight className="w-3.5 h-3.5" />}
                           {entry.difference < 0 && <ArrowDownRight className="w-3.5 h-3.5" />}
@@ -194,7 +194,7 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-danger-bg hover:text-danger">
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </AlertDialogTrigger>
@@ -207,7 +207,7 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => onDeleteEntry(entry.id)} className="rounded-xl bg-rose-600 hover:bg-rose-700">
+                              <AlertDialogAction onClick={() => onDeleteEntry(entry.id)} className="rounded-xl bg-danger hover:bg-danger">
                                 Delete
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -243,8 +243,8 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                       className={cn(
                         "px-2 py-0.5 rounded-lg text-xs font-medium",
                         entry.account === 'Savings' 
-                          ? "bg-blue-50 text-blue-700 border-blue-200" 
-                          : "bg-amber-50 text-amber-700 border-amber-200"
+                          ? "bg-info-bg text-info border-info-border" 
+                          : "bg-warning-bg text-warning border-warning-border"
                       )}
                     >
                       {entry.account}
@@ -262,7 +262,7 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-600">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-danger">
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </AlertDialogTrigger>
@@ -296,8 +296,8 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
                         <span className={cn(
                           "inline-flex items-center gap-1 font-bold text-sm px-2.5 py-1 rounded-lg",
                           entry.difference > 0 
-                            ? "text-emerald-700 bg-emerald-50" 
-                            : "text-rose-700 bg-rose-50"
+                            ? "text-profit bg-profit-bg" 
+                            : "text-danger bg-danger-bg"
                         )}>
                           {entry.difference > 0 && <ArrowUpRight className="w-3.5 h-3.5" />}
                           {entry.difference < 0 && <ArrowDownRight className="w-3.5 h-3.5" />}
@@ -317,7 +317,7 @@ const FinanceTable = ({ entries, onDeleteEntry, onUpdateEntry }: FinanceTablePro
             <DialogTitle className="flex items-center gap-2">
               <div className={cn(
                 "w-3 h-3 rounded-full",
-                editingEntry?.account === 'Savings' ? "bg-blue-500" : "bg-amber-500"
+                editingEntry?.account === 'Savings' ? "bg-info" : "bg-warning"
               )} />
               Edit {editingEntry?.account} Entry
             </DialogTitle>

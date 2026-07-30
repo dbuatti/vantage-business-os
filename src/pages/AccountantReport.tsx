@@ -323,15 +323,15 @@ const AccountantReport = () => {
 
         {/* Data Quality Audit Section */}
         {needsAttention && (
-          <Card className="border-0 shadow-xl bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900 print:hidden">
+          <Card className="border-0 shadow-xl bg-warning-bg border-warning-border print:hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg font-black flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                  <CardTitle className="text-lg font-black flex items-center gap-2 text-warning">
                     <AlertTriangle className="w-5 h-5 text-amber-600" />
                     Data Quality Audit
                   </CardTitle>
-                  <CardDescription className="text-amber-700 dark:text-amber-300">
+                  <CardDescription className="text-warning">
                     These work items are missing critical information for your tax return.
                   </CardDescription>
                 </div>
@@ -349,7 +349,7 @@ const AccountantReport = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-amber-200/50 dark:divide-amber-900/50">
+              <div className="divide-y divide-warning-border/50">
                 {[...stats.unmapped, ...stats.missingNotes].map((t) => (
                   <div key={t.id} className="p-4 flex items-center justify-between hover:bg-amber-100/30 transition-colors group">
                     <div className="flex items-center gap-4 min-w-0">

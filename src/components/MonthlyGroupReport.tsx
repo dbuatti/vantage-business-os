@@ -199,12 +199,12 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
                 </div>
                 <div className="text-right shrink-0 space-y-0.5">
                   {data.income > 0 && (
-                    <p className="text-xs text-emerald-600 font-medium">+{formatCurrency(data.income)}</p>
+                    <p className="text-xs text-profit font-medium">+{formatCurrency(data.income)}</p>
                   )}
                   {data.expenses > 0 && (
-                    <p className="text-xs text-rose-600 font-medium">-{formatCurrency(data.expenses)}</p>
+                    <p className="text-xs text-danger font-medium">-{formatCurrency(data.expenses)}</p>
                   )}
-                  <p className={cn("font-bold", data.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                  <p className={cn("font-bold", data.net >= 0 ? "text-profit" : "text-danger")}>
                     {formatCurrency(data.net)}
                   </p>
                 </div>
@@ -229,13 +229,13 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
                       {categoryEntries.map(([catName, catData]) => (
                         <TableRow key={catName} className="hover:bg-muted/30">
                           <TableCell className="text-sm font-medium">{catName}</TableCell>
-                          <TableCell className="text-right text-sm text-emerald-600 tabular-nums">
+                          <TableCell className="text-right text-sm text-profit tabular-nums">
                             {catData.income > 0 ? formatCurrency(catData.income) : '—'}
                           </TableCell>
-                          <TableCell className="text-right text-sm text-rose-600 tabular-nums">
+                          <TableCell className="text-right text-sm text-danger tabular-nums">
                             {catData.expenses > 0 ? formatCurrency(-catData.expenses) : '—'}
                           </TableCell>
-                          <TableCell className={cn("text-right text-sm font-bold tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                          <TableCell className={cn("text-right text-sm font-bold tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-profit" : "text-danger")}>
                             {formatCurrency(catData.income - catData.expenses)}
                           </TableCell>
                           <TableCell className="text-right text-xs text-muted-foreground">
@@ -315,24 +315,24 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <ArrowUpRight className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">Income</span>
+                  <ArrowUpRight className="w-4 h-4 text-profit" />
+                  <span className="text-xs text-profit font-medium">Income</span>
                 </div>
-                <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(totalIncome)}</p>
+                <p className="text-2xl font-bold text-profit">{formatCurrency(totalIncome)}</p>
               </div>
               <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <ArrowDownRight className="w-4 h-4 text-rose-600" />
-                  <span className="text-xs text-rose-700 dark:text-rose-300 font-medium">Expenses</span>
+                  <ArrowDownRight className="w-4 h-4 text-danger" />
+                  <span className="text-xs text-danger font-medium">Expenses</span>
                 </div>
-                <p className="text-2xl font-bold text-rose-700 dark:text-rose-300">{formatCurrency(-totalExpenses)}</p>
+                <p className="text-2xl font-bold text-danger">{formatCurrency(-totalExpenses)}</p>
               </div>
               <div className={cn("p-4 rounded-xl", totalNet >= 0 ? "bg-blue-50 dark:bg-blue-950" : "bg-amber-50 dark:bg-amber-950")}>
                 <div className="flex items-center gap-1.5 mb-1">
-                  <TrendingUp className={cn("w-4 h-4", totalNet >= 0 ? "text-blue-600" : "text-amber-600")} />
-                  <span className={cn("text-xs font-medium", totalNet >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>Net</span>
+                  <TrendingUp className={cn("w-4 h-4", totalNet >= 0 ? "text-info" : "text-warning")} />
+                  <span className={cn("text-xs font-medium", totalNet >= 0 ? "text-info" : "text-warning")}>Net</span>
                 </div>
-                <p className={cn("text-2xl font-bold", totalNet >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>{formatCurrency(totalNet)}</p>
+                <p className={cn("text-2xl font-bold", totalNet >= 0 ? "text-info" : "text-warning")}>{formatCurrency(totalNet)}</p>
               </div>
             </div>
 
@@ -348,8 +348,8 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">❓</span>
-                    <span className="font-semibold text-sm text-amber-700">Unmapped Categories</span>
-                    <Badge variant="outline" className="text-[10px] rounded-lg bg-amber-50 text-amber-700 border-amber-200">
+                    <span className="font-semibold text-sm text-warning">Unmapped Categories</span>
+                    <Badge variant="outline" className="text-[10px] rounded-lg bg-warning-bg text-warning border-warning-border">
                       {groupedData['Unmapped'].transactions.length} txns
                     </Badge>
                   </div>

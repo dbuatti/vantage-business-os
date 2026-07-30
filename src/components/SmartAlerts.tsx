@@ -132,17 +132,17 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
                 <div className="space-y-1">
                   <h3 className={cn(
                     "font-black text-sm uppercase tracking-tight",
-                    alert.type === 'warning' ? "text-rose-700" :
-                    alert.type === 'opportunity' ? "text-emerald-700" :
-                    "text-blue-700"
+                    alert.type === 'warning' ? "text-danger" :
+                    alert.type === 'opportunity' ? "text-profit" :
+                    "text-info"
                   )}>{alert.title}</h3>
                   <p className="text-xs font-medium text-muted-foreground leading-relaxed">{alert.description}</p>
                 </div>
                 <div className={cn(
                   "p-2 rounded-xl shrink-0",
-                  alert.type === 'warning' ? "bg-rose-100 text-rose-600" :
-                  alert.type === 'opportunity' ? "bg-emerald-100 text-emerald-600" :
-                  "bg-blue-100 text-blue-600"
+                  alert.type === 'warning' ? "bg-danger-bg text-danger" :
+                  alert.type === 'opportunity' ? "bg-profit-bg text-profit" :
+                  "bg-info-bg text-info"
                 )}>
                   <alert.icon className="w-4 h-4" />
                 </div>
@@ -155,9 +155,9 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
                   asChild 
                   className={cn(
                     "w-full rounded-xl h-9 text-xs font-bold gap-2 group-hover:bg-white/50 transition-colors",
-                    alert.type === 'warning' ? "text-rose-700 hover:text-rose-800" :
-                    alert.type === 'opportunity' ? "text-emerald-700 hover:text-emerald-800" :
-                    "text-blue-700 hover:text-blue-800"
+                    alert.type === 'warning' ? "text-danger " :
+                    alert.type === 'opportunity' ? "text-profit " :
+                    "text-info "
                   )}
                 >
                   <Link to={alert.actionUrl || '#'}>

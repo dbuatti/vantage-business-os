@@ -103,8 +103,8 @@ const MonthlySummary = ({ entries }: MonthlySummaryProps) => {
                   </span>
                   <span className={cn(
                     "inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg",
-                    isPositive && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
-                    isNegative && "bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300",
+                    isPositive && "bg-profit-bg text-profit",
+                    isNegative && "bg-danger-bg text-danger",
                     !isPositive && !isNegative && "bg-gray-100 text-gray-500"
                   )}>
                     {isPositive && <ArrowUpRight className="w-3 h-3" />}
@@ -116,13 +116,13 @@ const MonthlySummary = ({ entries }: MonthlySummaryProps) => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-0.5">
                     <div className="text-xs text-muted-foreground font-medium">Savings</div>
-                    <div className="font-bold text-blue-600 dark:text-blue-400">
+                    <div className="font-bold text-info">
                       {formatCurrency(month.savings.total)}
                     </div>
                     {month.savings.count > 0 && (
                       <div className={cn(
                         "text-xs font-medium",
-                        month.savings.change > 0 ? "text-emerald-600" : "text-rose-600"
+                        month.savings.change > 0 ? "text-profit" : "text-danger"
                       )}>
                         {formatChange(month.savings.change)}
                       </div>
@@ -130,13 +130,13 @@ const MonthlySummary = ({ entries }: MonthlySummaryProps) => {
                   </div>
                   <div className="space-y-0.5">
                     <div className="text-xs text-muted-foreground font-medium">Credit</div>
-                    <div className="font-bold text-amber-600 dark:text-amber-400">
+                    <div className="font-bold text-warning">
                       {formatCurrency(month.credit.total)}
                     </div>
                     {month.credit.count > 0 && (
                       <div className={cn(
                         "text-xs font-medium",
-                        month.credit.change > 0 ? "text-emerald-600" : "text-rose-600"
+                        month.credit.change > 0 ? "text-profit" : "text-danger"
                       )}>
                         {formatChange(month.credit.change)}
                       </div>

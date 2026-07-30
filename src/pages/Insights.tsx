@@ -209,10 +209,10 @@ const Insights = () => {
 
   const getInsightColors = (type: string) => {
     switch (type) {
-      case 'opportunity': return { bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-200 dark:border-blue-800', icon: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' };
-      case 'warning': return { bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-800', icon: 'text-amber-600', badge: 'bg-amber-100 text-amber-700' };
-      case 'success': return { bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-200 dark:border-emerald-800', icon: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' };
-      case 'tip': return { bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-200 dark:border-violet-800', icon: 'text-violet-600', badge: 'bg-violet-100 text-violet-700' };
+      case 'opportunity': return { bg: 'bg-info-bg', border: 'border-info-border', icon: 'text-info', badge: 'bg-info text-info-foreground' };
+      case 'warning': return { bg: 'bg-warning-bg', border: 'border-warning-border', icon: 'text-warning', badge: 'bg-warning text-warning-foreground' };
+      case 'success': return { bg: 'bg-profit-bg', border: 'border-profit-border', icon: 'text-profit', badge: 'bg-profit text-profit-foreground' };
+      case 'tip': return { bg: 'bg-ai-bg', border: 'border-ai-border', icon: 'text-ai', badge: 'bg-ai text-ai-foreground' };
       default: return { bg: 'bg-muted/30', border: 'border-muted', icon: 'text-muted-foreground', badge: 'bg-muted text-muted-foreground' };
     }
   };
@@ -252,14 +252,14 @@ const Insights = () => {
       </div>
 
       {rateLimitError && (
-        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+        <Card className="border-warning-border bg-warning-bg">
           <CardContent className="p-6 flex items-center gap-4">
-            <Clock className="w-6 h-6 text-amber-600" />
+            <Clock className="w-6 h-6 text-warning" />
             <div className="flex-1">
-              <p className="font-bold text-amber-800 dark:text-amber-200">AI is taking a breather</p>
-              <p className="text-sm text-amber-700 dark:text-amber-300">{rateLimitError}</p>
+              <p className="font-bold text-warning">AI is taking a breather</p>
+              <p className="text-sm text-warning">{rateLimitError}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={generateInsights} className="rounded-xl border-amber-200 text-amber-700 hover:bg-amber-100">Try Again</Button>
+            <Button variant="outline" size="sm" onClick={generateInsights} className="rounded-xl border-warning-border text-warning hover:bg-warning-bg">Try Again</Button>
           </CardContent>
         </Card>
       )}

@@ -66,7 +66,7 @@ const PortalTotalsTable = ({
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-8 font-bold text-emerald-600 hover:bg-emerald-50 gap-2"
+                          className="h-8 font-bold text-profit hover:bg-profit-bg gap-2"
                           onClick={() => onCopyAmount(groupData.income.toString(), `${groupName}-inc`)}
                         >
                           {formatCurrency(groupData.income)}
@@ -79,7 +79,7 @@ const PortalTotalsTable = ({
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-8 font-bold text-rose-600 hover:bg-rose-50 gap-2"
+                          className="h-8 font-bold text-danger hover:bg-danger-bg gap-2"
                           onClick={() => onCopyAmount(groupData.expenses.toString(), `${groupName}-exp`)}
                         >
                           {formatCurrency(groupData.expenses)}
@@ -87,7 +87,7 @@ const PortalTotalsTable = ({
                         </Button>
                       ) : '—'}
                     </TableCell>
-                    <TableCell className={cn("text-right font-black pr-6", (groupData.income - groupData.expenses) >= 0 ? "text-emerald-700" : "text-rose-700")}>
+                    <TableCell className={cn("text-right font-black pr-6", (groupData.income - groupData.expenses) >= 0 ? "text-profit" : "text-danger")}>
                       {formatCurrency(groupData.income - groupData.expenses)}
                     </TableCell>
                   </TableRow>
@@ -105,7 +105,7 @@ const PortalTotalsTable = ({
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="h-7 text-xs text-emerald-600/80 hover:bg-emerald-50 gap-1.5"
+                                className="h-7 text-xs text-profit/80 hover:bg-profit-bg gap-1.5"
                                 onClick={() => onCopyAmount(catData.income.toString(), `${catName}-inc`)}
                               >
                                 {formatCurrency(catData.income)}
@@ -118,7 +118,7 @@ const PortalTotalsTable = ({
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="h-7 text-xs text-rose-600/80 hover:bg-rose-50 gap-1.5"
+                                className="h-7 text-xs text-danger/80 hover:bg-danger-bg gap-1.5"
                                 onClick={() => onCopyAmount(catData.expenses.toString(), `${catName}-exp`)}
                               >
                                 {formatCurrency(catData.expenses)}
@@ -126,7 +126,7 @@ const PortalTotalsTable = ({
                               </Button>
                             ) : '—'}
                           </TableCell>
-                          <TableCell className={cn("text-right text-sm font-black pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                          <TableCell className={cn("text-right text-sm font-black pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-profit" : "text-danger")}>
                             {formatCurrency(catData.income - catData.expenses)}
                           </TableCell>
                         </TableRow>
@@ -140,15 +140,15 @@ const PortalTotalsTable = ({
                               </TableCell>
                               <TableCell className="text-right">
                                 {subData.income > 0 ? (
-                                  <span className="text-[11px] text-emerald-600/60 tabular-nums">{formatCurrency(subData.income)}</span>
+                                  <span className="text-[11px] text-profit/60 tabular-nums">{formatCurrency(subData.income)}</span>
                                 ) : '—'}
                               </TableCell>
                               <TableCell className="text-right">
                                 {subData.expenses > 0 ? (
-                                  <span className="text-[11px] text-rose-600/60 tabular-nums">{formatCurrency(subData.expenses)}</span>
+                                  <span className="text-[11px] text-danger/60 tabular-nums">{formatCurrency(subData.expenses)}</span>
                                 ) : '—'}
                               </TableCell>
-                              <TableCell className={cn("text-right text-[11px] font-bold pr-6 tabular-nums opacity-80", (subData.income - subData.expenses) >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                              <TableCell className={cn("text-right text-[11px] font-bold pr-6 tabular-nums opacity-80", (subData.income - subData.expenses) >= 0 ? "text-profit" : "text-danger")}>
                                 {formatCurrency(subData.income - subData.expenses)}
                               </TableCell>
                             </TableRow>

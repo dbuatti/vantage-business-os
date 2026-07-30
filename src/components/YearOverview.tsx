@@ -158,16 +158,16 @@ const YearOverview = ({ transactions, categoryGroups, availableMonths }: YearOve
       <CardContent>
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-center">
-            <p className="text-xs text-emerald-600 font-medium">Year Income</p>
-            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(yearIncome)}</p>
+            <p className="text-xs text-profit font-medium">Year Income</p>
+            <p className="text-xl font-bold text-profit">{formatCurrency(yearIncome)}</p>
           </div>
           <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950 text-center">
-            <p className="text-xs text-rose-600 font-medium">Year Expenses</p>
-            <p className="text-xl font-bold text-rose-700 dark:text-rose-300">{formatCurrency(-yearExpenses)}</p>
+            <p className="text-xs text-danger font-medium">Year Expenses</p>
+            <p className="text-xl font-bold text-danger">{formatCurrency(-yearExpenses)}</p>
           </div>
           <div className={cn("p-3 rounded-xl text-center", yearNet >= 0 ? "bg-blue-50 dark:bg-blue-950" : "bg-amber-50 dark:bg-amber-950")}>
-            <p className={cn("text-xs font-medium", yearNet >= 0 ? "text-blue-600" : "text-amber-600")}>Year Net</p>
-            <p className={cn("text-xl font-bold", yearNet >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300")}>{formatCurrency(yearNet)}</p>
+            <p className={cn("text-xs font-medium", yearNet >= 0 ? "text-info" : "text-warning")}>Year Net</p>
+            <p className={cn("text-xl font-bold", yearNet >= 0 ? "text-info" : "text-warning")}>{formatCurrency(yearNet)}</p>
           </div>
         </div>
 
@@ -191,7 +191,7 @@ const YearOverview = ({ transactions, categoryGroups, availableMonths }: YearOve
               {yearData.map((month) => (
                 <TableRow key={month.month} className={cn("hover:bg-muted/30", !month.hasData && "opacity-40")}>
                   <TableCell className="font-medium text-sm sticky left-0 bg-background">{month.shortMonth}</TableCell>
-                  <TableCell className={cn("text-right text-sm font-bold tabular-nums", showIncome ? "text-emerald-600" : "text-rose-600")}>
+                  <TableCell className={cn("text-right text-sm font-bold tabular-nums", showIncome ? "text-profit" : "text-danger")}>
                     {month.hasData ? formatCurrency(showIncome ? month.income : -month.expenses) : '—'}
                   </TableCell>
                   {activeGroups.map(g => (
@@ -199,14 +199,14 @@ const YearOverview = ({ transactions, categoryGroups, availableMonths }: YearOve
                       {month.groupTotals[g.name] > 0 ? formatCurrency(showIncome ? month.groupTotals[g.name] : -month.groupTotals[g.name]) : '—'}
                     </TableCell>
                   ))}
-                  <TableCell className={cn("text-right text-sm font-bold tabular-nums sticky right-0 bg-background", month.net >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                  <TableCell className={cn("text-right text-sm font-bold tabular-nums sticky right-0 bg-background", month.net >= 0 ? "text-profit" : "text-danger")}>
                     {month.hasData ? formatCurrency(month.net) : '—'}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow className="bg-muted/30 font-bold">
                 <TableCell className="sticky left-0 bg-muted/30">Total</TableCell>
-                <TableCell className={cn("text-right", showIncome ? "text-emerald-600" : "text-rose-600")}>
+                <TableCell className={cn("text-right", showIncome ? "text-profit" : "text-danger")}>
                   {formatCurrency(showIncome ? yearIncome : -yearExpenses)}
                 </TableCell>
                 {activeGroups.map(g => {
@@ -217,7 +217,7 @@ const YearOverview = ({ transactions, categoryGroups, availableMonths }: YearOve
                     </TableCell>
                   );
                 })}
-                <TableCell className={cn("text-right sticky right-0 bg-muted/30", yearNet >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                <TableCell className={cn("text-right sticky right-0 bg-muted/30", yearNet >= 0 ? "text-profit" : "text-danger")}>
                   {formatCurrency(yearNet)}
                 </TableCell>
               </TableRow>

@@ -141,7 +141,7 @@ const TransactionTable = ({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className={cn("text-right font-black tabular-nums", t.amount > 0 ? "text-emerald-600" : t.amount < 0 ? "text-rose-600" : "")}>
+                  <TableCell className={cn("text-right font-black tabular-nums", t.amount > 0 ? "text-profit" : t.amount < 0 ? "text-danger" : "")}>
                     {formatCurrency(t.amount)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -149,7 +149,7 @@ const TransactionTable = ({
                       <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={() => onEdit(t)}>
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-rose-50 hover:text-rose-600" onClick={() => setDeleteConfirmId(t.id!)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-danger-bg hover:text-danger" onClick={() => setDeleteConfirmId(t.id!)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -184,8 +184,8 @@ const TransactionTable = ({
                           <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Financial Impact</p>
                             <div className="space-y-1">
-                              {t.credit && <p className="text-xs text-emerald-600 font-bold">Credit: {formatCurrency(t.credit)}</p>}
-                              {t.debit && <p className="text-xs text-rose-600 font-bold">Debit: {formatCurrency(t.debit)}</p>}
+                              {t.credit && <p className="text-xs text-profit font-bold">Credit: {formatCurrency(t.credit)}</p>}
+                              {t.debit && <p className="text-xs text-danger font-bold">Debit: {formatCurrency(t.debit)}</p>}
                               <p className="text-sm font-black">Net: {formatCurrency(t.amount)}</p>
                             </div>
                           </div>
@@ -278,14 +278,14 @@ const TransactionTable = ({
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className={cn("font-black text-sm tabular-nums", t.amount > 0 ? "text-emerald-600" : "text-rose-600")}>
+                <p className={cn("font-black text-sm tabular-nums", t.amount > 0 ? "text-profit" : "text-danger")}>
                   {formatCurrency(t.amount)}
                 </p>
                 <div className="flex items-center justify-end gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => onEdit(t)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-rose-500" onClick={() => setDeleteConfirmId(t.id!)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-danger" onClick={() => setDeleteConfirmId(t.id!)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -333,8 +333,8 @@ const TransactionTable = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="rounded-xl bg-rose-600 hover:bg-rose-700"
+                <AlertDialogAction
+              className="rounded-xl bg-danger hover:bg-danger"
               onClick={() => {
                 if (deleteConfirmId) {
                   onDelete(deleteConfirmId);

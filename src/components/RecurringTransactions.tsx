@@ -147,7 +147,7 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
               <p className="text-xs text-muted-foreground">Monthly recurring</p>
               <p className={cn(
                 "font-bold text-lg",
-                totalMonthlyRecurring < 0 ? "text-rose-600" : "text-emerald-600"
+                totalMonthlyRecurring < 0 ? "text-danger" : "text-profit"
               )}>
                 {formatCurrency(totalMonthlyRecurring)}
               </p>
@@ -169,7 +169,7 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
                       {group.description}
                     </p>
                     {group.isWork && (
-                      <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 rounded-lg shrink-0">
+                      <Badge variant="outline" className="text-[10px] bg-warning-bg text-warning border-warning-border rounded-lg shrink-0">
                         Work
                       </Badge>
                     )}
@@ -185,7 +185,7 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
                 <div className="text-right ml-4">
                   <p className={cn(
                     "font-bold",
-                    group.avgAmount < 0 ? "text-rose-600" : "text-emerald-600"
+                    group.avgAmount < 0 ? "text-danger" : "text-profit"
                   )}>
                     {formatCurrencyAbs(group.avgAmount)}
                   </p>
@@ -196,7 +196,7 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
               <div className="flex items-center gap-3 mt-3">
                 <Badge className={cn(
                   "rounded-lg text-[10px]",
-                  group.frequency === 'Monthly' ? "bg-blue-100 text-blue-700" :
+                  group.frequency === 'Monthly' ? "bg-info-bg text-info" :
                   group.frequency === 'Weekly' ? "bg-purple-100 text-purple-700" :
                   group.frequency === 'Bi-weekly' ? "bg-indigo-100 text-indigo-700" :
                   group.frequency === 'Quarterly' ? "bg-amber-100 text-amber-700" :

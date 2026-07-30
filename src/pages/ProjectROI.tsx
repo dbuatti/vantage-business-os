@@ -276,15 +276,15 @@ const ProjectROI = () => {
           </Card>
 
           {/* Proactive Tip */}
-          <Card className="border-0 shadow-xl bg-indigo-50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900">
+          <Card className="border-0 shadow-xl bg-ai-bg border-ai-border">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900 rounded-lg text-indigo-600 dark:text-indigo-400">
+                <div className="p-1.5 bg-ai-bg rounded-lg text-ai">
                   <Brain className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">AI Recommendation</span>
+                <span className="text-xs font-black uppercase tracking-widest text-ai">AI Recommendation</span>
               </div>
-              <p className="text-sm font-medium leading-relaxed text-indigo-900 dark:text-indigo-100">
+              <p className="text-sm font-medium leading-relaxed text-ai">
                 Based on your ROI data, <span className="font-black">{metrics[0]?.clientName}</span> is your most profitable client. You should prioritize their tickets to maximize your effective hourly yield.
               </p>
             </CardContent>

@@ -124,7 +124,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       label: 'Savings Rate',
       value: `${stats.savingsRate.toFixed(1)}%`,
       icon: Percent,
-      color: stats.savingsRate >= 20 ? 'text-emerald-600' : stats.savingsRate >= 0 ? 'text-amber-600' : 'text-rose-600',
+      color: stats.savingsRate >= 20 ? 'text-profit' : stats.savingsRate >= 0 ? 'text-warning' : 'text-danger',
       bg: stats.savingsRate >= 20 ? 'bg-emerald-50' : stats.savingsRate >= 0 ? 'bg-amber-50' : 'bg-rose-50',
       subtitle: stats.savingsRate >= 20 ? 'Great job!' : stats.savingsRate >= 0 ? 'Could improve' : 'Spending more than earning'
     },
@@ -132,7 +132,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       label: 'Monthly Burn Rate',
       value: formatCurrency(stats.monthlyBurnRate),
       icon: Zap,
-      color: 'text-violet-600',
+      color: 'text-ai',
       bg: 'bg-violet-50',
       subtitle: `Over ${stats.months} months`
     },
@@ -140,7 +140,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       label: 'Daily Avg Spending',
       value: formatCurrency(stats.dailyAvgSpend),
       icon: Calendar,
-      color: 'text-blue-600',
+      color: 'text-info',
       bg: 'bg-blue-50',
       subtitle: 'Per active day'
     },
@@ -148,7 +148,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       label: 'Unique Merchants',
       value: stats.uniqueMerchants.toString(),
       icon: Target,
-      color: 'text-indigo-600',
+      color: 'text-ai',
       bg: 'bg-indigo-50',
       subtitle: `${stats.totalTransactions} total transactions`
     },
@@ -268,10 +268,10 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Avg Expense', value: formatCurrency(stats.avgExpense), color: 'text-rose-600' },
-              { label: 'Avg Income', value: formatCurrency(stats.avgIncome), color: 'text-emerald-600' },
-              { label: 'Work %', value: `${stats.workPercentage.toFixed(1)}%`, color: 'text-amber-600' },
-              { label: 'Net', value: formatCurrency(stats.net), color: stats.net >= 0 ? 'text-emerald-600' : 'text-rose-600' },
+              { label: 'Avg Expense', value: formatCurrency(stats.avgExpense), color: 'text-danger' },
+              { label: 'Avg Income', value: formatCurrency(stats.avgIncome), color: 'text-profit' },
+              { label: 'Work %', value: `${stats.workPercentage.toFixed(1)}%`, color: 'text-warning' },
+              { label: 'Net', value: formatCurrency(stats.net), color: stats.net >= 0 ? 'text-profit' : 'text-danger' },
             ].map((item) => (
               <div key={item.label} className="p-3 rounded-xl bg-muted/50 text-center">
                 <p className="text-xs text-muted-foreground mb-1">{item.label}</p>

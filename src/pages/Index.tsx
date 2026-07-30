@@ -206,9 +206,9 @@ const Index = () => {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return { text: 'Good Morning', icon: Coffee, color: 'text-amber-500' };
-    if (hour < 18) return { text: 'Good Afternoon', icon: Sun, color: 'text-orange-500' };
-    return { text: 'Good Evening', icon: Moon, color: 'text-indigo-500' };
+    if (hour < 12) return { text: 'Good Morning', icon: Coffee, color: 'text-warning' };
+    if (hour < 18) return { text: 'Good Afternoon', icon: Sun, color: 'text-warning' };
+    return { text: 'Good Evening', icon: Moon, color: 'text-ai' };
   };
 
   const greeting = getGreeting();
@@ -227,8 +227,8 @@ const Index = () => {
           <p className="text-muted-foreground text-lg">Your business intelligence at a glance.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-3 py-1 rounded-full font-bold gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <Badge variant="outline" className="bg-profit-bg text-profit border-profit-border px-3 py-1 rounded-full font-bold gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-profit animate-pulse" />
             LIVE DATA SYNC
           </Badge>
         </div>
@@ -310,19 +310,19 @@ const Index = () => {
           {/* Business Streams Summary */}
           {transactionSummary && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up stagger-1">
-              <Card className="border-0 shadow-xl bg-white overflow-hidden group">
+              <Card className="border-0 shadow-xl overflow-hidden group">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600">
+                    <div className="p-2.5 rounded-2xl bg-ai-bg text-ai">
                       <Music className="w-6 h-6" />
                     </div>
-                    <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 font-bold">Music Stream</Badge>
+                    <Badge variant="outline" className="bg-ai-bg text-ai border-ai-border font-bold">Music Stream</Badge>
                   </div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Net Professional Income</p>
-                  <p className="text-3xl font-black text-indigo-600">{formatCurrency(transactionSummary.musicNet)}</p>
+                  <p className="text-3xl font-black text-ai">{formatCurrency(transactionSummary.musicNet)}</p>
                   <div className="mt-4 pt-4 border-t flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Averagable Income</span>
-                    <Button variant="ghost" size="sm" asChild className="h-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold gap-1">
+                    <Button variant="ghost" size="sm" asChild className="h-8 text-ai hover:text-ai hover:bg-ai-bg font-bold gap-1">
                       <Link to="/tax-averaging">
                         Tax Averaging <ChevronRight className="w-3 h-3" />
                       </Link>
@@ -331,19 +331,19 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-xl bg-white overflow-hidden group">
+              <Card className="border-0 shadow-xl overflow-hidden group">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600">
+                    <div className="p-2.5 rounded-2xl bg-profit-bg text-profit">
                       <Sparkles className="w-6 h-6" />
                     </div>
-                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 font-bold">Kinesiology</Badge>
+                    <Badge variant="outline" className="bg-profit-bg text-profit border-profit-border font-bold">Kinesiology</Badge>
                   </div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Net Business Income</p>
-                  <p className="text-3xl font-black text-emerald-600">{formatCurrency(transactionSummary.kineNet)}</p>
+                  <p className="text-3xl font-black text-profit">{formatCurrency(transactionSummary.kineNet)}</p>
                   <div className="mt-4 pt-4 border-t flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">New Business Stream</span>
-                    <Button variant="ghost" size="sm" asChild className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-bold gap-1">
+                    <Button variant="ghost" size="sm" asChild className="h-8 text-profit hover:text-profit hover:bg-profit-bg font-bold gap-1">
                       <Link to="/tax-averaging?tab=kinesiology">
                         View Details <ChevronRight className="w-3 h-3" />
                       </Link>
@@ -375,43 +375,43 @@ const Index = () => {
               </CardHeader>
               <CardContent className="p-8 space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 rounded-3xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 group hover:shadow-lg transition-all">
+                  <div className="p-6 rounded-3xl bg-profit-bg border border-profit-border group hover:shadow-lg transition-all">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-emerald-100 rounded-lg text-emerald-600"><ArrowUpRight className="w-4 h-4" /></div>
-                      <span className="text-xs text-emerald-700 dark:text-emerald-300 font-black uppercase tracking-widest">Income</span>
+                      <div className="p-1.5 rounded-lg bg-profit text-profit-foreground"><ArrowUpRight className="w-4 h-4" /></div>
+                      <span className="text-xs text-profit font-black uppercase tracking-widest">Income</span>
                     </div>
-                    <p className="text-3xl font-black text-emerald-700 dark:text-emerald-300">
+                    <p className="text-3xl font-black text-profit">
                       {formatCurrency(transactionSummary.totalIncome)}
                     </p>
                   </div>
-                  <div className="p-6 rounded-3xl bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/50 group hover:shadow-lg transition-all">
+                  <div className="p-6 rounded-3xl bg-danger-bg border border-danger-border group hover:shadow-lg transition-all">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="p-1.5 bg-rose-100 rounded-lg text-rose-600"><ArrowDownRight className="w-4 h-4" /></div>
-                      <span className="text-xs text-rose-700 dark:text-rose-300 font-black uppercase tracking-widest">Expenses</span>
+                      <div className="p-1.5 rounded-lg bg-danger text-danger-foreground"><ArrowDownRight className="w-4 h-4" /></div>
+                      <span className="text-xs text-danger font-black uppercase tracking-widest">Expenses</span>
                     </div>
-                    <p className="text-3xl font-black text-rose-700 dark:text-rose-300">
+                    <p className="text-3xl font-black text-danger">
                       {formatCurrency(-transactionSummary.totalExpenses)}
                     </p>
                   </div>
                   <div className={cn(
                     "p-6 rounded-3xl border group hover:shadow-lg transition-all",
                     transactionSummary.net >= 0 
-                      ? "bg-blue-50 dark:bg-blue-950/30 border-blue-100 dark:border-blue-900/50" 
-                      : "bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50"
+                      ? "bg-info-bg border-info-border" 
+                      : "bg-warning-bg border-warning-border"
                   )}>
                     <div className="flex items-center gap-2 mb-2">
                       <div className={cn(
                         "p-1.5 rounded-lg",
-                        transactionSummary.net >= 0 ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600"
+                        transactionSummary.net >= 0 ? "bg-info text-info-foreground" : "bg-warning text-warning-foreground"
                       )}><TrendingUp className="w-4 h-4" /></div>
                       <span className={cn(
                         "text-xs font-black uppercase tracking-widest",
-                        transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
+                        transactionSummary.net >= 0 ? "text-info" : "text-warning"
                       )}>Net Position</span>
                     </div>
                     <p className={cn(
                       "text-3xl font-black",
-                      transactionSummary.net >= 0 ? "text-blue-700 dark:text-blue-300" : "text-amber-700 dark:text-amber-300"
+                      transactionSummary.net >= 0 ? "text-info" : "text-warning"
                     )}>
                       {formatCurrency(transactionSummary.net)}
                     </p>

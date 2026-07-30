@@ -192,10 +192,10 @@ const WeeklyLog = () => {
             if (!latestCredit || latestCredit.amount === 0) return null;
             const creditChange = prevCredit ? latestCredit.amount - prevCredit.amount : 0;
             return (
-              <Card className="border-0 shadow-md bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+              <Card className="border-0 shadow-md bg-gradient-to-r from-warning-bg to-warning-bg">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600">
+                    <div className="p-2.5 rounded-xl bg-warning-bg text-warning">
                       <CreditCard className="w-5 h-5" />
                     </div>
                     <div>

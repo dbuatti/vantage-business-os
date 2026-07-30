@@ -267,21 +267,21 @@ const SubscriptionAuditPage = () => {
       {/* Intelligence Alerts */}
       {(audit.redundancyAlerts.length > 0 || audit.services.some(s => s.alerts.length > 0)) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up stagger-1">
-          <Card className="border-0 shadow-xl bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900">
+          <Card className="border-0 shadow-xl bg-warning-bg border-warning-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-warning flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4" /> Redundancy Alerts
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {audit.redundancyAlerts.map((alert, i) => (
-                <div key={i} className="flex items-start gap-3 text-sm text-amber-900 dark:text-amber-100 font-medium">
+                <div key={i} className="flex items-start gap-3 text-sm text-warning font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p>{alert}</p>
                 </div>
               ))}
               {audit.services.filter(s => s.alerts.includes('Multiple Streams')).map((s, i) => (
-                <div key={i} className="flex items-start gap-3 text-sm text-amber-900 dark:text-amber-100 font-medium">
+                <div key={i} className="flex items-start gap-3 text-sm text-warning font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p><span className="font-black">{s.name}</span> has multiple active billing streams. Check for duplicate accounts.</p>
                 </div>
@@ -289,18 +289,18 @@ const SubscriptionAuditPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-xl bg-blue-50 border-blue-100 dark:bg-blue-950/20 dark:border-blue-900">
+          <Card className="border-0 shadow-xl bg-info-bg border-info-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-blue-800 dark:text-blue-200 flex items-center gap-2">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-info flex items-center gap-2">
                 <Sparkles className="w-4 h-4" /> Optimization Tips
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-start gap-3 text-sm text-blue-900 dark:text-blue-100 font-medium">
+              <div className="flex items-start gap-3 text-sm text-info font-medium">
                 <Zap className="w-4 h-4 text-blue-500 shrink-0" />
                 <p>Switching <span className="font-black">Notion</span> to an annual plan could save you ~20% ($190/year).</p>
               </div>
-              <div className="flex items-start gap-3 text-sm text-blue-900 dark:text-blue-100 font-medium">
+              <div className="flex items-start gap-3 text-sm text-info font-medium">
                 <Zap className="w-4 h-4 text-blue-500 shrink-0" />
                 <p>You have {audit.services.filter(s => !s.isWork).length} personal entertainment subs. Totaling {formatCurrency(audit.services.filter(s => !s.isWork).reduce((s, v) => s + v.monthlyCost, 0))}/mo.</p>
               </div>
@@ -363,7 +363,7 @@ const SubscriptionAuditPage = () => {
                   <div className="bg-muted/30 md:w-80 p-6 flex items-center justify-between md:justify-end gap-8 border-t md:border-t-0 md:border-l">
                     <div className="flex flex-col items-end gap-1">
                       {service.alerts.map((alert, i) => (
-                        <Badge key={i} variant="outline" className="bg-rose-50 text-rose-600 border-rose-200 text-[9px] font-black uppercase px-2 py-0.5">
+                        <Badge key={i} variant="outline" className="bg-danger-bg text-danger border-danger-border text-[9px] font-black uppercase px-2 py-0.5">
                           {alert}
                         </Badge>
                       ))}

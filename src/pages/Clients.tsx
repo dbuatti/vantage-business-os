@@ -287,7 +287,7 @@ const Clients = () => {
                     <TableCell className="text-right">
                       <span className={cn(
                         "font-bold",
-                        (client.total_receivable || 0) > 0 ? "text-amber-600" : "text-emerald-600"
+                        (client.total_receivable || 0) > 0 ? "text-warning" : "text-profit"
                       )}>
                         {formatCurrency(client.total_receivable || 0)}
                       </span>
@@ -297,7 +297,7 @@ const Clients = () => {
                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEdit(client)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-rose-600" onClick={() => setDeleteConfirmId(client.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-danger" onClick={() => setDeleteConfirmId(client.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>

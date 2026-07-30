@@ -49,7 +49,7 @@ const TrackerDrilldown = ({ open, onOpenChange, category, periodLabel, transacti
         <div className="p-6 grid grid-cols-2 gap-4 border-b bg-background">
           <div className="space-y-1">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Spent</p>
-            <p className={cn("text-2xl font-black", isOver ? "text-rose-600" : "text-foreground")}>
+            <p className={cn("text-2xl font-black", isOver ? "text-danger" : "text-foreground")}>
               {formatCurrency(total)}
             </p>
           </div>
@@ -91,7 +91,7 @@ const TrackerDrilldown = ({ open, onOpenChange, category, periodLabel, transacti
                         )}
                       </div>
                     </div>
-                    <p className="font-black text-sm tabular-nums text-rose-600">
+                    <p className="font-black text-sm tabular-nums text-danger">
                       {formatCurrency(Math.abs(t.amount))}
                     </p>
                   </div>

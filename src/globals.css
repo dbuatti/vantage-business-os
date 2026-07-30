@@ -24,6 +24,32 @@
     --input: 220 13% 91%;
     --ring: 239 84% 67%;
     --radius: 0.75rem;
+
+    --profit: 160 84% 39%;
+    --profit-foreground: 0 0% 100%;
+    --profit-bg: 160 40% 95%;
+    --profit-border: 160 30% 80%;
+
+    --danger: 0 72% 51%;
+    --danger-foreground: 0 0% 100%;
+    --danger-bg: 0 60% 96%;
+    --danger-border: 0 60% 85%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-bg: 38 60% 95%;
+    --warning-border: 38 50% 82%;
+
+    --info: 221 83% 53%;
+    --info-foreground: 0 0% 100%;
+    --info-bg: 221 60% 95%;
+    --info-border: 221 50% 82%;
+
+    --ai: 263 70% 50%;
+    --ai-foreground: 0 0% 100%;
+    --ai-bg: 263 60% 96%;
+    --ai-border: 263 50% 84%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -54,6 +80,32 @@
     --border: 215 27% 16%;
     --input: 215 27% 16%;
     --ring: 239 84% 67%;
+
+    --profit: 160 60% 45%;
+    --profit-foreground: 0 0% 100%;
+    --profit-bg: 160 50% 10%;
+    --profit-border: 160 40% 25%;
+
+    --danger: 0 70% 55%;
+    --danger-foreground: 0 0% 100%;
+    --danger-bg: 0 50% 12%;
+    --danger-border: 0 40% 25%;
+
+    --warning: 38 90% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-bg: 38 50% 12%;
+    --warning-border: 38 40% 25%;
+
+    --info: 221 70% 55%;
+    --info-foreground: 0 0% 100%;
+    --info-bg: 221 50% 12%;
+    --info-border: 221 40% 25%;
+
+    --ai: 263 60% 55%;
+    --ai-foreground: 0 0% 100%;
+    --ai-bg: 263 50% 12%;
+    --ai-border: 263 40% 25%;
+
     --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 213 31% 91%;
     --sidebar-primary: 239 84% 67%;

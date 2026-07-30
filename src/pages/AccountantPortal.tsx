@@ -574,10 +574,10 @@ const AccountantPortal = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/50">
+          <Card className="border-0 shadow-lg bg-warning-bg border-warning-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                <ClipboardCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <CardTitle className="text-sm font-bold flex items-center gap-2 text-warning">
+                <ClipboardCheck className="w-4 h-4 text-warning" />
                 Tax Checklist
               </CardTitle>
             </CardHeader>

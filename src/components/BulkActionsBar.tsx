@@ -40,7 +40,7 @@ const BulkActionsBar = ({
             variant="outline" 
             size="sm" 
             onClick={() => onMarkWork(true)} 
-            className="rounded-xl gap-2 bg-background text-amber-700 border-amber-200 hover:bg-amber-50"
+            className="rounded-xl gap-2 bg-background text-warning border-warning-border hover:bg-warning-bg"
           >
             <Briefcase className="w-4 h-4" /> Mark Work
           </Button>
@@ -48,7 +48,7 @@ const BulkActionsBar = ({
             variant="outline" 
             size="sm" 
             onClick={() => onMarkWork(false)} 
-            className="rounded-xl gap-2 bg-background text-blue-700 border-blue-200 hover:bg-blue-50"
+            className="rounded-xl gap-2 bg-background text-info border-info-border hover:bg-info-bg"
           >
             <User className="w-4 h-4" /> Mark Personal
           </Button>
@@ -72,7 +72,7 @@ const BulkActionsBar = ({
             variant="outline" 
             size="sm" 
             onClick={onDelete} 
-            className="rounded-xl text-rose-600 hover:bg-rose-50"
+            className="rounded-xl text-danger hover:bg-danger-bg"
           >
             <Trash2 className="w-4 h-4 mr-1" /> Delete
           </Button>

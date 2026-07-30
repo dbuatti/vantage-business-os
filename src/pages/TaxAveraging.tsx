@@ -138,7 +138,7 @@ const TaxAveraging = () => {
                 <Card className="border-slate-100 shadow-sm overflow-hidden">
                   <CardHeader className="bg-slate-50/50 border-b">
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-indigo-600" />
+                      <TrendingUp className="h-5 w-5 text-ai" />
                       Income Breakdown
                     </CardTitle>
                   </CardHeader>
@@ -152,15 +152,15 @@ const TaxAveraging = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Income</span>
-                            <span className="font-bold text-emerald-600">{formatCurrency(musicIncome)}</span>
+                            <span className="font-bold text-profit">{formatCurrency(musicIncome)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Expenses</span>
-                            <span className="font-bold text-rose-600">-{formatCurrency(musicExpenses)}</span>
+                            <span className="font-bold text-danger">-{formatCurrency(musicExpenses)}</span>
                           </div>
                           <div className="pt-2 border-t flex justify-between">
                             <span className="font-black text-slate-900">Net Professional</span>
-                            <span className="font-black text-indigo-600">{formatCurrency(musicNet)}</span>
+                            <span className="font-black text-ai">{formatCurrency(musicNet)}</span>
                           </div>
                         </div>
                       </div>
@@ -172,11 +172,11 @@ const TaxAveraging = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Income</span>
-                            <span className="font-bold text-emerald-600">{formatCurrency(kineIncome)}</span>
+                            <span className="font-bold text-profit">{formatCurrency(kineIncome)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Expenses</span>
-                            <span className="font-bold text-rose-600">-{formatCurrency(kineExpenses)}</span>
+                            <span className="font-bold text-danger">-{formatCurrency(kineExpenses)}</span>
                           </div>
                           <div className="pt-2 border-t flex justify-between">
                             <span className="font-black text-slate-900">Net Other</span>
@@ -200,7 +200,7 @@ const TaxAveraging = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-xs text-amber-700 leading-relaxed">
+                    <p className="text-xs text-warning leading-relaxed">
                       Income averaging for special professionals (performers, composers, artists) helps smooth out tax liabilities when income fluctuates significantly. 
                       <br /><br />
                       Only your <strong>Music</strong> business income qualifies for this averaging. Your <strong>Kinesiology</strong> income is treated as standard taxable income.
@@ -222,13 +222,13 @@ const TaxAveraging = () => {
               <Card className="bg-rose-50 border-rose-100">
                 <CardContent className="pt-6">
                   <p className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-1">Music Expenses</p>
-                  <p className="text-2xl font-black text-rose-700">{formatCurrency(musicExpenses)}</p>
+                  <p className="text-2xl font-black text-danger">{formatCurrency(musicExpenses)}</p>
                 </CardContent>
               </Card>
               <Card className="bg-emerald-50 border-emerald-100">
                 <CardContent className="pt-6">
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Net Music Profit</p>
-                  <p className="text-2xl font-black text-emerald-700">{formatCurrency(musicNet)}</p>
+                  <p className="text-2xl font-black text-profit">{formatCurrency(musicNet)}</p>
                 </CardContent>
               </Card>
             </div>
@@ -261,19 +261,19 @@ const TaxAveraging = () => {
               <Card className="bg-emerald-50 border-emerald-100">
                 <CardContent className="pt-6">
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Kinesiology Income</p>
-                  <p className="text-2xl font-black text-emerald-700">{formatCurrency(kineIncome)}</p>
+                  <p className="text-2xl font-black text-profit">{formatCurrency(kineIncome)}</p>
                 </CardContent>
               </Card>
               <Card className="bg-rose-50 border-rose-100">
                 <CardContent className="pt-6">
                   <p className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-1">Kinesiology Expenses</p>
-                  <p className="text-2xl font-black text-rose-700">{formatCurrency(kineExpenses)}</p>
+                  <p className="text-2xl font-black text-danger">{formatCurrency(kineExpenses)}</p>
                 </CardContent>
               </Card>
               <Card className="bg-blue-50 border-blue-100">
                 <CardContent className="pt-6">
                   <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Net Kinesiology Profit</p>
-                  <p className="text-2xl font-black text-blue-700">{formatCurrency(kineNet)}</p>
+                  <p className="text-2xl font-black text-info">{formatCurrency(kineNet)}</p>
                 </CardContent>
               </Card>
             </div>

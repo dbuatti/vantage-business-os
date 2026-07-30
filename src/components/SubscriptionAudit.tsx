@@ -137,7 +137,7 @@ const SubscriptionAudit = ({ transactions }: SubscriptionAuditProps) => {
               <p className="text-sm font-bold">Audit Recommendation</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 You have <span className="font-bold text-foreground">{auditData.filter(s => s.isHighCost).length} high-cost subscriptions</span> (+$30/mo). 
-                Cancelling just one could save you over <span className="font-bold text-emerald-600">$360 per year</span>.
+                Cancelling just one could save you over <span className="font-bold text-profit">$360 per year</span>.
               </p>
             </div>
           </div>

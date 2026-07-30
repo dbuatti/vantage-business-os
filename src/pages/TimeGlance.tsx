@@ -635,7 +635,7 @@ const TimeGlance = () => {
                   sortedTransactions.map((t) => (
                     <div key={t.id} className={cn(
                       "p-4 flex items-center justify-between hover:bg-muted/30 transition-colors group",
-                      Math.abs(t.amount) >= 200 && t.amount < 0 && "bg-rose-50/30 dark:bg-rose-950/10"
+                      Math.abs(t.amount) >= 200 && t.amount < 0 && "bg-danger-bg/30"
                     )}>
                       <div className="flex items-center gap-4 min-w-0">
                         <div className={cn(

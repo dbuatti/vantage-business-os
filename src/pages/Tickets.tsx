@@ -157,18 +157,18 @@ const Tickets = () => {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'high': return <Badge className="bg-rose-100 text-rose-700 border-rose-200 rounded-lg">High</Badge>;
-      case 'medium': return <Badge className="bg-amber-100 text-amber-700 border-amber-200 rounded-lg">Medium</Badge>;
-      case 'low': return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 rounded-lg">Low</Badge>;
+      case 'high': return <Badge className="bg-danger-bg text-danger border-danger-border rounded-lg">High</Badge>;
+      case 'medium': return <Badge className="bg-warning-bg text-warning border-warning-border rounded-lg">Medium</Badge>;
+      case 'low': return <Badge className="bg-profit-bg text-profit border-profit-border rounded-lg">Low</Badge>;
       default: return <Badge variant="outline">{priority}</Badge>;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'open': return <Badge className="bg-blue-100 text-blue-700 border-blue-200 rounded-lg">Open</Badge>;
-      case 'in_progress': return <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200 rounded-lg">In Progress</Badge>;
-      case 'resolved': return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 rounded-lg">Resolved</Badge>;
+      case 'open': return <Badge className="bg-info-bg text-info border-info-border rounded-lg">Open</Badge>;
+      case 'in_progress': return <Badge className="bg-ai-bg text-ai border-ai-border rounded-lg">In Progress</Badge>;
+      case 'resolved': return <Badge className="bg-profit-bg text-profit border-profit-border rounded-lg">Resolved</Badge>;
       case 'closed': return <Badge variant="outline" className="rounded-lg">Closed</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }

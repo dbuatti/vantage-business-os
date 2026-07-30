@@ -211,7 +211,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
                       value={creditWas} 
                       onChange={(e) => setCreditWas(e.target.value)}
                       required
-                      className="h-14 rounded-2xl pl-12 bg-muted/30 border-muted focus:bg-background transition-all font-bold text-lg text-rose-600"
+                      className="h-14 rounded-2xl pl-12 bg-muted/30 border-muted focus:bg-background transition-all font-bold text-lg text-danger"
                     />
                   </div>
                 </div>

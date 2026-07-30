@@ -62,13 +62,13 @@ const PortalFixedCosts = ({
                   className="h-8 w-8 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => onCopyAmount(groupData.total.toString(), `${groupName}-fixed`)}
                 >
-                  {copiedId === `${groupName}-fixed` ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                  {copiedId === `${groupName}-fixed` ? <Check className="w-4 h-4 text-profit" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
                 </Button>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{groupName}</p>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-black text-rose-600">{formatCurrency(groupData.total)}</p>
+                  <p className="text-2xl font-black text-danger">{formatCurrency(groupData.total)}</p>
                   <span className="text-[10px] font-bold text-muted-foreground">{groupData.items.length} items</span>
                 </div>
               </div>
@@ -114,7 +114,7 @@ const PortalFixedCosts = ({
                       <TableRow key={t.id} className="hover:bg-muted/20">
                         <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                         <TableCell className="text-xs font-bold">{t.description}</TableCell>
-                        <TableCell className="text-right pr-6 text-xs font-black tabular-nums text-rose-600">{formatCurrency(t.amount)}</TableCell>
+                        <TableCell className="text-right pr-6 text-xs font-black tabular-nums text-danger">{formatCurrency(t.amount)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

@@ -234,10 +234,10 @@ const Invoices = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Paid': return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 rounded-lg">Paid</Badge>;
-      case 'Sent': return <Badge className="bg-blue-100 text-blue-700 border-blue-200 rounded-lg">Sent</Badge>;
+      case 'Paid': return <Badge className="bg-profit-bg text-profit border-profit-border rounded-lg">Paid</Badge>;
+      case 'Sent': return <Badge className="bg-info-bg text-info border-info-border rounded-lg">Sent</Badge>;
       case 'Draft': return <Badge variant="outline" className="rounded-lg">Draft</Badge>;
-      case 'Overdue': return <Badge className="bg-rose-100 text-rose-700 border-rose-200 rounded-lg">Overdue</Badge>;
+      case 'Overdue': return <Badge className="bg-danger-bg text-danger border-danger-border rounded-lg">Overdue</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -324,10 +324,10 @@ const Invoices = () => {
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {invoice.status !== 'Paid' && (
                           <>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-amber-600" onClick={() => sendReminder(invoice)} title="Send Reminder">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-warning" onClick={() => sendReminder(invoice)} title="Send Reminder">
                               <BellRing className="h-3.5 w-3.5" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-emerald-600" onClick={() => updateStatus(invoice.id, 'Paid')} title="Mark Paid">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-profit" onClick={() => updateStatus(invoice.id, 'Paid')} title="Mark Paid">
                               <CheckCircle2 className="h-3.5 w-3.5" />
                             </Button>
                           </>

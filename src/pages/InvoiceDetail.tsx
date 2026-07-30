@@ -156,11 +156,11 @@ const InvoiceDetail = () => {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={copyPublicLink} className="rounded-xl gap-2">
-            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-profit" /> : <Share2 className="w-4 h-4" />}
             {copied ? 'Copied' : 'Public Link'}
           </Button>
           {invoice.status !== 'Paid' && (
-            <Button variant="outline" onClick={markAsPaid} className="rounded-xl gap-2 text-emerald-600 hover:bg-emerald-50">
+            <Button variant="outline" onClick={markAsPaid} className="rounded-xl gap-2 text-profit hover:bg-profit-bg">
               <CheckCircle2 className="w-4 h-4" /> Mark Paid
             </Button>
           )}

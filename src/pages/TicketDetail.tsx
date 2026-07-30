@@ -249,7 +249,7 @@ const TicketDetail = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* AI Analysis Result */}
           {aiAnalysis && (
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-violet-50 to-white dark:from-violet-950/20 dark:to-card border-violet-100 dark:border-violet-900 overflow-hidden animate-fade-in">
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-ai-bg to-card border-ai-border overflow-hidden animate-fade-in">
               <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-500" />
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">

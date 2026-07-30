@@ -206,7 +206,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
                   </div>
 
                   <div className="md:col-span-2 text-right">
-                    <p className={cn("font-black text-sm tabular-nums", t.amount > 0 ? "text-emerald-600" : "text-rose-600")}>
+                    <p className={cn("font-black text-sm tabular-nums", t.amount > 0 ? "text-profit" : "text-danger")}>
                       {formatCurrency(t.amount)}
                     </p>
                   </div>

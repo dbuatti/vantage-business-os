@@ -52,7 +52,7 @@ const PortalTaxSummary = ({
             onClick={() => onToggleSection('income')}
             className="w-full text-left bg-emerald-50 dark:bg-emerald-950/30 border-b p-4 flex items-center justify-between hover:bg-emerald-100/50 transition-colors"
           >
-            <CardTitle className="text-xl text-emerald-900 dark:text-emerald-100">Business Income</CardTitle>
+            <CardTitle className="text-xl text-profit">Business Income</CardTitle>
             {expandedSections.has('income') ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
           </button>
           {expandedSections.has('income') && (
@@ -72,7 +72,7 @@ const PortalTaxSummary = ({
                       <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                       <TableCell className="text-sm font-bold">{t.description}</TableCell>
                       <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
-                      <TableCell className="text-right font-black text-emerald-600">{formatCurrency(t.amount)}</TableCell>
+                      <TableCell className="text-right font-black text-profit">{formatCurrency(t.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -125,7 +125,7 @@ const PortalTaxSummary = ({
                         <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                         <TableCell className="text-sm font-bold">{t.description}</TableCell>
                         <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
-                        <TableCell className="text-right font-black text-rose-600">{formatCurrency(t.amount)}</TableCell>
+                        <TableCell className="text-right font-black text-danger">{formatCurrency(t.amount)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground italic">{t.notes || '—'}</TableCell>
                       </TableRow>
                     ))}

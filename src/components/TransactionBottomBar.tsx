@@ -45,15 +45,15 @@ const TransactionBottomBar = ({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-sm font-black text-emerald-600">{formatCurrency(totalIncome)}</span>
+                <span className="text-sm font-black text-profit">{formatCurrency(totalIncome)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
-                <span className="text-sm font-black text-rose-600">{formatCurrency(-totalExpenses)}</span>
+                <span className="text-sm font-black text-danger">{formatCurrency(-totalExpenses)}</span>
               </div>
               <div className={cn(
                 "px-2.5 py-1 rounded-lg font-black text-sm tabular-nums shadow-sm",
-                net >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                net >= 0 ? "bg-profit-bg text-profit" : "bg-danger-bg text-danger"
               )}>
                 {formatCurrency(net)}
               </div>

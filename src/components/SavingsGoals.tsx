@@ -245,13 +245,13 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       {isComplete ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        <CheckCircle2 className="w-5 h-5 text-profit" />
                       ) : (
                         <div className={cn("w-3 h-3 rounded-full bg-gradient-to-r", goal.color)} />
                       )}
                       <h3 className="font-bold">{goal.name}</h3>
                       {isComplete && (
-                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold bg-profit-bg text-profit px-2 py-0.5 rounded-full">
                           <Sparkles className="w-2.5 h-2.5 inline mr-1" />
                           Complete!
                         </span>
@@ -261,7 +261,7 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                       <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => handleEdit(goal)}>
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:text-rose-600" onClick={() => handleDelete(goal.id)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-danger" onClick={() => handleDelete(goal.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -276,7 +276,7 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                       <div className="text-right">
                         <p className={cn(
                           "text-lg font-bold",
-                          isComplete ? "text-emerald-600" : "text-primary"
+                          isComplete ? "text-profit" : "text-primary"
                         )}>
                           {Math.round(percentage)}%
                         </p>
@@ -306,7 +306,7 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                         </span>
                       )}
                       {isComplete && (
-                        <span className="text-emerald-600 font-medium flex items-center gap-1">
+                        <span className="text-profit font-medium flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" />
                           Goal achieved!
                         </span>

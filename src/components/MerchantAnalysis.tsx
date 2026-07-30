@@ -133,7 +133,7 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Top {merchants.length} total</p>
-            <p className="font-bold text-lg text-rose-600">{formatCurrency(totalTopMerchants)}</p>
+            <p className="font-bold text-lg text-danger">{formatCurrency(totalTopMerchants)}</p>
           </div>
         </div>
       </CardHeader>
@@ -160,15 +160,15 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
                           {merchant.name}
                         </p>
                         {merchant.isWork && (
-                          <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200 rounded-md shrink-0">
+                          <Badge variant="outline" className="text-[9px] bg-warning-bg text-warning border-warning-border rounded-md shrink-0">
                             Work
                           </Badge>
                         )}
                         {merchant.trend === 'up' && (
-                          <TrendingUp className="w-3 h-3 text-rose-500 shrink-0" />
+                          <TrendingUp className="w-3 h-3 text-danger shrink-0" />
                         )}
                         {merchant.trend === 'down' && (
-                          <TrendingDown className="w-3 h-3 text-emerald-500 shrink-0" />
+                          <TrendingDown className="w-3 h-3 text-profit shrink-0" />
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -194,7 +194,7 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
                   <div className="text-right shrink-0">
                     <p className={cn(
                       "font-bold text-sm",
-                      netAmount >= 0 ? "text-emerald-600" : "text-rose-600"
+                      netAmount >= 0 ? "text-profit" : "text-danger"
                     )}>
                       {netAmount >= 0 ? '+' : ''}{formatCurrency(netAmount)}
                     </p>

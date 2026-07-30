@@ -90,12 +90,12 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
+            <CardTitle className="text-sm font-black uppercase tracking-widest text-ai flex items-center gap-2">
               <Sparkles className="w-4 h-4" /> AI Cash Flow Forecast
             </CardTitle>
             <CardDescription>Predicted performance for the next 90 days</CardDescription>
           </div>
-          <Badge variant="outline" className="text-[10px] border-indigo-200 text-indigo-600">
+          <Badge variant="outline" className="text-[10px] border-ai-border text-ai">
             {Math.round(forecast.confidence * 100)}% Confidence
           </Badge>
         </div>
@@ -111,7 +111,7 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
               )}>
                 <p className={cn(
                   "text-sm font-black",
-                  m.net >= 0 ? "text-emerald-600" : "text-rose-600"
+                  m.net >= 0 ? "text-profit" : "text-danger"
                 )}>
                   {formatCurrency(m.net)}
                 </p>
@@ -124,7 +124,7 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
           <div className="flex items-start gap-3">
             <div className={cn(
               "p-2 rounded-xl shrink-0",
-              forecast.trend === 'positive' ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
+              forecast.trend === 'positive' ? "bg-profit-bg text-profit" : "bg-danger-bg text-danger"
             )}>
               {forecast.trend === 'positive' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
             </div>

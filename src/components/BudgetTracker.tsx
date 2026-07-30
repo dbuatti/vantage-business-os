@@ -210,7 +210,7 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
               <div className="flex items-center justify-between mt-2">
                 <span className={cn(
                   "text-xs font-medium",
-                  totalBudget - totalSpent >= 0 ? "text-emerald-600" : "text-rose-600"
+                  totalBudget - totalSpent >= 0 ? "text-profit" : "text-danger"
                 )}>
                   {totalBudget - totalSpent >= 0
                     ? `${formatCurrency(totalBudget - totalSpent)} remaining`
@@ -253,7 +253,7 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
                           <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg" onClick={() => handleEdit(budget)}>
                             <Pencil className="h-3 w-3" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg hover:text-rose-600" onClick={() => handleDelete(budget.id)}>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg hover:text-danger" onClick={() => handleDelete(budget.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
@@ -269,7 +269,7 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
                     <div className="flex items-center justify-between mt-1.5">
                       <span className={cn(
                         "text-[10px] font-medium",
-                        isOver ? "text-rose-600" : "text-emerald-600"
+                        isOver ? "text-danger" : "text-profit"
                       )}>
                         {isOver
                           ? `$${Math.abs(remaining).toFixed(0)} over`

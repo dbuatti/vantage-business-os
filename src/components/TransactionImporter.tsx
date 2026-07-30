@@ -344,10 +344,10 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
                 <span className="font-medium">Preview: {fileName}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-emerald-600 font-medium">
+                <span className="text-profit">
                   {parsedData.filter(t => !t._isDuplicate).length} new
                 </span>
-                <span className="text-amber-600 font-medium">
+                <span className="text-warning">
                   {parsedData.filter(t => t._isDuplicate).length} duplicates
                 </span>
               </div>
@@ -355,7 +355,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
 
             {unmappedCategories.length > 0 && (
               <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+                <div className="p-2 rounded-lg bg-warning-bg text-warning">
                   <Tags className="w-4 h-4" />
                 </div>
                 <div className="flex-1">
@@ -383,11 +383,11 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
                       <TableCell className="text-sm text-right font-medium">{formatCurrency(t.amount)}</TableCell>
                       <TableCell>
                         {t._isDuplicate ? (
-                          <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                          <Badge variant="outline" className="text-[10px] bg-warning-bg text-warning border-warning-border">
                             Skip
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                          <Badge variant="outline" className="text-[10px] bg-profit-bg text-profit border-profit-border">
                             New
                           </Badge>
                         )}
@@ -428,12 +428,12 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
               <p className="font-bold text-lg">Import Complete</p>
             </div>
             <div className="flex justify-center gap-6 text-sm">
-              <span className="text-emerald-600 font-medium">{result.imported} imported</span>
+              <span className="text-profit">{result.imported} imported</span>
               {result.duplicates > 0 && (
-                <span className="text-amber-600 font-medium">{result.duplicates} skipped</span>
+                <span className="text-warning">{result.duplicates} skipped</span>
               )}
               {result.errors > 0 && (
-                <span className="text-rose-600 font-medium">{result.errors} errors</span>
+                <span className="text-danger">{result.errors} errors</span>
               )}
             </div>
             <Button variant="ghost" size="sm" onClick={clearAll} className="rounded-xl">

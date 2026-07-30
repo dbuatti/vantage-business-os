@@ -192,7 +192,7 @@ const AppSidebar = () => {
             </div>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} className="h-11 rounded-xl px-4 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30">
+            <SidebarMenuButton onClick={handleSignOut} className="h-11 rounded-xl px-4 text-danger hover:text-danger hover:bg-danger-bg">
               <LogOut className="w-4 h-4" />
               <span className="font-bold text-sm">Sign Out</span>
             </SidebarMenuButton>

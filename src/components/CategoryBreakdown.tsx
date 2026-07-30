@@ -244,15 +244,15 @@ const CategoryBreakdown = ({ transactions, categoryGroups }: CategoryBreakdownPr
                     />
                     <span className="font-medium text-sm truncate">{cat.name}</span>
                     {cat.isWork && (
-                      <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200 rounded-md shrink-0">
+                      <Badge variant="outline" className="text-[9px] bg-warning-bg text-warning border-warning-border rounded-md shrink-0">
                         Work
                       </Badge>
                     )}
                     {cat.trend === 'up' && (
-                      <TrendingUp className="w-3 h-3 text-rose-500 shrink-0" />
+                      <TrendingUp className="w-3 h-3 text-danger shrink-0" />
                     )}
                     {cat.trend === 'down' && (
-                      <TrendingDown className="w-3 h-3 text-emerald-500 shrink-0" />
+                      <TrendingDown className="w-3 h-3 text-profit shrink-0" />
                     )}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
