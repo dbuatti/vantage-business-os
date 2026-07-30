@@ -23,6 +23,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Package, 
   Plus, 
@@ -31,8 +41,10 @@ import {
   Trash2, 
   DollarSign,
   Tag,
-  FileText
+  FileText,
+  RefreshCw
 } from 'lucide-react';
+import { format } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 
@@ -49,8 +61,10 @@ const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     name: '',
@@ -76,6 +90,7 @@ const Products = () => {
       showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
+      setLastRefreshed(new Date());
     }
   };
 
@@ -113,7 +128,6 @@ const Products = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure? This will remove the product from your catalog.')) return;
     try {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
@@ -151,15 +165,25 @@ const Products = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">Products & Services</h1>
-          <p className="text-muted-foreground">Manage your standard offerings for faster invoicing.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight">Products & Services</h1>
+            <p className="text-muted-foreground">Manage your standard offerings for faster invoicing.</p>
+            {lastRefreshed && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Last refreshed: {format(lastRefreshed, 'h:mm a')}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchProducts} className="rounded-xl gap-2" disabled={loading}>
+              <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} /> Refresh
+            </Button>
+            <Button onClick={() => { resetForm(); setShowDialog(true); }} className="rounded-xl gap-2">
+              <Plus className="w-4 h-4" /> Add Item
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => { resetForm(); setShowDialog(true); }} className="rounded-xl gap-2">
-          <Plus className="w-4 h-4" /> Add Item
-        </Button>
-      </div>
 
       <Card className="border-0 shadow-xl overflow-hidden">
         <CardHeader className="pb-3">
@@ -174,6 +198,7 @@ const Products = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
@@ -220,7 +245,7 @@ const Products = () => {
                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEdit(product)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-rose-600" onClick={() => handleDelete(product.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-rose-600" onClick={() => setDeleteConfirmId(product.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -230,6 +255,7 @@ const Products = () => {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -292,6 +318,31 @@ const Products = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this product from your catalog? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-rose-600 hover:bg-rose-700"
+              onClick={() => {
+                if (deleteConfirmId) {
+                  handleDelete(deleteConfirmId);
+                  setDeleteConfirmId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

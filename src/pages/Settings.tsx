@@ -10,6 +10,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Settings as SettingsIcon, 
   Building2, 
@@ -34,6 +44,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showTokenConfirm, setShowTokenConfirm] = useState(false);
   const [form, setForm] = useState({
     company_name: '',
     company_email: '',
@@ -87,7 +98,6 @@ const Settings = () => {
   };
 
   const generateNewToken = async () => {
-    if (!confirm('This will invalidate any existing links you have shared. Continue?')) return;
     const newToken = crypto.randomUUID();
     setForm(prev => ({ ...prev, accountant_share_token: newToken }));
     // Save immediately
@@ -286,7 +296,7 @@ const Settings = () => {
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-sm text-muted-foreground mb-4">No access link generated yet.</p>
-                      <Button onClick={generateNewToken} className="rounded-xl gap-2">
+                      <Button onClick={() => setShowTokenConfirm(true)} className="rounded-xl gap-2">
                         <RefreshCw className="w-4 h-4" /> Generate Access Link
                       </Button>
                     </div>
@@ -310,7 +320,7 @@ const Settings = () => {
 
                 {form.accountant_share_token && (
                   <div className="flex justify-center pt-4">
-                    <Button variant="ghost" onClick={generateNewToken} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl gap-2">
+                    <Button variant="ghost" onClick={() => setShowTokenConfirm(true)} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl gap-2">
                       <RefreshCw className="w-4 h-4" /> Regenerate Secret Link
                     </Button>
                   </div>
@@ -320,6 +330,29 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={showTokenConfirm} onOpenChange={setShowTokenConfirm}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate New Access Link?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will invalidate any existing links you have shared. Your accountant will need the new link to access the portal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl"
+              onClick={() => {
+                setShowTokenConfirm(false);
+                setTimeout(() => generateNewToken(), 100);
+              }}
+            >
+              Generate New Link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -323,6 +323,7 @@ const ClientDetail = () => {
             <TabsContent value="invoices" className="animate-fade-in">
               <Card className="border-0 shadow-xl overflow-hidden">
                 <CardContent className="p-0">
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
@@ -374,6 +375,7 @@ const ClientDetail = () => {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -381,6 +383,7 @@ const ClientDetail = () => {
             <TabsContent value="tickets" className="animate-fade-in">
               <Card className="border-0 shadow-xl overflow-hidden">
                 <CardContent className="p-0">
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
@@ -433,6 +436,7 @@ const ClientDetail = () => {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
