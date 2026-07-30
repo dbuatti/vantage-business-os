@@ -275,6 +275,7 @@ const Tickets = () => {
               <p>Create a ticket to start tracking work.</p>
             </div>
           ) : viewMode === 'table' ? (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
@@ -311,6 +312,7 @@ const Tickets = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <TicketKanban tickets={filteredTickets} onStatusChange={handleStatusChange} />
           )}

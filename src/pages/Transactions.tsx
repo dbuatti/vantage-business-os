@@ -46,7 +46,8 @@ import {
   Repeat, 
   ArrowUpRight, 
   Target, 
-  Activity 
+  Activity,
+  RefreshCw
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { fetchAllPaginated } from '@/utils/supabase';
@@ -78,6 +79,7 @@ const Transactions = () => {
   const [categoryGroups, setCategoryGroups] = useState<Record<string, unknown>[]>([]);
   const [invoices, setInvoices] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<'date' | 'amount' | 'description' | 'category'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -133,6 +135,7 @@ const Transactions = () => {
       showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
+      setLastRefreshed(new Date());
     }
   }, [selectedYear]);
 
@@ -493,10 +496,19 @@ const Transactions = () => {
                 <span className="hidden sm:inline">Accountant Ready</span>
               </Link>
             </Button>
+            <Button variant="outline" size="sm" onClick={fetchTransactions} className="rounded-xl gap-2" disabled={loading}>
+              <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
             <Button variant="outline" size="sm" onClick={exportToCSV} className="rounded-xl gap-2" disabled={filteredTransactions.length === 0}>
               <Download className="w-4 h-4" /><span className="hidden sm:inline">Export</span>
             </Button>
           </div>
+          {lastRefreshed && (
+            <p className="text-[10px] text-muted-foreground text-right -mt-2">
+              Last refreshed: {format(lastRefreshed, 'h:mm a')}
+            </p>
+          )}
         </div>
 
         {/* Summary Cards */}

@@ -48,7 +48,8 @@ import {
   X,
   Package,
   BellRing,
-  Mail
+  Mail,
+  RefreshCw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { showError, showSuccess } from '@/utils/toast';
@@ -86,6 +87,7 @@ const Invoices = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   
@@ -118,6 +120,7 @@ const Invoices = () => {
       showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
+      setLastRefreshed(new Date());
     }
   };
 
@@ -246,15 +249,25 @@ const Invoices = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">Invoices</h1>
-          <p className="text-muted-foreground">Create and track professional invoices for your clients.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight">Invoices</h1>
+            <p className="text-muted-foreground">Create and track professional invoices for your clients.</p>
+            {lastRefreshed && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Last refreshed: {format(lastRefreshed, 'h:mm a')}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => { fetchInvoices(); fetchClients(); fetchProducts(); }} className="rounded-xl gap-2" disabled={loading}>
+              <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} /> Refresh
+            </Button>
+            <Button onClick={() => setShowDialog(true)} className="rounded-xl gap-2">
+              <Plus className="w-4 h-4" /> Create Invoice
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setShowDialog(true)} className="rounded-xl gap-2">
-          <Plus className="w-4 h-4" /> Create Invoice
-        </Button>
-      </div>
 
       <Card className="border-0 shadow-xl overflow-hidden">
         <CardHeader className="pb-3">
@@ -269,6 +282,7 @@ const Invoices = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
@@ -330,6 +344,7 @@ const Invoices = () => {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 

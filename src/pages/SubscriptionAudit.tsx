@@ -186,6 +186,29 @@ const SubscriptionAuditPage = () => {
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
+  if (!loading && transactions.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+              <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+                <Repeat className="w-7 h-7" />
+              </div>
+              Subscription Audit
+            </h1>
+            <p className="text-muted-foreground">Intelligent analysis of your recurring financial commitments.</p>
+          </div>
+        </header>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Repeat className="w-16 h-16 text-muted-foreground/20 mb-6" />
+          <h2 className="text-xl font-black tracking-tight mb-2">No subscriptions detected</h2>
+          <p className="text-muted-foreground max-w-md">Import your transactions first and the audit will automatically scan for recurring payments and subscriptions.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
@@ -293,6 +316,13 @@ const SubscriptionAuditPage = () => {
           <Badge variant="outline" className="rounded-full">{filteredServices.length} Services</Badge>
         </div>
 
+        {filteredServices.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Search className="w-12 h-12 text-muted-foreground/20 mb-4" />
+            <p className="font-bold text-lg text-foreground">No matching services</p>
+            <p className="text-sm text-muted-foreground">Try adjusting your search query.</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredServices.map((service) => (
             <Card key={service.normalizedName} className="border-0 shadow-lg hover:shadow-xl transition-all group overflow-hidden">
@@ -353,6 +383,7 @@ const SubscriptionAuditPage = () => {
             </Card>
           ))}
         </div>
+        )}
       </div>
 
       {/* Footer Insight */}

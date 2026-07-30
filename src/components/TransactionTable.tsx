@@ -1,10 +1,21 @@
 "use client";
 
 import React from 'react';
+import { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, ArrowUpDown, FileText, ChevronRight, ChevronDown, Info, ExternalLink, Briefcase, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -41,6 +52,8 @@ const TransactionTable = ({
   sortOrder,
   onSort
 }: TransactionTableProps) => {
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   if (loading) {
     return (
       <div className="p-8 space-y-4">
@@ -136,7 +149,7 @@ const TransactionTable = ({
                       <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={() => onEdit(t)}>
                         <Pencil className="h-3 w-3" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-rose-50 hover:text-rose-600" onClick={() => onDelete(t.id!)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-rose-50 hover:text-rose-600" onClick={() => setDeleteConfirmId(t.id!)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -272,7 +285,7 @@ const TransactionTable = ({
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => onEdit(t)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-rose-500" onClick={() => onDelete(t.id!)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-rose-500" onClick={() => setDeleteConfirmId(t.id!)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -309,6 +322,31 @@ const TransactionTable = ({
           </div>
         ))}
       </div>
+
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this transaction? This action can be undone immediately after deletion.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-rose-600 hover:bg-rose-700"
+              onClick={() => {
+                if (deleteConfirmId) {
+                  onDelete(deleteConfirmId);
+                  setDeleteConfirmId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
