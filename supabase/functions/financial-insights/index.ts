@@ -16,11 +16,16 @@ serve(async (req: Request) => {
   }
 
   try {
+    const rawBody = await req.text()
+    console.log('rawBody length:', rawBody.length, 'first 200:', rawBody.slice(0, 200))
+    if (!rawBody) {
+      throw new Error('Request body is empty')
+    }
     let parsedBody
     try {
-      parsedBody = await req.json()
+      parsedBody = JSON.parse(rawBody)
     } catch {
-      throw new Error('Request body is not valid JSON')
+      throw new Error('Request body is not valid JSON: ' + rawBody.slice(0, 200))
     }
     const { transactions, categoryGroups, budgets, summaryStats, period } = parsedBody
 
