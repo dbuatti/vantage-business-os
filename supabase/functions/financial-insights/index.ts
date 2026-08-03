@@ -88,14 +88,40 @@ Provide your response as a JSON object:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+          generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
         })
       }
     )
 
+    if (!response.ok) {
+      const errBody = await response.text()
+      throw new Error(`Gemini API ${response.status}: ${errBody.slice(0, 500)}`)
+    }
+
     const data = await response.json()
+
+    if (data.error) {
+      throw new Error(`Gemini error: ${data.error.message || JSON.stringify(data.error)}`)
+    }
+
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text
-    const insights = JSON.parse(aiText.match(/\{[\s\S]*\}/)[0])
+
+    if (!aiText) {
+      throw new Error('Gemini returned no text content')
+    }
+
+    const jsonMatch = aiText.match(/\{[\s\S]*\}/)
+
+    if (!jsonMatch) {
+      throw new Error('Gemini response did not contain JSON')
+    }
+
+    let insights
+    try {
+      insights = JSON.parse(jsonMatch[0])
+    } catch {
+      throw new Error('Gemini returned malformed JSON (possibly truncated). Try again.')
+    }
 
     return new Response(JSON.stringify(insights), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
