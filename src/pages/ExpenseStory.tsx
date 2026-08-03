@@ -229,7 +229,7 @@ const ExpenseStory = () => {
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate">{t.description}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.date), 'MMM dd')}</p>
                   </div>
                   <p className="text-lg font-black text-rose-600 tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
                 </CardContent>
@@ -255,7 +255,7 @@ const ExpenseStory = () => {
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate">{t.description}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.date), 'MMM dd')}</p>
                   </div>
                   <p className="text-lg font-black text-blue-600 tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
                 </CardContent>
@@ -281,7 +281,7 @@ const ExpenseStory = () => {
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate">{t.description}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.date), 'MMM dd')}</p>
                   </div>
                   <p className="text-lg font-black text-amber-600 tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
                 </CardContent>

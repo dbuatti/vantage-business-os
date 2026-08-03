@@ -16,6 +16,7 @@ import {
   Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { normalizeMerchantName } from '@/utils/subscriptions';
 
 interface Transaction {
   transaction_date: string;
@@ -116,7 +117,8 @@ const CategoryBreakdown = ({ transactions, categoryGroups }: CategoryBreakdownPr
         // Top merchants
         const merchants: Record<string, number> = {};
         txns.forEach(t => {
-          merchants[t.description] = (merchants[t.description] || 0) + Math.abs(t.amount);
+          const merchantName = normalizeMerchantName(t.description);
+          merchants[merchantName] = (merchants[merchantName] || 0) + Math.abs(t.amount);
         });
 
         // Monthly average

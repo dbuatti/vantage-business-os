@@ -23,7 +23,6 @@ import {
   endOfMonth,
   isSameDay,
   eachWeekOfInterval,
-  subWeeks,
   isSameWeek,
   differenceInDays,
   endOfWeek
@@ -90,11 +89,9 @@ const MasterTrackerMatrix = ({
         end: endOfMonth(targetMonth)
       });
     } else if (view === 'weekly') {
-      const now = new Date();
-      const targetEnd = now.getFullYear() === year ? now : endOfYear(new Date(year, 0, 1));
       return eachWeekOfInterval({
-        start: subWeeks(targetEnd, 11),
-        end: targetEnd
+        start: startOfYear(new Date(year, 0, 1)),
+        end: endOfYear(new Date(year, 0, 1))
       }, { weekStartsOn: 1 });
     } else {
       return [startOfYear(new Date(year, 0, 1))];

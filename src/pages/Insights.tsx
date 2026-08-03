@@ -46,6 +46,12 @@ interface Insight {
   actionable?: string;
 }
 
+interface SuggestedBudget {
+  category: string;
+  suggestedMonthly: number;
+  reasoning: string;
+}
+
 interface AIInsights {
   headline?: string;
   summary?: string;
@@ -56,6 +62,7 @@ interface AIInsights {
   predictions?: Record<string, unknown>[];
   tacticalAdvice?: Record<string, unknown>[];
   quickWins?: string[];
+  suggestedBudgets?: SuggestedBudget[];
   coachingNote?: string;
 }
 
@@ -65,6 +72,8 @@ const Insights = () => {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Record<string, unknown>[]>([]);
   const [categoryGroups, setCategoryGroups] = useState<Record<string, unknown>[]>([]);
+  const [budgets, setBudgets] = useState<Record<string, unknown>[]>([]);
+  const [priorYearCategoryTotals, setPriorYearCategoryTotals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [insights, setInsights] = useState<AIInsights | null>(null);
@@ -126,6 +135,29 @@ const Insights = () => {
 
       const { data: groups } = await supabase.from('category_groups').select('*');
       setCategoryGroups(groups || []);
+
+      const year = parseInt(selectedYear === 'All' ? new Date().getFullYear().toString() : selectedYear);
+
+      const { data: budgetRows } = await supabase.from('budgets').select('*').eq('year', year);
+      setBudgets(budgetRows || []);
+
+      // Lightweight prior-year category summary (category + amount only, not full rows) so the
+      // AI can compare this period against last year without a heavy payload.
+      const priorYear = year - 1;
+      const { data: priorYearRows } = await supabase
+        .from('finance_transactions')
+        .select('category_1, amount')
+        .gte('transaction_date', `${priorYear}-01-01`)
+        .lte('transaction_date', `${priorYear}-12-31`)
+        .lt('amount', 0)
+        .neq('category_1', 'Account');
+
+      const priorTotals: Record<string, number> = {};
+      (priorYearRows || []).forEach((t: { category_1: string | null; amount: number }) => {
+        const cat = t.category_1 || 'Uncategorized';
+        priorTotals[cat] = (priorTotals[cat] || 0) + Math.abs(t.amount);
+      });
+      setPriorYearCategoryTotals(priorTotals);
     } catch (error: unknown) {
       showError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
@@ -165,8 +197,10 @@ const Insights = () => {
         body: {
           transactions: filteredTransactions.slice(0, 300),
           categoryGroups,
+          budgets,
           summaryStats,
-          period: selectedYear
+          period: selectedYear,
+          priorYearCategoryTotals
         }
       });
 
@@ -392,7 +426,29 @@ const Insights = () => {
 
             <div className="lg:col-span-5 space-y-8">
               <SubscriptionAudit transactions={filteredTransactions} />
-              
+
+              {(insights.suggestedBudgets?.length || 0) > 0 && (
+                <Card className="border-0 shadow-xl overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Target className="w-4 h-4" /> Suggested Budgets
+                    </CardTitle>
+                    <CardDescription>Grounded in this period's spend{Object.keys(priorYearCategoryTotals).length > 0 ? ' and last year’s trend' : ''}.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {insights.suggestedBudgets?.map((b, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-muted/40 border">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-sm">{b.category}</span>
+                          <span className="font-black text-sm">{formatCurrency(b.suggestedMonthly)}/mo</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{b.reasoning}</p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
               {(insights.quickWins?.length || 0) > 0 && (
                 <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden relative">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />

@@ -34,6 +34,7 @@ import {
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
+import { stripReferenceTokens } from '@/utils/subscriptions';
 import { Transaction } from '@/types/finance';
 
 interface SubscriptionService {
@@ -113,11 +114,13 @@ const SubscriptionAuditPage = () => {
     const groups: Record<string, Transaction[]> = {};
     potentialSubs.forEach(t => {
       const cleaned = cleanDescription(t.description);
-      // Further normalize for grouping (uppercase, remove small numbers)
-      const normalized = cleaned
-        .replace(/\d+/g, '')
-        .trim()
-        .toUpperCase();
+      // Further normalize for grouping: drop any token containing a digit
+      // (receipt numbers, card refs, or random alphanumeric transaction
+      // suffixes like "7MJJBCZ3TM9M") rather than just stripping digit
+      // characters, since mixed alphanumeric suffixes would otherwise
+      // survive and differ per transaction, splitting one subscription
+      // into many.
+      const normalized = stripReferenceTokens(cleaned).toUpperCase();
       
       if (!groups[normalized]) groups[normalized] = [];
       groups[normalized].push(t);
@@ -151,7 +154,7 @@ const SubscriptionAuditPage = () => {
         if (chargesThisMonth.length > 1) alerts.push('Multiple Streams');
 
         return {
-          name: cleanDescription(sorted[0].description),
+          name: stripReferenceTokens(cleanDescription(sorted[0].description)),
           normalizedName,
           monthlyCost: frequency === 'Yearly' ? latestAmount / 12 : latestAmount,
           totalSpent,

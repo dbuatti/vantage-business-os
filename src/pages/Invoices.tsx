@@ -184,7 +184,11 @@ const Invoices = () => {
           client_display_name: client?.display_name,
           total_amount: total,
           owner_user_id: session.user.id,
-          number: `INV-${Date.now().toString().slice(-6)}`
+          // A truncated Date.now() cycles every ~16.7 minutes (1,000,000ms), so two
+          // invoices created that far apart (or a multiple of it) could get the exact
+          // same number. Use a random 6-char code instead — same visible format,
+          // no periodic collision.
+          number: `INV-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
         }]);
 
       if (error) throw error;

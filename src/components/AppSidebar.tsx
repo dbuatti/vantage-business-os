@@ -17,9 +17,8 @@ import {
 import { 
   LayoutDashboard, 
   ListFilter, 
-  Calculator, 
-  PiggyBank, 
-  Settings, 
+  Calculator,
+  Settings,
   LogOut,
   TrendingUp,
   Target,
@@ -57,18 +56,21 @@ const AppSidebar = () => {
   const businessItems = [
     { title: "Clients", icon: Users, url: "/clients" },
     { title: "Invoices", icon: FileText, url: "/invoices" },
-    { title: "Tax Averaging", icon: Calculator, url: "/tax-averaging" },
     { title: "Project ROI", icon: TrendingUp, url: "/project-roi" },
     { title: "Catalog", icon: Package, url: "/products" },
-    { title: "Export Center", icon: FileSpreadsheet, url: "/export" },
+  ];
+
+  const taxItems = [
+    { title: "Tax Averaging", icon: Calculator, url: "/tax-averaging" },
+    { title: "Accountant Report", icon: FileText, url: "/accountant-report" },
     { title: "Accountant Portal", icon: ShieldCheck, url: "/accountant-portal" },
+    { title: "Export Center", icon: FileSpreadsheet, url: "/export" },
   ];
 
   const financeItems = [
     { title: "Transactions", icon: ListFilter, url: "/transactions" },
     { title: "Subscriptions", icon: Repeat, url: "/subscriptions" },
-    { title: "Budgets", icon: Target, url: "/transactions?tab=planning" },
-    { title: "Savings Goals", icon: PiggyBank, url: "/transactions?tab=planning" },
+    { title: "Budgets & Savings", icon: Target, url: "/transactions?tab=planning" },
   ];
 
   const handleSignOut = async () => {
@@ -116,13 +118,36 @@ const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Business</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Clients &amp; Billing</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {businessItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
+                    isActive={location.pathname === item.url}
+                    tooltip={item.title}
+                    className="h-11 rounded-xl px-4"
+                  >
+                    <Link to={item.url} className="flex items-center gap-3">
+                      <item.icon className={cn("w-4 h-4", location.pathname === item.url ? "text-primary" : "text-muted-foreground")} />
+                      <span className="font-bold text-sm">{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Tax &amp; Reports</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {taxItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
                     isActive={location.pathname === item.url}
                     tooltip={item.title}
                     className="h-11 rounded-xl px-4"

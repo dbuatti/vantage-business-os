@@ -15,6 +15,7 @@ import {
   Percent
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { normalizeMerchantName } from '@/utils/subscriptions';
 
 interface Transaction {
   transaction_date: string;
@@ -70,8 +71,9 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
     });
     const mostExpensiveMonth = Object.entries(monthTotals).sort((a, b) => b[1] - a[1])[0];
 
-    // Unique merchants
-    const uniqueMerchants = new Set(transactions.map(t => t.description)).size;
+    // Unique merchants (normalized so recurring charges with a random reference
+    // code or embedded date, e.g. "Dropbox 7MJJBCZ3TM9M", collapse to one merchant)
+    const uniqueMerchants = new Set(transactions.map(t => normalizeMerchantName(t.description))).size;
 
     // Work percentage
     const workAmount = transactions.filter(t => t.is_work).reduce((s, t) => s + Math.abs(t.amount), 0);

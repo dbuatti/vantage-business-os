@@ -32,6 +32,10 @@ serve(async (req: Request) => {
     if (!ticket) throw new Error('Ticket not found')
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY not configured')
+    }
+
     const prompt = `You are an expert business consultant and technical support lead. Analyze this support ticket and provide a summary and a suggested solution.
 
 TICKET DETAILS:
@@ -62,9 +66,44 @@ Provide your response as a JSON object:
       }
     )
 
-    const aiData = await response.json()
+    if (!response.ok) {
+      const errBody = await response.text()
+      console.error('Gemini API error:', response.status, errBody)
+      throw new Error(`Gemini API ${response.status}: ${errBody.slice(0, 500)}`)
+    }
+
+    const responseText = await response.text()
+    if (!responseText) {
+      throw new Error('Gemini returned empty response body')
+    }
+
+    let aiData
+    try {
+      aiData = JSON.parse(responseText)
+    } catch {
+      throw new Error('Gemini response body is not valid JSON: ' + responseText.slice(0, 200))
+    }
+
+    if (aiData.error) {
+      throw new Error(`Gemini error: ${aiData.error.message || JSON.stringify(aiData.error)}`)
+    }
+
     const aiText = aiData.candidates?.[0]?.content?.parts?.[0]?.text
-    const analysis = JSON.parse(aiText.match(/\{[\s\S]*\}/)[0])
+    if (!aiText) {
+      throw new Error('Gemini returned no text content')
+    }
+
+    const jsonMatch = aiText.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new Error('Gemini response did not contain JSON')
+    }
+
+    let analysis
+    try {
+      analysis = JSON.parse(jsonMatch[0])
+    } catch {
+      throw new Error('Gemini returned malformed JSON (possibly truncated). Try again.')
+    }
 
     // Save analysis to database
     const { data: savedAnalysis, error: saveError } = await supabaseClient

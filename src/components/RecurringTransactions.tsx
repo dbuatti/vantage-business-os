@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Repeat, Calendar, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { normalizeMerchantName } from '@/utils/subscriptions';
 
 interface Transaction {
   id?: string;
@@ -36,13 +37,11 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
     const groups: Record<string, Transaction[]> = {};
 
     transactions.forEach(t => {
-      // Normalize description: lowercase, remove numbers/dates, trim
-      const normalized = t.description
-        .toLowerCase()
-        .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '')
-        .replace(/\d+/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
+      // Normalize description: strip receipt/card/reference tokens and embedded
+      // dates so the same merchant with a different random suffix each charge
+      // (e.g. "Dropbox 7MJJBCZ3TM9M" vs "Dropbox GB9DTD2CGLT7") collapses into
+      // one recurring group instead of being missed entirely.
+      const normalized = normalizeMerchantName(t.description).toLowerCase();
 
       if (normalized.length < 3) return;
 
@@ -76,7 +75,7 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
         else if (avgDays >= 360 && avgDays <= 370) frequency = 'Yearly';
 
         return {
-          description: sorted[sorted.length - 1].description,
+          description: normalizeMerchantName(sorted[sorted.length - 1].description),
           category: sorted[sorted.length - 1].category_1,
           amounts,
           dates,

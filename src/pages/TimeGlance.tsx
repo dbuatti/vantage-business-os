@@ -131,7 +131,7 @@ const TimeGlance = () => {
     try {
       const { data, error } = await supabase
         .from('finance_transactions')
-        .select('transaction_date, amount, category_1, description, notes')
+        .select('id, transaction_date, amount, category_1, description, notes')
         .gte('transaction_date', format(dateRange.start, 'yyyy-MM-dd'))
         .lte('transaction_date', format(dateRange.end, 'yyyy-MM-dd'))
         .neq('category_1', 'Account')

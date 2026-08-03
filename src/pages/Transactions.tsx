@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -75,6 +75,12 @@ const Transactions = () => {
   const { session, loading: authLoading } = useAuth();
   const { selectedYear } = useSettings();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const VALID_MAIN_TABS = ['transactions', 'analytics', 'planning'] as const;
+  const requestedTab = searchParams.get('tab');
+  const initialMainTab = VALID_MAIN_TABS.includes(requestedTab as typeof VALID_MAIN_TABS[number])
+    ? (requestedTab as typeof VALID_MAIN_TABS[number])
+    : 'transactions';
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categoryGroups, setCategoryGroups] = useState<Record<string, unknown>[]>([]);
   const [invoices, setInvoices] = useState<Record<string, unknown>[]>([]);
@@ -413,7 +419,7 @@ const Transactions = () => {
 
   const categories = useMemo(() => {
     const cats = new Set(transactions.map(t => t.category_1).filter(Boolean));
-    return ['All', ...Array.from(cats)].sort();
+    return ['All', ...Array.from(cats).sort()];
   }, [transactions]);
 
   const subcategories = useMemo(() => {
@@ -566,7 +572,7 @@ const Transactions = () => {
 
         {/* Main Content */}
         {transactions.length > 0 && (
-          <Tabs defaultValue="transactions" className="space-y-4">
+          <Tabs defaultValue={initialMainTab} className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <TabsList className="rounded-xl flex-wrap h-auto gap-1 p-1 bg-muted/50">
                 <TabsTrigger value="transactions" className="rounded-lg gap-2"><LayoutGrid className="w-4 h-4" />Data</TabsTrigger>

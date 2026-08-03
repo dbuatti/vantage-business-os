@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '@/utils/format';
+import { normalizeSubscriptionName } from '@/utils/subscriptions';
 
 interface Alert {
   id: string;
@@ -94,12 +95,13 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
     }
 
     // 4. Subscription Opportunity
-    const subs = transactions.filter(t => t.category_1 === 'Subscription');
-    if (subs.length > 10) {
+    const subTxns = transactions.filter(t => t.category_1 === 'Subscription');
+    const uniqueSubCount = new Set(subTxns.map(t => normalizeSubscriptionName(t.description))).size;
+    if (uniqueSubCount > 10) {
       list.push({
         id: 'sub-audit',
         title: 'Subscription Bloat?',
-        description: `You're currently paying for ${subs.length} different services. Time for a quick audit?`,
+        description: `You're currently paying for ${uniqueSubCount} different services. Time for a quick audit?`,
         type: 'opportunity',
         actionLabel: 'Audit Services',
         actionUrl: '/subscriptions',

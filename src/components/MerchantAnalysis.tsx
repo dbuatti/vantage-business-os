@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Store, TrendingUp, TrendingDown, Repeat, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { normalizeMerchantName } from '@/utils/subscriptions';
 
 interface Transaction {
   transaction_date: string;
@@ -40,7 +41,7 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
     transactions
       .filter(t => t.category_1 !== 'Account')
       .forEach(t => {
-        const key = t.description.trim();
+        const key = normalizeMerchantName(t.description);
         if (!groups[key]) groups[key] = [];
         groups[key].push(t);
       });
@@ -70,7 +71,7 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
         }
 
         return {
-          name: sorted[sorted.length - 1].description,
+          name: normalizeMerchantName(sorted[sorted.length - 1].description),
           totalSpent,
           totalReceived,
           transactionCount: txns.length,

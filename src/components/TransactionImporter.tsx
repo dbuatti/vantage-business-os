@@ -164,10 +164,14 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
           const unmapped = Array.from(incomingCategories).filter(cat => !mappedCategoryNames.has(cat));
           setUnmappedCategories(unmapped);
 
-          // Mark duplicates
+          // Mark duplicates — checks against both already-imported transactions and
+          // earlier rows in this same file, so an accidental double-export (two
+          // identical rows in one CSV) is also caught, not just re-imports of an
+          // already-saved transaction.
           parsedData.forEach(t => {
             const sig = generateSignature(t);
             t._isDuplicate = existingSignatures.has(sig);
+            existingSignatures.add(sig);
           });
 
           setProgress(80);

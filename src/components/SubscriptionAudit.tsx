@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
+import { normalizeSubscriptionName } from '@/utils/subscriptions';
 import { Transaction } from '@/types/finance';
 
 interface SubscriptionAuditProps {
@@ -36,7 +37,7 @@ const SubscriptionAudit = ({ transactions }: SubscriptionAuditProps) => {
 
     const groups: Record<string, Transaction[]> = {};
     subs.forEach(t => {
-      const key = t.description.split('-')[0].trim();
+      const key = normalizeSubscriptionName(t.description);
       if (!groups[key]) groups[key] = [];
       groups[key].push(t);
     });
