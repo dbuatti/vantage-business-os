@@ -16,7 +16,13 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { transactions, categoryGroups, budgets, summaryStats, period } = await req.json()
+    let parsedBody
+    try {
+      parsedBody = await req.json()
+    } catch {
+      throw new Error('Request body is not valid JSON')
+    }
+    const { transactions, categoryGroups, budgets, summaryStats, period } = parsedBody
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     if (!geminiApiKey) {
@@ -95,10 +101,21 @@ Provide your response as a JSON object:
 
     if (!response.ok) {
       const errBody = await response.text()
+      console.error('Gemini API error:', response.status, errBody)
       throw new Error(`Gemini API ${response.status}: ${errBody.slice(0, 500)}`)
     }
 
-    const data = await response.json()
+    const responseText = await response.text()
+    if (!responseText) {
+      throw new Error('Gemini returned empty response body')
+    }
+
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch {
+      throw new Error('Gemini response body is not valid JSON: ' + responseText.slice(0, 200))
+    }
 
     if (data.error) {
       throw new Error(`Gemini error: ${data.error.message || JSON.stringify(data.error)}`)
@@ -127,6 +144,7 @@ Provide your response as a JSON object:
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error: unknown) {
+    console.error('financial-insights error:', error?.message || error)
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders } })
   }
 })
