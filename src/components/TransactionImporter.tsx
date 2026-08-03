@@ -126,7 +126,13 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
             
             let amount = dollarAmount;
             if (amount === null) {
-              amount = (credit || 0) - (debit || 0);
+              if (credit != null) {
+                amount = Math.abs(credit);
+              } else if (debit != null) {
+                amount = -Math.abs(debit);
+              } else {
+                amount = 0;
+              }
             }
 
             const transactionDate = parseCSVDate(row['Date'] || row['date']);
