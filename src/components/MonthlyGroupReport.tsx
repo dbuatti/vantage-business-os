@@ -291,7 +291,7 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={() => navigateMonth(1)} className="rounded-xl h-9 w-9">
+                <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)} className="rounded-xl h-9 w-9">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -304,7 +304,7 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)} className="rounded-xl h-9 w-9">
+                <Button variant="outline" size="icon" onClick={() => navigateMonth(1)} className="rounded-xl h-9 w-9">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
