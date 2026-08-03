@@ -56,14 +56,6 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
   const [formCurrent, setFormCurrent] = useState('');
   const [formDeadline, setFormDeadline] = useState('');
 
-  const currentSavings = useMemo(() => {
-    const savingsTransactions = transactions.filter(t => {
-      const label = t.account_label?.toLowerCase() || '';
-      return label.includes('saving') || label.includes('savings');
-    });
-    return savingsTransactions.length > 0 ? savingsTransactions[0].amount : 0;
-  }, [transactions]);
-
   const saveGoals = (newGoals: SavingsGoal[]) => {
     setGoals(newGoals);
     localStorage.setItem('finance-savings-goals', JSON.stringify(newGoals));
