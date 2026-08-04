@@ -221,7 +221,7 @@ const TicketDetail = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-muted-foreground">#{ticket.ticket_number}</span>
-              <h1 className="text-2xl font-black tracking-tight">{ticket.title}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{ticket.title}</h1>
             </div>
             <p className="text-sm text-muted-foreground">Client: <Link to={`/clients/${ticket.client_id}`} className="font-bold text-primary hover:underline">{ticket.client_display_name}</Link></p>
           </div>
@@ -249,11 +249,11 @@ const TicketDetail = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* AI Analysis Result */}
           {aiAnalysis && (
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-ai-bg to-card border-ai-border overflow-hidden animate-fade-in">
-              <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-500" />
+            <Card className="border-0 shadow-sm bg-ai-bg border-ai-border overflow-hidden animate-fade-in">
+              <div className="h-1 bg-ai" />
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-black uppercase tracking-widest text-violet-600 flex items-center gap-2">
+                  <CardTitle className="text-sm font-semibold text-violet-600 flex items-center gap-2">
                     <Sparkles className="w-4 h-4" /> AI Analysis
                   </CardTitle>
                   <Badge variant="outline" className="text-[10px] border-violet-200 text-violet-600">
@@ -263,11 +263,11 @@ const TicketDetail = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-muted-foreground uppercase">Summary</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Summary</p>
                   <p className="text-sm font-medium">{aiAnalysis.summary}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-muted-foreground uppercase">Suggested Solution</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Suggested Solution</p>
                   <div className="text-sm leading-relaxed bg-white/50 dark:bg-black/20 p-3 rounded-xl border border-violet-100 dark:border-violet-900">
                     {aiAnalysis.solution}
                   </div>
@@ -277,7 +277,7 @@ const TicketDetail = () => {
             </Card>
           )}
 
-          <Card className="border-0 shadow-xl">
+          <Card className="border-0 shadow-sm">
             <CardHeader className="pb-4 border-b">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-primary" />
@@ -322,7 +322,7 @@ const TicketDetail = () => {
               ))}
             </div>
 
-            <Card className="border-0 shadow-lg overflow-hidden">
+            <Card className="border-0 shadow-sm overflow-hidden">
               <form onSubmit={handleAddComment}>
                 <CardContent className="p-4 space-y-4">
                   <textarea 
@@ -354,14 +354,14 @@ const TicketDetail = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <Card className="border-0 shadow-xl">
+          <Card className="border-0 shadow-sm">
             <CardHeader className="pb-4 border-b">
-              <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Ticket Details</CardTitle>
+              <CardTitle className="text-sm font-semibold text-muted-foreground">Ticket Details</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-muted-foreground uppercase">Priority</span>
+                  <span className="text-xs font-semibold text-muted-foreground">Priority</span>
                   <Badge className={cn(
                     "rounded-lg px-3 py-0.5",
                     ticket.priority === 'high' ? "bg-danger-bg text-danger" :
@@ -370,8 +370,8 @@ const TicketDetail = () => {
                   )}>{ticket.priority}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-muted-foreground uppercase">Category</span>
-                  <Badge variant="outline" className="rounded-lg px-3 py-0.5 uppercase text-[10px]">{ticket.category}</Badge>
+                  <span className="text-xs font-semibold text-muted-foreground">Category</span>
+                  <Badge variant="outline" className="rounded-lg px-3 py-0.5 text-xs font-semibold">{ticket.category}</Badge>
                 </div>
                 <div className="pt-4 border-t space-y-3">
                   <div className="flex items-center justify-between text-sm">
@@ -386,7 +386,7 @@ const TicketDetail = () => {
                   </div>
                   {ticket.estimated_hours > 0 && (
                     <div className="space-y-1.5">
-                      <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                      <div className="flex justify-between text-xs font-semibold text-muted-foreground">
                         <span>Progress</span>
                         <span>{Math.round((ticket.actual_hours / ticket.estimated_hours) * 100)}%</span>
                       </div>
@@ -406,7 +406,7 @@ const TicketDetail = () => {
                 <div className="p-1.5 bg-white/20 rounded-lg">
                   <Brain className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest opacity-80">AI Assistant</span>
+                <span className="text-xs font-semibold opacity-70">AI Assistant</span>
               </div>
               <p className="text-sm font-medium leading-relaxed">I can analyze this ticket to suggest a solution or summarize the conversation.</p>
               <Button 

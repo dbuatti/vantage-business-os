@@ -30,11 +30,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="flex items-center justify-center min-h-[60vh] p-8">
           <div className="text-center space-y-6 max-w-md">
-            <div className="w-16 h-16 mx-auto rounded-3xl bg-danger-bg flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-danger-bg flex items-center justify-center">
               <AlertTriangle className="w-8 h-8 text-danger" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-black tracking-tight">Something went wrong</h2>
+              <h2 className="text-xl font-bold tracking-tight">Something went wrong</h2>
               <p className="text-sm text-muted-foreground">
                 {this.state.error?.message || 'An unexpected error occurred while rendering this page.'}
               </p>

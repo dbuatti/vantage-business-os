@@ -105,7 +105,7 @@ const Productivity = () => {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       <header>
-        <h1 className="text-3xl font-black tracking-tight">Productivity Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Productivity Dashboard</h1>
         <p className="text-muted-foreground">Analyze your time investment and client efficiency.</p>
       </header>
 
@@ -120,7 +120,7 @@ const Productivity = () => {
             <p className="text-xs opacity-70 mt-1">Across {tickets.length} tickets</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-profit text-profit-foreground">
+        <Card className="border-0 shadow-sm bg-profit text-profit-foreground">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium opacity-80">Resolution Rate</p>
@@ -130,7 +130,7 @@ const Productivity = () => {
             <p className="text-xs opacity-70 mt-1">{stats.resolvedCount} tickets completed</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-warning text-warning-foreground">
+        <Card className="border-0 shadow-sm bg-warning text-warning-foreground">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium opacity-80">Avg. Hourly Yield</p>
@@ -142,7 +142,7 @@ const Productivity = () => {
             <p className="text-xs opacity-70 mt-1">Revenue per logged hour</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-ai text-ai-foreground">
+        <Card className="border-0 shadow-sm bg-ai text-ai-foreground">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium opacity-80">Estimation Accuracy</p>
@@ -160,7 +160,7 @@ const Productivity = () => {
         <div className="lg:col-span-2 space-y-8">
           <TimeLogChart data={stats.weeklyData} />
 
-          <Card className="border-0 shadow-xl">
+          <Card className="border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
@@ -184,7 +184,7 @@ const Productivity = () => {
                       <div className="text-right">
                         <p className="text-xl font-black text-primary">${yield_.toFixed(0)}<span className="text-xs font-bold text-muted-foreground">/h</span></p>
                         <Badge variant="outline" className={cn(
-                          "text-[10px] rounded-lg uppercase font-bold",
+                          "text-xs font-semibold rounded-lg",
                           yield_ > 150 ? "bg-profit-bg text-profit border-profit-border" : "bg-muted text-muted-foreground"
                         )}>
                           {yield_ > 150 ? 'High Yield' : 'Standard'}
@@ -199,7 +199,7 @@ const Productivity = () => {
         </div>
 
         <div className="space-y-8">
-          <Card className="border-0 shadow-xl">
+          <Card className="border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-primary" />
@@ -219,12 +219,12 @@ const Productivity = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground overflow-hidden relative">
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-primary to-primary/70 text-primary-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative space-y-4">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5" />
-                <span className="text-xs font-black uppercase tracking-widest opacity-80">Productivity Tip</span>
+                <span className="text-xs font-semibold opacity-70">Productivity Tip</span>
               </div>
               <p className="text-sm font-medium leading-relaxed">
                 {stats.topClients[0]?.name} is your most time-intensive client. Ensure your service tier reflects the {stats.topClients[0]?.hours.toFixed(0)} hours spent this month.

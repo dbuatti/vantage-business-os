@@ -67,7 +67,7 @@ const PortalSubscriptions = ({
               {data.map(([catName, groupData]) => (
                 <TableRow key={catName}>
                   <TableCell className="pl-6 font-bold">{catName}</TableCell>
-                  <TableCell className="text-right pr-6 font-black text-primary">
+                  <TableCell className="text-right pr-6 font-bold text-primary">
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -89,7 +89,7 @@ const PortalSubscriptions = ({
         {data.map(([catName, groupData]) => {
           const isExpanded = expandedSections.has(catName);
           return (
-            <Card key={catName} className="border-0 shadow-lg overflow-hidden">
+            <Card key={catName} className="border-0 shadow-sm overflow-hidden">
               <button 
                 onClick={() => onToggleSection(catName)}
                 className="w-full text-left bg-muted/10 border-b py-3 px-4 flex items-center justify-between hover:bg-muted/20 transition-colors"
@@ -115,7 +115,7 @@ const PortalSubscriptions = ({
                         <TableRow key={t.id}>
                           <TableCell className="text-xs">{formatDate(t.transaction_date)}</TableCell>
                           <TableCell className="text-xs font-medium">{t.description}</TableCell>
-                          <TableCell className="text-right pr-6 text-xs font-black tabular-nums">{formatCurrency(t.amount)}</TableCell>
+                          <TableCell className="text-right pr-6 text-xs font-bold tabular-nums">{formatCurrency(t.amount)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

@@ -162,12 +162,12 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-4xl rounded-2xl p-0 overflow-hidden border-0 shadow-2xl h-[90vh] flex flex-col">
         <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6 shrink-0 border-b">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <DialogTitle className="flex items-center gap-2 text-2xl font-black">
+                <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
                   <Zap className="w-6 h-6 text-primary" />
                   Power Note Entry
                 </DialogTitle>
@@ -196,8 +196,8 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
               return (
                 <div key={t.id} className="group grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-4 rounded-2xl bg-card border hover:border-primary/30 transition-all shadow-sm">
                   <div className="md:col-span-2">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground">{format(new Date(t.transaction_date), 'MMM dd, yyyy')}</p>
-                    <Badge variant="outline" className="mt-1 text-[9px] font-bold uppercase tracking-tighter">{t.category_1}</Badge>
+                    <p className="text-xs font-semibold text-muted-foreground">{format(new Date(t.transaction_date), 'MMM dd, yyyy')}</p>
+                    <Badge variant="outline" className="mt-1 text-xs font-semibold text-muted-foreground">{t.category_1}</Badge>
                   </div>
                   
                   <div className="md:col-span-4 min-w-0">
@@ -206,7 +206,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
                   </div>
 
                   <div className="md:col-span-2 text-right">
-                    <p className={cn("font-black text-sm tabular-nums", t.amount > 0 ? "text-profit" : "text-danger")}>
+                    <p className={cn("font-bold text-sm tabular-nums", t.amount > 0 ? "text-profit" : "text-danger")}>
                       {formatCurrency(t.amount)}
                     </p>
                   </div>
@@ -244,7 +244,7 @@ const QuickNotesModal = ({ open, onOpenChange, transactions, onSuccess }: QuickN
             <Button 
               onClick={handleSave} 
               disabled={saving} 
-              className="rounded-xl px-10 h-12 font-black text-base gap-2 shadow-xl shadow-primary/20"
+              className="rounded-xl px-10 h-12 font-bold text-base gap-2 shadow-xl shadow-primary/20"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save All Notes

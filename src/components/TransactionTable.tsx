@@ -78,16 +78,16 @@ const TransactionTable = ({
                 />
               </TableHead>
               <TableHead className="w-8"></TableHead>
-              <TableHead className="font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('date')}>
+              <TableHead className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('date')}>
                 <div className="flex items-center gap-1">Date {sortField === 'date' && <ArrowUpDown className="w-3 h-3" />}</div>
               </TableHead>
-              <TableHead className="font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('description')}>
+              <TableHead className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('description')}>
                 <div className="flex items-center gap-1">Description {sortField === 'description' && <ArrowUpDown className="w-3 h-3" />}</div>
               </TableHead>
-              <TableHead className="font-bold text-[10px] uppercase tracking-widest cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('category')}>
+              <TableHead className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('category')}>
                 <div className="flex items-center gap-1">Category {sortField === 'category' && <ArrowUpDown className="w-3 h-3" />}</div>
               </TableHead>
-              <TableHead className="font-bold text-[10px] uppercase tracking-widest text-right cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('amount')}>
+              <TableHead className="text-xs font-semibold text-muted-foreground text-right cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('amount')}>
                 <div className="flex items-center justify-end gap-1">Amount {sortField === 'amount' && <ArrowUpDown className="w-3 h-3" />}</div>
               </TableHead>
               <TableHead className="w-20"></TableHead>
@@ -122,17 +122,17 @@ const TransactionTable = ({
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-1">
-                      <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-primary/5 text-primary border-primary/10">
+                      <Badge variant="outline" className="rounded-lg text-xs font-semibold opacity-70 bg-primary/5 text-primary border-primary/10">
                         {t.category_1 || 'Uncategorized'}
                       </Badge>
                       {t.is_work && (
-                        <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-warning-bg text-warning border-warning-border">Work</Badge>
+                        <Badge variant="outline" className="rounded-lg text-xs font-semibold opacity-70 bg-warning-bg text-warning border-warning-border">Work</Badge>
                       )}
                       {t.business_stream && t.business_stream !== 'Other' && (
                         <Badge
                           variant="outline"
                           className={cn(
-                            "rounded-lg text-[9px] font-black uppercase tracking-tighter",
+                            "rounded-lg text-xs font-semibold opacity-70",
                             t.business_stream === 'Music' ? "bg-primary/10 text-primary border-primary/20" : "bg-profit-bg text-profit border-profit-border"
                           )}
                         >
@@ -141,7 +141,7 @@ const TransactionTable = ({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className={cn("text-right font-black tabular-nums", t.amount > 0 ? "text-profit" : t.amount < 0 ? "text-danger" : "")}>
+                  <TableCell className={cn("text-right font-bold tabular-nums", t.amount > 0 ? "text-profit" : t.amount < 0 ? "text-danger" : "")}>
                     {formatCurrency(t.amount)}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -161,11 +161,11 @@ const TransactionTable = ({
                       <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in border-b">
                         <div className="space-y-4">
                           <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Transaction Date</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Full Transaction Date</p>
                             <p className="font-bold text-sm">{format(new Date(t.transaction_date), 'EEEE, MMMM dd, yyyy')}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Account Source</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Account Source</p>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="rounded-lg font-bold">{t.account_label || 'Manual Entry'}</Badge>
                               <span className="text-xs text-muted-foreground font-mono">{t.account_identifier}</span>
@@ -175,18 +175,18 @@ const TransactionTable = ({
 
                         <div className="space-y-4">
                           <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Categorization</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Categorization</p>
                             <div className="flex flex-wrap gap-2">
                               <Badge className="bg-primary text-primary-foreground rounded-lg font-bold">{t.category_1 || 'None'}</Badge>
                               {t.category_2 && <Badge variant="outline" className="rounded-lg font-bold">{t.category_2}</Badge>}
                             </div>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Financial Impact</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Financial Impact</p>
                             <div className="space-y-1">
                               {t.credit && <p className="text-xs text-profit font-bold">Credit: {formatCurrency(t.credit)}</p>}
                               {t.debit && <p className="text-xs text-danger font-bold">Debit: {formatCurrency(t.debit)}</p>}
-                              <p className="text-sm font-black">Net: {formatCurrency(t.amount)}</p>
+                              <p className="text-sm font-bold">Net: {formatCurrency(t.amount)}</p>
                             </div>
                           </div>
                         </div>
@@ -194,7 +194,7 @@ const TransactionTable = ({
                         <div className="space-y-4">
                           {t.invoice_id && (
                             <div className="space-y-1">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Linked Invoice</p>
+                              <p className="text-xs font-semibold text-muted-foreground">Linked Invoice</p>
                               <Button variant="outline" size="sm" asChild className="rounded-xl gap-2 h-9 border-primary/20 text-primary hover:bg-primary/5">
                                 <Link to={`/invoices/${t.invoice_id}`}>
                                   <FileText className="w-3.5 h-3.5" />
@@ -204,18 +204,18 @@ const TransactionTable = ({
                             </div>
                           )}
                           <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Notes & Metadata</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Notes & Metadata</p>
                             <div className="p-3 rounded-xl bg-background border text-xs leading-relaxed italic text-muted-foreground">
                               {t.notes || 'No additional notes provided for this transaction.'}
                             </div>
                           </div>
                           <div className="flex items-center gap-4 pt-2">
                             <div className="text-center">
-                              <p className="text-[9px] font-black uppercase text-muted-foreground">Week</p>
+                              <p className="text-xs font-semibold text-muted-foreground">Week</p>
                               <p className="font-bold text-xs">{t.week}</p>
                             </div>
                             <div className="text-center">
-                              <p className="text-[9px] font-black uppercase text-muted-foreground">Period</p>
+                              <p className="text-xs font-semibold text-muted-foreground">Period</p>
                               <p className="font-bold text-xs">{t.mmm_yyyy || t.month_name}</p>
                             </div>
                           </div>
@@ -250,16 +250,16 @@ const TransactionTable = ({
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <p className="text-xs font-semibold text-muted-foreground">
                     {format(new Date(t.transaction_date), 'MMM dd, yyyy')}
                   </p>
                   <p className="font-bold text-sm truncate mt-0.5">{t.description}</p>
                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                    <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-primary/5 text-primary border-primary/10">
+                    <Badge variant="outline" className="rounded-lg text-xs font-semibold opacity-70 bg-primary/5 text-primary border-primary/10">
                       {t.category_1 || 'Uncategorized'}
                     </Badge>
                     {t.is_work && (
-                      <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-warning-bg text-warning border-warning-border">
+                      <Badge variant="outline" className="rounded-lg text-xs font-semibold opacity-70 bg-warning-bg text-warning border-warning-border">
                         <Briefcase className="w-2 h-2 mr-1" /> Work
                       </Badge>
                     )}
@@ -267,7 +267,7 @@ const TransactionTable = ({
                       <Badge
                         variant="outline"
                         className={cn(
-                          "rounded-lg text-[9px] font-black uppercase tracking-tighter",
+                          "rounded-lg text-xs font-semibold opacity-70",
                           t.business_stream === 'Music' ? "bg-primary/10 text-primary border-primary/20" : "bg-profit-bg text-profit border-profit-border"
                         )}
                       >
@@ -278,7 +278,7 @@ const TransactionTable = ({
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className={cn("font-black text-sm tabular-nums", t.amount > 0 ? "text-profit" : "text-danger")}>
+                <p className={cn("font-bold text-sm tabular-nums", t.amount > 0 ? "text-profit" : "text-danger")}>
                   {formatCurrency(t.amount)}
                 </p>
                 <div className="flex items-center justify-end gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
@@ -301,11 +301,11 @@ const TransactionTable = ({
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase text-muted-foreground">Account</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Account</p>
                     <p className="text-xs font-bold">{t.account_label || 'Manual'}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[9px] font-black uppercase text-muted-foreground">Period</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Period</p>
                     <p className="text-xs font-bold">{t.mmm_yyyy || 'N/A'}</p>
                   </div>
                 </div>

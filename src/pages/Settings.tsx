@@ -124,7 +124,7 @@ const Settings = () => {
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       <header>
-        <h1 className="text-3xl font-black tracking-tight">Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">Manage your business profile and application preferences.</p>
       </header>
 
@@ -144,7 +144,7 @@ const Settings = () => {
         <TabsContent value="general" className="space-y-8 animate-fade-in">
           <div className="grid grid-cols-1 gap-8">
             {/* Company Profile */}
-            <Card className="border-0 shadow-xl">
+            <Card className="border-0 shadow-sm">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-primary" />
@@ -206,7 +206,7 @@ const Settings = () => {
             </Card>
 
             {/* Appearance */}
-            <Card className="border-0 shadow-xl">
+            <Card className="border-0 shadow-sm">
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Palette className="w-5 h-5 text-primary" />
@@ -262,10 +262,10 @@ const Settings = () => {
         </TabsContent>
 
         <TabsContent value="share" className="animate-fade-in">
-          <Card className="border-0 shadow-xl overflow-hidden">
+          <Card className="border-0 shadow-sm overflow-hidden">
             <div className="bg-gradient-to-br from-primary/10 to-background p-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-primary rounded-2xl text-primary-foreground shadow-lg shadow-primary/20">
+                <div className="p-3 bg-primary rounded-xl text-primary-foreground shadow-lg shadow-primary/20">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
@@ -277,7 +277,7 @@ const Settings = () => {
               <div className="space-y-6 mt-8">
                 <div className="p-6 rounded-2xl bg-background border-2 border-dashed border-primary/20 space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Secret Access Link</Label>
+                    <Label className="text-xs font-semibold text-muted-foreground">Your Secret Access Link</Label>
                     {form.accountant_share_token && (
                       <Badge className="bg-profit-bg text-profit border-profit-border">Active</Badge>
                     )}

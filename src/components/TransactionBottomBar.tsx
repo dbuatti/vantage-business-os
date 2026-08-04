@@ -45,14 +45,14 @@ const TransactionBottomBar = ({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-sm font-black text-profit">{formatCurrency(totalIncome)}</span>
+                <span className="text-sm font-bold text-profit">{formatCurrency(totalIncome)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
-                <span className="text-sm font-black text-danger">{formatCurrency(-totalExpenses)}</span>
+                <span className="text-sm font-bold text-danger">{formatCurrency(-totalExpenses)}</span>
               </div>
               <div className={cn(
-                "px-2.5 py-1 rounded-lg font-black text-sm tabular-nums shadow-sm",
+                "px-2.5 py-1 rounded-lg font-bold text-sm tabular-nums shadow-sm",
                 net >= 0 ? "bg-profit-bg text-profit" : "bg-danger-bg text-danger"
               )}>
                 {formatCurrency(net)}
@@ -62,15 +62,15 @@ const TransactionBottomBar = ({
 
           {selectedCount > 0 ? (
             <div className="flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-300">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary text-white shadow-sm shadow-primary/20">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span className="text-xs font-black uppercase tracking-widest">{selectedCount} Selected</span>
+                <span className="text-xs font-semibold uppercase tracking-widest">{selectedCount} Selected</span>
                 <div className="w-[1px] h-3 bg-white/30 mx-1" />
-                <span className="text-sm font-black">{formatCurrency(selectedTotal)}</span>
+                <span className="text-sm font-bold">{formatCurrency(selectedTotal)}</span>
               </div>
             </div>
           ) : (
-            <div className="hidden lg:flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live Data Sync Active
             </div>

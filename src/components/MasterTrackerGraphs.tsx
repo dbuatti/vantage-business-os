@@ -116,8 +116,8 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: CustomTooltipPayload[]; label?: string }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-card border rounded-xl shadow-2xl p-4 space-y-2">
-          <p className="font-black text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+        <div className="bg-card border rounded-xl shadow-sm p-4 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
           <div className="space-y-1">
             {payload.map((entry: CustomTooltipPayload, i: number) => (
               <div key={i} className="flex items-center justify-between gap-8">
@@ -125,7 +125,7 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
                   <span className="text-xs font-bold">{entry.name}</span>
                 </div>
-                <span className="text-xs font-black tabular-nums">{formatCurrency(entry.value)}</span>
+                <span className="text-xs font-bold tabular-nums">{formatCurrency(entry.value)}</span>
               </div>
             ))}
           </div>
@@ -139,14 +139,14 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
     <div className="space-y-8 animate-fade-in">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Group Spending Trend */}
-        <Card className="border-0 shadow-xl overflow-hidden">
+        <Card className="border-0 shadow-sm overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-primary/10 text-primary">
                 <Activity className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-lg font-black">Group Spending Trend</CardTitle>
+                <CardTitle className="text-lg font-bold">Group Spending Trend</CardTitle>
                 <CardDescription>Monthly evolution of expense groups</CardDescription>
               </div>
             </div>
@@ -197,14 +197,14 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
         </Card>
 
         {/* Budget Adherence */}
-        <Card className="border-0 shadow-xl overflow-hidden">
+        <Card className="border-0 shadow-sm overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-primary/10 text-primary">
                 <BarChart3 className="w-5 h-5" />
               </div>
               <div>
-                <CardTitle className="text-lg font-black">Budget Adherence</CardTitle>
+                <CardTitle className="text-lg font-bold">Budget Adherence</CardTitle>
                 <CardDescription>Actual spending vs. annual targets</CardDescription>
               </div>
             </div>
@@ -246,7 +246,7 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
               <Target className="w-5 h-5" />
             </div>
             <div>
-              <CardTitle className="text-lg font-black">Cumulative Burn Velocity</CardTitle>
+              <CardTitle className="text-lg font-bold">Cumulative Burn Velocity</CardTitle>
               <CardDescription>Tracking total YTD spend against linear budget trajectory</CardDescription>
             </div>
           </div>

@@ -101,7 +101,7 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
 
   if (merchants.length === 0) {
     return (
-      <Card className="border-0 shadow-xl">
+      <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Store className="w-5 h-5 text-primary" />
@@ -120,7 +120,7 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
   const totalTopMerchants = merchants.reduce((s, m) => s + m.totalSpent, 0);
 
   return (
-    <Card className="border-0 shadow-xl">
+    <Card className="border-0 shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -184,8 +184,8 @@ const MerchantAnalysis = ({ transactions }: MerchantAnalysisProps) => {
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
                             merchant.totalSpent > merchant.totalReceived
-                              ? "bg-gradient-to-r from-rose-400 to-rose-500"
-                              : "bg-gradient-to-r from-emerald-400 to-emerald-500"
+                              ? "bg-danger"
+                              : "bg-profit"
                           )}
                           style={{ width: `${barWidth}%` }}
                         />

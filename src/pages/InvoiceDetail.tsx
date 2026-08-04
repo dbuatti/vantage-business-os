@@ -150,7 +150,7 @@ const InvoiceDetail = () => {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-black tracking-tight">Invoice {invoice.number}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Invoice {invoice.number}</h1>
             <p className="text-sm text-muted-foreground">Manage and preview your invoice</p>
           </div>
         </div>
@@ -174,17 +174,17 @@ const InvoiceDetail = () => {
       </div>
 
       {/* Invoice Document */}
-      <Card className="border-0 shadow-2xl overflow-hidden print:shadow-none print:border">
+      <Card className="border-0 shadow-xl overflow-hidden print:shadow-none print:border">
         <CardContent className="p-8 sm:p-12 space-y-12">
           {/* Doc Header */}
           <div className="flex flex-col sm:flex-row justify-between gap-8">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-primary rounded-2xl text-white">
+                <div className="p-3 bg-primary rounded-xl text-white">
                   <FileText className="w-8 h-8" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tighter uppercase">{settings?.company_name || 'Your Business'}</h2>
+                  <h2 className="text-2xl font-bold tracking-tighter uppercase">{settings?.company_name || 'Your Business'}</h2>
                   <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Tax Invoice</p>
                 </div>
               </div>
@@ -197,7 +197,7 @@ const InvoiceDetail = () => {
             </div>
             <div className="text-left sm:text-right space-y-2">
               <Badge className={cn(
-                "rounded-lg px-4 py-1 text-xs font-black uppercase tracking-widest",
+                "rounded-lg px-4 py-1 text-xs font-semibold uppercase tracking-widest",
                 invoice.status === 'Paid' ? "bg-emerald-500 text-white" : "bg-primary text-white"
               )}>
                 {invoice.status}
@@ -222,9 +222,9 @@ const InvoiceDetail = () => {
           {/* Bill To */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8 border-t">
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">Bill To</p>
+              <p className="text-xs text-muted-foreground uppercase font-semibold tracking-widest">Bill To</p>
               <div className="space-y-1">
-                <p className="text-lg font-black">{invoice.client_display_name}</p>
+                <p className="text-lg font-bold">{invoice.client_display_name}</p>
                 <Button variant="link" asChild className="p-0 h-auto text-primary print:hidden">
                   <Link to={`/clients/${invoice.client_id}`} className="flex items-center gap-1 text-xs">
                     View Client Profile <ExternalLink className="w-3 h-3" />
@@ -239,10 +239,10 @@ const InvoiceDetail = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-b-2 border-foreground">
-                  <TableHead className="text-foreground font-black uppercase text-xs">Description</TableHead>
-                  <TableHead className="text-foreground font-black uppercase text-xs text-right">Qty</TableHead>
-                  <TableHead className="text-foreground font-black uppercase text-xs text-right">Unit Price</TableHead>
-                  <TableHead className="text-foreground font-black uppercase text-xs text-right">Total</TableHead>
+                  <TableHead className="text-foreground font-semibold uppercase text-xs">Description</TableHead>
+                  <TableHead className="text-foreground font-semibold uppercase text-xs text-right">Qty</TableHead>
+                  <TableHead className="text-foreground font-semibold uppercase text-xs text-right">Unit Price</TableHead>
+                  <TableHead className="text-foreground font-semibold uppercase text-xs text-right">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -270,7 +270,7 @@ const InvoiceDetail = () => {
                 <span className="font-medium">$0.00</span>
               </div>
               <div className="flex justify-between items-center pt-4 border-t-2 border-foreground">
-                <span className="text-lg font-black uppercase">Total</span>
+                <span className="text-lg font-bold uppercase">Total</span>
                 <span className="text-2xl font-black text-primary">{formatCurrency(invoice.total_amount)}</span>
               </div>
             </div>

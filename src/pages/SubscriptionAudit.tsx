@@ -194,8 +194,8 @@ const SubscriptionAuditPage = () => {
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
           <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <div className="p-2.5 bg-primary rounded-2xl text-primary-foreground shadow-lg shadow-primary/20">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              <div className="p-2.5 bg-primary rounded-xl text-primary-foreground shadow-lg shadow-primary/20">
                 <Repeat className="w-7 h-7" />
               </div>
               Subscription Audit
@@ -205,7 +205,7 @@ const SubscriptionAuditPage = () => {
         </header>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Repeat className="w-16 h-16 text-muted-foreground/20 mb-6" />
-          <h2 className="text-xl font-black tracking-tight mb-2">No subscriptions detected</h2>
+          <h2 className="text-xl font-bold tracking-tight mb-2">No subscriptions detected</h2>
           <p className="text-muted-foreground max-w-md">Import your transactions first and the audit will automatically scan for recurring payments and subscriptions.</p>
         </div>
       </div>
@@ -216,8 +216,8 @@ const SubscriptionAuditPage = () => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2.5 bg-primary rounded-xl text-white shadow-lg shadow-primary/20">
               <Repeat className="w-7 h-7" />
             </div>
             Subscription Audit
@@ -244,23 +244,23 @@ const SubscriptionAuditPage = () => {
         <Card className="border-0 shadow-xl bg-primary text-primary-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-6 relative">
-            <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-1">Monthly Burn Rate</p>
+            <p className="text-xs font-semibold opacity-70 mb-1">Monthly Burn Rate</p>
             <p className="text-4xl font-black">{formatCurrency(audit.totalMonthlyBurn)}</p>
             <p className="text-xs opacity-70 mt-2">Across {audit.services.length} active services</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-ai text-ai-foreground overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-ai text-ai-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-6 relative">
-            <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-1">AI & Tools Investment</p>
+            <p className="text-xs font-semibold opacity-70 mb-1">AI & Tools Investment</p>
             <p className="text-4xl font-black">{formatCurrency(audit.aiSpend)}</p>
             <p className="text-xs opacity-70 mt-2">{Math.round((audit.aiSpend / audit.totalMonthlyBurn) * 100)}% of total burn</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-profit text-profit-foreground overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-profit text-profit-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-6 relative">
-            <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-1">Annual Commitment</p>
+            <p className="text-xs font-semibold opacity-70 mb-1">Annual Commitment</p>
             <p className="text-4xl font-black">{formatCurrency(audit.totalMonthlyBurn * 12)}</p>
             <p className="text-xs opacity-70 mt-2">Projected yearly cost if unchanged</p>
           </CardContent>
@@ -270,9 +270,9 @@ const SubscriptionAuditPage = () => {
       {/* Intelligence Alerts */}
       {(audit.redundancyAlerts.length > 0 || audit.services.some(s => s.alerts.length > 0)) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up stagger-1">
-          <Card className="border-0 shadow-xl bg-warning-bg border-warning-border">
+          <Card className="border-0 shadow-sm bg-warning-bg border-warning-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-warning flex items-center gap-2">
+              <CardTitle className="text-sm font-bold uppercase tracking-widest text-warning flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4" /> Redundancy Alerts
               </CardTitle>
             </CardHeader>
@@ -286,22 +286,22 @@ const SubscriptionAuditPage = () => {
               {audit.services.filter(s => s.alerts.includes('Multiple Streams')).map((s, i) => (
                 <div key={i} className="flex items-start gap-3 text-sm text-warning font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 shrink-0" />
-                  <p><span className="font-black">{s.name}</span> has multiple active billing streams. Check for duplicate accounts.</p>
+                  <p><span className="font-bold">{s.name}</span> has multiple active billing streams. Check for duplicate accounts.</p>
                 </div>
               ))}
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-xl bg-info-bg border-info-border">
+          <Card className="border-0 shadow-sm bg-info-bg border-info-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-black uppercase tracking-widest text-info flex items-center gap-2">
+              <CardTitle className="text-sm font-bold uppercase tracking-widest text-info flex items-center gap-2">
                 <Sparkles className="w-4 h-4" /> Optimization Tips
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3 text-sm text-info font-medium">
                 <Zap className="w-4 h-4 text-info shrink-0" />
-                <p>Switching <span className="font-black">Notion</span> to an annual plan could save you ~20% ($190/year).</p>
+                <p>Switching <span className="font-bold">Notion</span> to an annual plan could save you ~20% ($190/year).</p>
               </div>
               <div className="flex items-start gap-3 text-sm text-info font-medium">
                 <Zap className="w-4 h-4 text-info shrink-0" />
@@ -315,7 +315,7 @@ const SubscriptionAuditPage = () => {
       {/* Service List */}
       <div className="space-y-4 animate-slide-up stagger-2">
         <div className="flex items-center justify-between px-2">
-          <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Active Service Streams</h2>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Active Service Streams</h2>
           <Badge variant="outline" className="rounded-full">{filteredServices.length} Services</Badge>
         </div>
 
@@ -328,7 +328,7 @@ const SubscriptionAuditPage = () => {
         ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredServices.map((service) => (
-            <Card key={service.normalizedName} className="border-0 shadow-lg hover:shadow-xl transition-all group overflow-hidden">
+            <Card key={service.normalizedName} className="border-0 shadow-sm hover:shadow-xl transition-all group overflow-hidden">
               <CardContent className="p-0">
                 <div className="flex flex-col md:flex-row">
                   {/* Service Info */}
@@ -348,9 +348,9 @@ const SubscriptionAuditPage = () => {
                     
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-black text-lg truncate">{service.name}</h3>
-                        {service.isWork && <Badge className="bg-warning-bg text-warning border-warning-border text-[9px] font-black uppercase">Work</Badge>}
-                        {service.isAI && <Badge className="bg-ai-bg text-ai border-ai-border text-[9px] font-black uppercase">AI</Badge>}
+                        <h3 className="font-bold text-lg truncate">{service.name}</h3>
+                        {service.isWork && <Badge className="bg-warning-bg border-warning-border text-xs font-semibold opacity-70">Work</Badge>}
+                        {service.isAI && <Badge className="bg-ai-bg border-ai-border text-xs font-semibold opacity-70">AI</Badge>}
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground font-bold uppercase tracking-tighter">
                         <span className="flex items-center gap-1"><Repeat className="w-3 h-3" /> {service.frequency}</span>
@@ -366,14 +366,14 @@ const SubscriptionAuditPage = () => {
                   <div className="bg-muted/30 md:w-80 p-6 flex items-center justify-between md:justify-end gap-8 border-t md:border-t-0 md:border-l">
                     <div className="flex flex-col items-end gap-1">
                       {service.alerts.map((alert, i) => (
-                        <Badge key={i} variant="outline" className="bg-danger-bg text-danger border-danger-border text-[9px] font-black uppercase px-2 py-0.5">
+                        <Badge key={i} variant="outline" className="bg-danger-bg border-danger-border text-xs font-semibold opacity-70 px-2 py-0.5">
                           {alert}
                         </Badge>
                       ))}
                     </div>
                     <div className="text-right min-w-[120px]">
                       <p className="text-2xl font-black tracking-tight">{formatCurrency(service.monthlyCost)}</p>
-                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                      <p className="text-xs font-semibold text-muted-foreground">
                         {service.frequency === 'Yearly' ? 'Per Month (Avg)' : 'Per Month'}
                       </p>
                     </div>
@@ -391,16 +391,16 @@ const SubscriptionAuditPage = () => {
 
       {/* Footer Insight */}
       <footer className="pt-12">
-        <Card className="border-0 shadow-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">
+        <Card className="border-0 shadow-sm bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">
           <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="space-y-2">
-              <h3 className="text-xl font-black">Audit Summary</h3>
+              <h3 className="text-xl font-bold">Audit Summary</h3>
               <p className="text-slate-400 max-w-xl">
                 You are currently committed to <span className="text-white font-bold">{formatCurrency(audit.totalMonthlyBurn * 12)}</span> in annual subscriptions. 
                 We've identified <span className="text-amber-400 font-bold">{audit.services.filter(s => s.alerts.length > 0).length} services</span> that could be optimized or cancelled.
               </p>
             </div>
-            <Button variant="secondary" className="rounded-2xl h-14 px-8 font-black text-base shadow-xl">
+            <Button variant="secondary" className="rounded-2xl h-14 px-8 font-bold text-base shadow-xl">
               Export Audit Report
             </Button>
           </CardContent>

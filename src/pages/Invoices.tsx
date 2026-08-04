@@ -255,7 +255,7 @@ const Invoices = () => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight">Invoices</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
             <p className="text-muted-foreground">Create and track professional invoices for your clients.</p>
             {lastRefreshed && (
               <p className="text-[10px] text-muted-foreground mt-1">
@@ -273,7 +273,7 @@ const Invoices = () => {
           </div>
         </div>
 
-      <Card className="border-0 shadow-xl overflow-hidden">
+      <Card className="border-0 shadow-sm overflow-hidden">
         <CardHeader className="pb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -314,7 +314,7 @@ const Invoices = () => {
                   <TableRow key={invoice.id} className="group hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/invoices/${invoice.id}`)}>
                     <TableCell>
                       <p className="font-bold">{invoice.number}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Due {format(new Date(invoice.due_date), 'MMM dd')}</p>
+                      <p className="text-xs font-semibold text-muted-foreground">Due {format(new Date(invoice.due_date), 'MMM dd')}</p>
                     </TableCell>
                     <TableCell className="font-medium">{invoice.client_display_name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -385,7 +385,7 @@ const Invoices = () => {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Line Items</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Line Items</Label>
                 <Button variant="ghost" size="sm" onClick={handleAddLineItem} className="h-7 text-xs rounded-lg gap-1.5">
                   <PlusCircle className="w-3.5 h-3.5" /> Add Item
                 </Button>
@@ -421,7 +421,7 @@ const Invoices = () => {
                         />
                       </div>
                       <div className="w-20">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Qty</Label>
+                        <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Qty</Label>
                         <Input 
                           type="number" 
                           placeholder="Qty" 
@@ -431,7 +431,7 @@ const Invoices = () => {
                         />
                       </div>
                       <div className="w-32">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">Price</Label>
+                        <Label className="text-xs font-semibold text-muted-foreground mb-1 block">Price</Label>
                         <Input 
                           type="number" 
                           placeholder="Price" 

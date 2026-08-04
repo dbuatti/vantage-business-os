@@ -72,7 +72,7 @@ const PortalTaxSummary = ({
                       <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                       <TableCell className="text-sm font-bold">{t.description}</TableCell>
                       <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-card">{t.category_1}</Badge></TableCell>
-                      <TableCell className="text-right font-black text-profit">{formatCurrency(t.amount)}</TableCell>
+                      <TableCell className="text-right font-bold text-profit">{formatCurrency(t.amount)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -89,7 +89,7 @@ const PortalTaxSummary = ({
         const isExpanded = expandedSections.has(key);
 
         return (
-          <Card key={key} className="border-0 shadow-xl overflow-hidden break-inside-avoid">
+          <Card key={key} className="border-0 shadow-sm overflow-hidden break-inside-avoid">
             <button 
               onClick={() => onToggleSection(key)}
               className={cn("w-full text-left border-b p-4 flex items-center justify-between transition-colors", bucket.bg, "dark:bg-muted/20 hover:opacity-90")}
@@ -125,7 +125,7 @@ const PortalTaxSummary = ({
                         <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                         <TableCell className="text-sm font-bold">{t.description}</TableCell>
                         <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-card">{t.category_1}</Badge></TableCell>
-                        <TableCell className="text-right font-black text-danger">{formatCurrency(t.amount)}</TableCell>
+                        <TableCell className="text-right font-bold text-danger">{formatCurrency(t.amount)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground italic">{t.notes || '—'}</TableCell>
                       </TableRow>
                     ))}

@@ -149,29 +149,29 @@ const WeeklyLog = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-10">
         {/* Immersive Header */}
-        <header className="relative py-8 px-6 rounded-[2.5rem] bg-primary overflow-hidden shadow-2xl shadow-primary/20 animate-fade-in">
+        <header className="relative py-8 px-6 rounded-[2.5rem] bg-primary overflow-hidden shadow-xl shadow-primary/20 animate-fade-in">
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-indigo-600 to-purple-700" />
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,white_1px,transparent_1px)] [background-size:32px_32px]" />
           
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 text-white">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-white/20 rounded-2xl backdrop-blur-md">
+                <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md">
                   <CalendarCheck className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] opacity-80">Routine Mode</span>
+                <span className="text-xs font-semibold opacity-70">Routine Mode</span>
               </div>
-              <h1 className="text-4xl font-black tracking-tighter">Thursday Snapshot</h1>
+              <h1 className="text-4xl font-bold tracking-tighter">Thursday Snapshot</h1>
               <p className="text-white/70 text-lg font-medium max-w-xl">
                 Log your savings and debt to map your true financial progress.
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
-                <p className="text-[10px] font-black uppercase opacity-60">Current Year</p>
+              <div className="px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+                <p className="text-xs font-semibold opacity-70">Current Year</p>
                 <p className="text-xl font-black">{selectedYear}</p>
               </div>
-              <Button variant="outline" asChild className="rounded-2xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold h-12 px-6">
+              <Button variant="outline" asChild className="rounded-xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold h-12 px-6">
                 <Link to="/"><ArrowLeft className="w-4 h-4 mr-2" /> Dashboard</Link>
               </Button>
             </div>
@@ -182,7 +182,7 @@ const WeeklyLog = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 px-2">
             <TrendingUp className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Financial Health</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Financial Health</h2>
           </div>
           <FinanceSummary entries={calculatedEntries} />
           {(() => {
@@ -192,7 +192,7 @@ const WeeklyLog = () => {
             if (!latestCredit || latestCredit.amount === 0) return null;
             const creditChange = prevCredit ? latestCredit.amount - prevCredit.amount : 0;
             return (
-              <Card className="border-0 shadow-md bg-gradient-to-r from-warning-bg to-warning-bg">
+              <Card className="border-0 shadow-md bg-warning-bg">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="p-2.5 rounded-xl bg-warning-bg text-warning">
@@ -229,14 +229,14 @@ const WeeklyLog = () => {
             <div className="sticky top-24">
               <FinanceForm onAddEntry={addEntry} lastEntry={entries[0]} />
               
-              <Card className="mt-6 border-0 shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden relative">
+              <Card className="mt-6 border-0 shadow-sm bg-info text-white overflow-hidden relative">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
                 <CardContent className="p-6 relative space-y-4">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-white/20 rounded-lg">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-black uppercase tracking-widest opacity-80">Why this matters</span>
+                    <span className="text-xs font-semibold opacity-70">Why this matters</span>
                   </div>
                   <p className="text-sm font-medium leading-relaxed opacity-90">
                     Recording your balances every Thursday creates a high-fidelity map of your wealth. 
@@ -252,7 +252,7 @@ const WeeklyLog = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-2">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Progress Chart</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Progress Chart</h2>
               </div>
               <FinanceChart entries={calculatedEntries} />
             </div>
@@ -260,7 +260,7 @@ const WeeklyLog = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-2">
                 <History className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Monthly History</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Monthly History</h2>
               </div>
               <MonthlySummary entries={calculatedEntries} />
             </div>
@@ -268,7 +268,7 @@ const WeeklyLog = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 px-2">
                 <History className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Detailed History</h2>
+                <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Detailed History</h2>
               </div>
               <FinanceTable 
                 entries={calculatedEntries} 

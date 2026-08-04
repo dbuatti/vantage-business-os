@@ -251,7 +251,7 @@ const AccountantReport = () => {
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild className="rounded-xl"><Link to="/transactions"><ArrowLeft className="w-5 h-5" /></Link></Button>
             <div>
-              <h1 className="text-3xl font-black tracking-tight flex items-center gap-2"><Calculator className="w-8 h-8 text-primary" />Accountant Ready</h1>
+              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Calculator className="w-8 h-8 text-primary" />Accountant Ready</h1>
               <p className="text-muted-foreground">Prepare your tax information with ease</p>
             </div>
           </div>
@@ -265,7 +265,7 @@ const AccountantReport = () => {
         <div className="hidden print:block border-b-2 border-primary pb-6 mb-8">
           <div className="flex justify-between items-end">
             <div>
-              <h1 className="text-4xl font-black tracking-tight text-primary">Financial Report</h1>
+              <h1 className="text-4xl font-bold tracking-tight text-primary">Financial Report</h1>
               <p className="text-lg text-muted-foreground mt-1">{reportType === 'fy' ? 'Financial Year' : 'Calendar Year'} Ending {selectedYear}</p>
               <p className="text-sm text-muted-foreground mt-4">Generated on {format(new Date(), 'MMMM dd, yyyy')}</p>
             </div>
@@ -273,7 +273,7 @@ const AccountantReport = () => {
           </div>
         </div>
 
-        <Card className="border-0 shadow-lg print:hidden">
+        <Card className="border-0 shadow-sm print:hidden">
           <CardContent className="p-6 flex flex-wrap items-end gap-6">
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Report Period</label>
@@ -316,18 +316,18 @@ const AccountantReport = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-0 shadow-lg bg-profit text-profit-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Work Income</p><TrendingUp className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.income)}</p></CardContent></Card>
-          <Card className="border-0 shadow-lg bg-danger text-danger-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Work Expenses</p><TrendingDown className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p></CardContent></Card>
-          <Card className="border-0 shadow-lg bg-primary text-primary-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Net Business Position</p><Briefcase className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.net)}</p></CardContent></Card>
-          <Card className="border-0 shadow-lg bg-warning text-warning-foreground relative overflow-hidden"><div className="absolute -right-4 -bottom-4 opacity-10"><ShieldAlert className="w-24 h-24" /></div><CardContent className="p-6 relative"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Est. Tax Liability</p><div className="flex items-center gap-1 bg-white/20 rounded px-1.5 py-0.5"><Input type="number" value={taxRate} onChange={(e) => setTaxRate(parseInt(e.target.value) || 0)} className="w-8 h-5 p-0 bg-transparent border-0 text-warning-foreground text-xs font-bold text-center focus-visible:ring-0" /><span className="text-[10px] font-bold">%</span></div></div><p className="text-3xl font-black">{formatCurrency(stats.estimatedTax)}</p><p className="text-[10px] opacity-70 mt-1 italic">Based on {taxRate}% flat rate</p></CardContent></Card>
+          <Card className="border-0 shadow-sm bg-danger text-danger-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Work Expenses</p><TrendingDown className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p></CardContent></Card>
+          <Card className="border-0 shadow-sm bg-primary text-primary-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Net Business Position</p><Briefcase className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.net)}</p></CardContent></Card>
+          <Card className="border-0 shadow-sm bg-warning text-warning-foreground relative overflow-hidden"><div className="absolute -right-4 -bottom-4 opacity-10"><ShieldAlert className="w-24 h-24" /></div><CardContent className="p-6 relative"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Est. Tax Liability</p><div className="flex items-center gap-1 bg-white/20 rounded px-1.5 py-0.5"><Input type="number" value={taxRate} onChange={(e) => setTaxRate(parseInt(e.target.value) || 0)} className="w-8 h-5 p-0 bg-transparent border-0 text-warning-foreground text-xs font-bold text-center focus-visible:ring-0" /><span className="text-[10px] font-bold">%</span></div></div><p className="text-3xl font-black">{formatCurrency(stats.estimatedTax)}</p><p className="text-[10px] opacity-70 mt-1 italic">Based on {taxRate}% flat rate</p></CardContent></Card>
         </div>
 
         {/* Data Quality Audit Section */}
         {needsAttention && (
-          <Card className="border-0 shadow-xl bg-warning-bg border-warning-border print:hidden">
+          <Card className="border-0 shadow-sm bg-warning-bg border-warning-border print:hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-lg font-black flex items-center gap-2 text-warning">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-warning">
                     <AlertTriangle className="w-5 h-5 text-warning" />
                     Data Quality Audit
                   </CardTitle>
@@ -360,13 +360,13 @@ const AccountantReport = () => {
                         <p className="text-sm font-bold truncate">{t.description}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] font-bold text-warning uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</span>
-                          {!t.category_1 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-warning-border text-warning">Missing Category</Badge>}
-                          {!t.notes && Math.abs(t.amount) > 50 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-warning-border text-warning">Missing Note</Badge>}
+                          {!t.category_1 && <Badge variant="outline" className="text-xs font-semibold text-muted-foreground h-4 px-1.5 rounded-md border-warning-border">Missing Category</Badge>}
+                          {!t.notes && Math.abs(t.amount) > 50 && <Badge variant="outline" className="text-xs font-semibold text-muted-foreground h-4 px-1.5 rounded-md border-warning-border">Missing Note</Badge>}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <p className="text-sm font-black tabular-nums text-warning">{formatCurrency(t.amount)}</p>
+                      <p className="text-sm font-bold tabular-nums text-warning">{formatCurrency(t.amount)}</p>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="h-8 w-8 rounded-lg hover:bg-warning-bg text-warning">
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -378,7 +378,7 @@ const AccountantReport = () => {
           </Card>
         )}
 
-        <Card className="border-0 shadow-lg overflow-hidden">
+        <Card className="border-0 shadow-sm overflow-hidden">
           <CardHeader className="bg-muted/30"><CardTitle className="text-lg flex items-center gap-2"><PieChart className="w-5 h-5 text-primary" />Tax Category Summary</CardTitle><CardDescription>Grouped expenses for your tax return</CardDescription></CardHeader>
           <CardContent className="p-0">
             <Table>

@@ -47,15 +47,15 @@ const ImportCategoryMapper = ({ unmappedCategories, onMappingComplete, onCancel 
   const isComplete = unmappedCategories.every(cat => !!mappings[cat]);
 
   return (
-    <Card className="border-0 shadow-2xl bg-card animate-fade-in">
+    <Card className="border-0 shadow-xl bg-card animate-fade-in">
       <CardHeader className="pb-4 border-b bg-primary/5">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+          <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
             <Tags className="w-6 h-6" />
           </div>
           <div>
-            <CardTitle className="text-xl font-black tracking-tight">New Categories Detected</CardTitle>
-            <CardDescription className="text-xs font-bold uppercase tracking-wider">
+            <CardTitle className="text-xl font-bold tracking-tight">New Categories Detected</CardTitle>
+            <CardDescription className="text-xs font-semibold">
               Please map these {unmappedCategories.length} categories to your groups
             </CardDescription>
           </div>
@@ -81,11 +81,11 @@ const ImportCategoryMapper = ({ unmappedCategories, onMappingComplete, onCancel 
                     <SelectValue placeholder="Select Group..." />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Income</div>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Income</div>
                     {INCOME_GROUPS.map(g => (
                       <SelectItem key={g.name} value={g.name} className="rounded-lg font-bold">{g.name}</SelectItem>
                     ))}
-                    <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground border-t mt-1 pt-2">Expenses</div>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Expenses</div>
                     {EXPENSE_GROUPS.map(g => (
                       <SelectItem key={g.name} value={g.name} className="rounded-lg font-bold">
                         <span className="flex items-center gap-2">

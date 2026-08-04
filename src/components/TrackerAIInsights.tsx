@@ -75,16 +75,16 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
   };
 
   return (
-    <Card className="border-0 shadow-2xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white overflow-hidden relative group">
+    <Card className="border-0 shadow-xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white overflow-hidden relative group">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
       
       {!insights ? (
         <CardContent className="p-8 relative flex flex-col items-center text-center space-y-6">
-          <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500">
+          <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500">
             <Brain className="w-10 h-10" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-2xl font-black tracking-tight">AI Financial Coach</h3>
+            <h3 className="text-2xl font-bold tracking-tight">AI Financial Coach</h3>
             <p className="text-white/70 max-w-md mx-auto">
               I'll analyze your {transactions.length} transactions against your {budgets.length} budget targets to help you stay on track.
             </p>
@@ -92,7 +92,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
           <Button 
             onClick={getInsights} 
             disabled={loading}
-            className="rounded-2xl h-14 px-8 bg-white text-primary hover:bg-white/90 font-black text-lg shadow-2xl shadow-black/20 gap-3"
+            className="rounded-2xl h-14 px-8 bg-white text-primary hover:bg-white/90 font-bold text-lg shadow-xl shadow-black/20 gap-3"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
             Analyze My Progress
@@ -106,12 +106,12 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
                 <Brain className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black tracking-tight">Coach Analysis</h3>
+                <h3 className="text-xl font-bold tracking-tight">Coach Analysis</h3>
                 <p className="text-xs font-bold uppercase tracking-widest opacity-70">Real-time Strategy</p>
               </div>
             </div>
             <Badge className={cn(
-              "rounded-full px-4 py-1 font-black uppercase tracking-widest text-[10px]",
+              "rounded-full px-4 py-1 text-xs font-semibold opacity-70",
               insights.status === 'on_track' ? "bg-emerald-400 text-emerald-950" : 
               insights.status === 'at_risk' ? "bg-amber-400 text-amber-950" : "bg-rose-400 text-rose-950"
             )}>
@@ -128,7 +128,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Predictions */}
             <div className="space-y-4">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Trajectory Warnings</p>
+              <p className="text-xs font-semibold opacity-70">Trajectory Warnings</p>
               <div className="space-y-3">
                 {insights.predictions?.map((p: Prediction, i: number) => (
                   <div key={i} className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-start gap-3">
@@ -139,7 +139,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
                       <AlertTriangle className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-tighter">{p.category}</p>
+                      <p className="text-xs font-semibold uppercase tracking-tighter">{p.category}</p>
                       <p className="text-sm font-medium opacity-90">{p.prediction}</p>
                     </div>
                   </div>
@@ -152,7 +152,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
 
             {/* Tactical Advice */}
             <div className="space-y-4">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Tactical Adjustments</p>
+              <p className="text-xs font-semibold opacity-70">Tactical Adjustments</p>
               <div className="space-y-3">
                 {insights.tacticalAdvice?.map((a: TacticalAdvice, i: number) => (
                   <div key={i} className="p-4 rounded-2xl bg-black/20 border border-white/5 flex items-start gap-3">
@@ -162,7 +162,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
                     <div>
                       <p className="text-sm font-bold">{a.title}</p>
                       <p className="text-xs opacity-70 mt-0.5">{a.advice}</p>
-                      {a.impact && <p className="text-[10px] font-black text-emerald-300 uppercase mt-2">Impact: {a.impact}</p>}
+                      {a.impact && <p className="text-xs font-semibold text-emerald-300 opacity-70 mt-2">Impact: {a.impact}</p>}
                     </div>
                   </div>
                 ))}

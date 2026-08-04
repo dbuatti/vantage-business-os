@@ -165,8 +165,8 @@ const ExportCenter = () => {
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
       <header className="space-y-2 animate-fade-in">
-        <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-          <div className="p-2.5 bg-profit rounded-2xl text-profit-foreground shadow-lg shadow-profit/20">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <div className="p-2.5 bg-profit rounded-xl text-profit-foreground shadow-lg shadow-profit/20">
             <FileSpreadsheet className="w-7 h-7" />
           </div>
           Export Center
@@ -184,7 +184,7 @@ const ExportCenter = () => {
             <CardContent className="p-6 space-y-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Report Type</label>
+                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Report Type</label>
                   <div className="flex p-1 bg-muted rounded-xl">
                     <Button 
                       variant={reportType === 'fy' ? 'secondary' : 'ghost'} 
@@ -204,7 +204,7 @@ const ExportCenter = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Year Ending</label>
+                  <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Year Ending</label>
                   <Select value={selectedYear} onValueChange={setSelectedYear}>
                     <SelectTrigger className="h-12 rounded-xl font-bold text-lg">
                       <SelectValue />
@@ -222,7 +222,7 @@ const ExportCenter = () => {
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-profit">{periodLabel}</p>
+                    <p className="text-sm font-bold text-profit">{periodLabel}</p>
                     <p className="text-xs text-profit opacity-80">
                       {format(reportInterval.start, 'MMM dd, yyyy')} — {format(reportInterval.end, 'MMM dd, yyyy')}
                     </p>
@@ -236,7 +236,7 @@ const ExportCenter = () => {
               <Button
                 onClick={handleExport}
                 disabled={exporting || data.transactions.length === 0}
-                className="w-full h-16 rounded-2xl bg-profit hover:bg-profit/90 text-profit-foreground font-black text-xl shadow-xl shadow-profit/20 gap-3 transition-all active:scale-[0.98]"
+                className="w-full h-16 rounded-2xl bg-profit hover:bg-profit/90 text-profit-foreground font-bold text-xl shadow-xl shadow-profit/20 gap-3 transition-all active:scale-[0.98]"
               >
                 {exporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Download className="w-6 h-6" />}
                 Download Excel Workbook
@@ -245,22 +245,22 @@ const ExportCenter = () => {
           </Card>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card className="border-0 shadow-lg bg-primary/10 border-l-4 border-primary">
+            <Card className="border-0 shadow-sm bg-primary/10 border-l-4 border-primary">
               <CardContent className="p-4 flex items-start gap-3">
                 <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-xs font-black uppercase text-primary">What's included?</p>
+                  <p className="text-xs font-semibold uppercase text-primary">What's included?</p>
                   <p className="text-xs text-primary/80 leading-relaxed">
                     Summary P&L, Monthly Matrix, Category Totals, and Invoice History.
                   </p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-warning-bg border-l-4 border-warning">
+            <Card className="border-0 shadow-sm bg-warning-bg border-l-4 border-warning">
               <CardContent className="p-4 flex items-start gap-3">
                 <ShieldCheck className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-xs font-black uppercase text-warning">Accountant Ready</p>
+                  <p className="text-xs font-semibold uppercase text-warning">Accountant Ready</p>
                   <p className="text-xs text-warning/80 leading-relaxed">
                     Formatted for easy import into Xero, MYOB, or QuickBooks.
                   </p>
@@ -271,9 +271,9 @@ const ExportCenter = () => {
         </div>
 
         <div className="space-y-6">
-          <Card className="border-0 shadow-xl bg-slate-900 text-white overflow-hidden">
+          <Card className="border-0 shadow-sm bg-slate-900 text-white overflow-hidden">
             <CardHeader>
-              <CardTitle className="text-sm font-black uppercase tracking-widest opacity-70">Export Checklist</CardTitle>
+              <CardTitle className="text-sm font-bold uppercase tracking-widest opacity-70">Export Checklist</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">

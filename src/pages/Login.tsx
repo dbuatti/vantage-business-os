@@ -74,7 +74,7 @@ const Login = () => {
             <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md">
               <Sparkles className="w-10 h-10" />
             </div>
-            <h1 className="text-5xl font-black tracking-tighter">Vantage</h1>
+            <h1 className="text-5xl font-bold tracking-tighter">Vantage</h1>
           </div>
           
           <div className="space-y-8">
@@ -118,13 +118,13 @@ const Login = () => {
         <div className="absolute top-0 right-0 p-8 lg:hidden">
           <div className="flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
-            <span className="font-black text-xl tracking-tighter">Vantage</span>
+            <span className="font-bold text-xl tracking-tighter">Vantage</span>
           </div>
         </div>
 
         <div className="w-full max-w-md space-y-8 animate-fade-in">
           <div className="space-y-2">
-            <h3 className="text-3xl font-black tracking-tight">
+            <h3 className="text-3xl font-bold tracking-tight">
               {isSignUp ? 'Create your account' : 'Welcome back'}
             </h3>
             <p className="text-muted-foreground font-medium">
@@ -162,14 +162,14 @@ const Login = () => {
 
           <div className="relative">
             <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-xs font-semibold text-muted-foreground">
               or use email
             </span>
           </div>
 
           <form onSubmit={handleEmailAuth} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
+              <Label htmlFor="email" className="text-xs font-semibold text-muted-foreground">Email Address</Label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -185,7 +185,7 @@ const Login = () => {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Password</Label>
+                <Label htmlFor="password" className="text-xs font-semibold text-muted-foreground">Password</Label>
                 {!isSignUp && <button type="button" className="text-xs font-bold text-primary hover:underline">Forgot password?</button>}
               </div>
               <div className="relative">
@@ -204,7 +204,7 @@ const Login = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-14 rounded-2xl font-black text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
+              className="w-full h-14 rounded-2xl font-bold text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-[0.98]"
             >
               {isLoading ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
@@ -221,7 +221,7 @@ const Login = () => {
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="font-black text-primary hover:text-primary/80 transition-colors"
+              className="font-bold text-primary hover:text-primary/80 transition-colors"
             >
               {isSignUp ? 'Sign In' : 'Sign Up for Free'}
             </button>

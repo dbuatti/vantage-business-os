@@ -127,8 +127,8 @@ const ProjectROI = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <div className="p-2.5 bg-profit rounded-2xl text-profit-foreground shadow-lg shadow-profit/20">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              <div className="p-2.5 bg-profit rounded-xl text-profit-foreground shadow-lg shadow-profit/20">
                 <TrendingUp className="w-7 h-7" />
               </div>
               Project ROI Engine
@@ -143,31 +143,31 @@ const ProjectROI = () => {
           <Card className="border-0 shadow-xl bg-primary text-primary-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Avg. Effective Rate</p>
+              <p className="text-xs font-semibold opacity-70 mb-1">Avg. Effective Rate</p>
               <p className="text-3xl font-black">{formatCurrency(globalStats.avgRate)}<span className="text-sm opacity-60">/h</span></p>
               <p className="text-xs opacity-70 mt-2">Across all logged projects</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-profit text-profit-foreground overflow-hidden relative">
+          <Card className="border-0 shadow-sm bg-profit text-profit-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Attributed Revenue</p>
+              <p className="text-xs font-semibold opacity-70 mb-1">Total Attributed Revenue</p>
               <p className="text-3xl font-black">{formatCurrency(globalStats.totalRevenue)}</p>
               <p className="text-xs opacity-70 mt-2">From {metrics.length} projects</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-ai text-ai-foreground overflow-hidden relative">
+          <Card className="border-0 shadow-sm bg-ai text-ai-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Estimation Accuracy</p>
+              <p className="text-xs font-semibold opacity-70 mb-1">Estimation Accuracy</p>
               <p className="text-3xl font-black">{Math.round(globalStats.avgEfficiency)}%</p>
               <p className="text-xs opacity-70 mt-2">Actual vs. Estimated hours</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-warning text-warning-foreground overflow-hidden relative">
+          <Card className="border-0 shadow-sm bg-warning text-warning-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Time Investment</p>
+              <p className="text-xs font-semibold opacity-70 mb-1">Total Time Investment</p>
               <p className="text-3xl font-black">{globalStats.totalHours.toFixed(1)}h</p>
               <p className="text-xs opacity-70 mt-2">Billable hours logged</p>
             </CardContent>
@@ -177,11 +177,11 @@ const ProjectROI = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="border-0 shadow-2xl overflow-hidden">
+          <Card className="border-0 shadow-sm overflow-hidden">
             <CardHeader className="border-b bg-muted/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-black">Profitability Matrix</CardTitle>
+                  <CardTitle className="text-xl font-bold">Profitability Matrix</CardTitle>
                   <CardDescription>Which projects are generating the highest return?</CardDescription>
                 </div>
                 <Badge variant="outline" className="rounded-lg font-bold">Top ROI First</Badge>
@@ -193,10 +193,10 @@ const ProjectROI = () => {
                   <div key={m.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-muted/30 transition-colors group">
                     <div className="space-y-1 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-black text-lg truncate group-hover:text-primary transition-colors">{m.title}</h3>
+                        <h3 className="font-bold text-lg truncate group-hover:text-primary transition-colors">{m.title}</h3>
                         <Badge className={cn(
-                          "text-[9px] font-black uppercase rounded-md",
-                          m.hourlyRate > (globalStats?.avgRate || 0) ? "bg-profit-bg text-profit" : "bg-muted text-muted-foreground"
+                          "text-xs font-semibold rounded-md",
+                          m.hourlyRate > (globalStats?.avgRate || 0) ? "bg-profit-bg opacity-70" : "bg-muted text-muted-foreground"
                         )}>
                           {m.hourlyRate > (globalStats?.avgRate || 0) ? 'High Yield' : 'Standard'}
                         </Badge>
@@ -216,7 +216,7 @@ const ProjectROI = () => {
 
                     <div className="flex items-center gap-8 shrink-0">
                       <div className="text-right space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Effective Rate</p>
+                        <p className="text-xs font-semibold text-muted-foreground">Effective Rate</p>
                         <p className={cn(
                           "text-2xl font-black tabular-nums",
                           m.hourlyRate > (globalStats?.avgRate || 0) ? "text-profit" : "text-foreground"
@@ -237,9 +237,9 @@ const ProjectROI = () => {
 
         <div className="space-y-8">
           {/* Efficiency Insights */}
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">
             <CardHeader>
-              <CardTitle className="text-lg font-black flex items-center gap-2">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
                 <Zap className="w-5 h-5 text-amber-400" />
                 Efficiency Audit
               </CardTitle>
@@ -247,7 +247,7 @@ const ProjectROI = () => {
             <CardContent className="space-y-6">
               {metrics.filter(m => m.efficiency < 70).length > 0 && (
                 <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-2">
-                  <div className="flex items-center gap-2 text-rose-400 font-black uppercase tracking-widest text-[10px]">
+                  <div className="flex items-center gap-2 text-xs font-semibold opacity-70">
                     <AlertTriangle className="w-4 h-4" /> Under-Estimated
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed">
@@ -257,35 +257,35 @@ const ProjectROI = () => {
               )}
 
               <div className="space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Top Performers</p>
+                <p className="text-xs font-semibold opacity-70">Top Performers</p>
                 {metrics.slice(0, 3).map((m, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-black">{i + 1}</div>
+                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-semibold">{i + 1}</div>
                       <span className="text-sm font-bold truncate max-w-[120px]">{m.title}</span>
                     </div>
-                    <span className="text-sm font-black text-emerald-400">{formatCurrency(m.hourlyRate)}/h</span>
+                    <span className="text-sm font-bold text-emerald-400">{formatCurrency(m.hourlyRate)}/h</span>
                   </div>
                 ))}
               </div>
 
-              <Button variant="secondary" className="w-full rounded-xl font-black gap-2 shadow-lg" asChild>
+              <Button variant="secondary" className="w-full rounded-xl font-bold gap-2 shadow-lg" asChild>
                 <Link to="/invoices">Review Service Tiers</Link>
               </Button>
             </CardContent>
           </Card>
 
           {/* Proactive Tip */}
-          <Card className="border-0 shadow-xl bg-ai-bg border-ai-border">
+          <Card className="border-0 shadow-sm bg-ai-bg border-ai-border">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-ai-bg rounded-lg text-ai">
                   <Brain className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest text-ai">AI Recommendation</span>
+                <span className="text-xs font-semibold uppercase tracking-widest text-ai">AI Recommendation</span>
               </div>
               <p className="text-sm font-medium leading-relaxed text-ai">
-                Based on your ROI data, <span className="font-black">{metrics[0]?.clientName}</span> is your most profitable client. You should prioritize their tickets to maximize your effective hourly yield.
+                Based on your ROI data, <span className="font-bold">{metrics[0]?.clientName}</span> is your most profitable client. You should prioritize their tickets to maximize your effective hourly yield.
               </p>
             </CardContent>
           </Card>

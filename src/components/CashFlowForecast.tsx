@@ -86,11 +86,11 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
 
   return (
     <Card className="border-0 shadow-xl bg-gradient-to-br from-ai-bg to-card overflow-hidden">
-      <div className="h-1 bg-gradient-to-r from-ai to-primary" />
+      <div className="h-1 bg-ai" />
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <CardTitle className="text-sm font-black uppercase tracking-widest text-ai flex items-center gap-2">
+            <CardTitle className="text-sm font-bold uppercase tracking-widest text-ai flex items-center gap-2">
               <Sparkles className="w-4 h-4" /> AI Cash Flow Forecast
             </CardTitle>
             <CardDescription>Predicted performance for the next 90 days</CardDescription>
@@ -104,13 +104,13 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
         <div className="grid grid-cols-3 gap-4">
           {forecast.next3Months.map((m, i) => (
             <div key={i} className="space-y-2 text-center">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{m.month}</p>
+              <p className="text-xs font-semibold text-muted-foreground">{m.month}</p>
               <div className={cn(
-                "p-3 rounded-2xl border transition-all",
+                "p-3 rounded-xl border transition-all",
                 m.net >= 0 ? "bg-profit-bg/50 border-profit-border" : "bg-danger-bg/50 border-danger-border"
               )}>
                 <p className={cn(
-                  "text-sm font-black",
+                  "text-sm font-bold",
                   m.net >= 0 ? "text-profit" : "text-danger"
                 )}>
                   {formatCurrency(m.net)}

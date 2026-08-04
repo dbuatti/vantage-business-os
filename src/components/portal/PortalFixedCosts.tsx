@@ -50,10 +50,10 @@ const PortalFixedCosts = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {data.map(([groupName, groupData]) => (
-          <Card key={groupName} className="border-0 shadow-lg hover:shadow-xl transition-all group overflow-hidden">
+          <Card key={groupName} className="border-0 shadow-sm hover:shadow-xl transition-all group overflow-hidden">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-4">
-                <div className={cn("p-3 rounded-2xl shadow-sm", groupData.bg, groupData.color)}>
+                <div className={cn("p-3 rounded-xl shadow-sm", groupData.bg, groupData.color)}>
                   <groupData.icon className="w-6 h-6" />
                 </div>
                 <Button 
@@ -66,7 +66,7 @@ const PortalFixedCosts = ({
                 </Button>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">{groupName}</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{groupName}</p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-2xl font-black text-danger">{formatCurrency(groupData.total)}</p>
                   <span className="text-[10px] font-bold text-muted-foreground">{groupData.items.length} items</span>
@@ -88,14 +88,14 @@ const PortalFixedCosts = ({
         {data.map(([groupName, groupData]) => {
           if (!expandedSections.has(groupName)) return null;
           return (
-            <Card key={groupName} className="border-0 shadow-lg overflow-hidden animate-fade-in">
+            <Card key={groupName} className="border-0 shadow-sm overflow-hidden animate-fade-in">
               <CardHeader className="bg-muted/10 border-b py-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className={cn("p-1.5 rounded-lg", groupData.bg, groupData.color)}>
                       <groupData.icon className="w-4 h-4" />
                     </div>
-                    <CardTitle className="text-sm font-black uppercase tracking-wider">{groupName}</CardTitle>
+                    <CardTitle className="text-sm font-bold uppercase tracking-wider">{groupName}</CardTitle>
                   </div>
                   <Badge variant="secondary" className="rounded-lg font-bold">{groupData.items.length} transactions</Badge>
                 </div>
@@ -104,9 +104,9 @@ const PortalFixedCosts = ({
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/5">
-                      <TableHead className="w-32 text-[10px] uppercase font-black">Date</TableHead>
-                      <TableHead className="text-[10px] uppercase font-black">Description</TableHead>
-                      <TableHead className="text-right pr-6 text-[10px] uppercase font-black">Amount</TableHead>
+                      <TableHead className="w-32 text-xs font-semibold text-muted-foreground">Date</TableHead>
+                      <TableHead className="text-xs font-semibold text-muted-foreground">Description</TableHead>
+                      <TableHead className="text-right pr-6 text-xs font-semibold text-muted-foreground">Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -114,7 +114,7 @@ const PortalFixedCosts = ({
                       <TableRow key={t.id} className="hover:bg-muted/20">
                         <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                         <TableCell className="text-xs font-bold">{t.description}</TableCell>
-                        <TableCell className="text-right pr-6 text-xs font-black tabular-nums text-danger">{formatCurrency(t.amount)}</TableCell>
+                        <TableCell className="text-right pr-6 text-xs font-bold tabular-nums text-danger">{formatCurrency(t.amount)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

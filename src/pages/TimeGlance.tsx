@@ -278,7 +278,7 @@ const TimeGlance = () => {
   const renderTransactionList = (items: Transaction[]) => (
     <ScrollArea className="max-h-[250px] w-[280px] p-3">
       <div className="space-y-2">
-        <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Breakdown ({items.length})</p>
+        <p className="text-xs font-semibold text-muted-foreground/60 mb-2">Breakdown ({items.length})</p>
         {items.length === 0 ? (
           <p className="text-[10px] text-muted-foreground italic">No transactions.</p>
         ) : (
@@ -288,7 +288,7 @@ const TimeGlance = () => {
                 <p className="text-[10px] font-bold truncate leading-tight">{t.description}</p>
                 <p className="text-[8px] font-medium text-muted-foreground uppercase tracking-tighter">{t.transaction_date ? format(parseISO(t.transaction_date), 'MMM dd') : ''}</p>
               </div>
-              <p className="text-[10px] font-black tabular-nums shrink-0">{formatCurrency(Math.abs(t.amount))}</p>
+              <p className="text-[10px] font-bold tabular-nums shrink-0">{formatCurrency(Math.abs(t.amount))}</p>
             </div>
           ))
         )}
@@ -300,8 +300,8 @@ const TimeGlance = () => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2.5 bg-primary rounded-xl text-white shadow-sm shadow-primary/20">
               <CalendarRange className="w-7 h-7" />
             </div>
             Time Glance
@@ -327,7 +327,7 @@ const TimeGlance = () => {
       </header>
 
       <div className="flex items-center justify-center py-2">
-        <Badge variant="secondary" className="px-6 py-2 rounded-full text-lg font-black tracking-tight bg-primary/5 text-primary border-primary/10">
+        <Badge variant="secondary" className="px-6 py-2 rounded-full text-lg font-bold tracking-tight bg-primary/5 text-primary border-primary/10">
           {getTitle()}
         </Badge>
       </div>
@@ -337,36 +337,36 @@ const TimeGlance = () => {
         <Card className="border-0 shadow-xl bg-emerald-600 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Income</p>
+            <p className="text-xs font-semibold opacity-70 mb-1">Total Income</p>
             <p className="text-2xl font-black">{formatCurrency(stats.income)}</p>
             <div className="mt-2 flex items-center gap-1 text-[10px] font-bold bg-white/20 w-fit px-2 py-0.5 rounded-full">
               <ArrowUpRight className="w-3 h-3" /> {stats.income > 0 ? 'Active' : 'No income'}
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-rose-600 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-rose-600 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Expenses</p>
+            <p className="text-xs font-semibold opacity-70 mb-1">Total Expenses</p>
             <p className="text-2xl font-black">{formatCurrency(-stats.expenses)}</p>
             <div className="mt-2 flex items-center gap-1 text-[10px] font-bold bg-white/20 w-fit px-2 py-0.5 rounded-full">
               <ArrowDownRight className="w-3 h-3" /> {stats.expenses > 0 ? 'Spending' : 'No spend'}
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-indigo-600 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-indigo-600 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Avg Daily Spend</p>
+            <p className="text-xs font-semibold opacity-70 mb-1">Avg Daily Spend</p>
             <p className="text-2xl font-black">{formatCurrency(stats.avgDailySpend)}</p>
             <p className="text-[10px] opacity-60 mt-1">Over {stats.daysInPeriod} days</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-amber-500 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-amber-500 text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Top Merchant</p>
-            <p className="text-lg font-black truncate" title={stats.topMerchant?.[0] || 'None'}>
+            <p className="text-xs font-semibold opacity-70 mb-1">Top Merchant</p>
+            <p className="text-lg font-bold truncate" title={stats.topMerchant?.[0] || 'None'}>
               {stats.topMerchant ? stats.topMerchant[0] : '—'}
             </p>
             <p className="text-[10px] opacity-80 mt-1">{stats.topMerchant ? formatCurrency(stats.topMerchant[1]) : 'No data'}</p>
@@ -375,7 +375,7 @@ const TimeGlance = () => {
       </div>
 
       {/* The Expense Story - Neurodivergent Friendly Breakdown */}
-      <Card className="border-0 shadow-2xl bg-card overflow-hidden animate-slide-up opacity-0 stagger-2">
+      <Card className="border-0 shadow-sm bg-card overflow-hidden animate-slide-up opacity-0 stagger-2">
         <CardHeader className="pb-4 border-b bg-primary/5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
@@ -386,7 +386,7 @@ const TimeGlance = () => {
                 to={`/expense-story?view=${view}&date=${format(currentDate, 'yyyy-MM-dd')}`}
                 className="group flex items-center gap-2"
               >
-                <CardTitle className="text-xl font-black tracking-tight group-hover:text-primary transition-colors">The Expense Story</CardTitle>
+                <CardTitle className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">The Expense Story</CardTitle>
                 <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
               </Link>
               <CardDescription className="text-xs font-bold uppercase tracking-wider">How your {formatCurrency(stats.expenses)} adds up</CardDescription>
@@ -401,15 +401,15 @@ const TimeGlance = () => {
                 <div className="text-center space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="p-4 rounded-3xl bg-danger-bg border border-danger-border shadow-sm cursor-help hover:scale-105 transition-transform">
+                      <div className="p-4 rounded-2xl bg-danger-bg border border-danger-border shadow-sm cursor-help hover:scale-105 transition-transform">
                         <p className="text-2xl font-black text-danger">{formatCurrency(stats.breakdown.bigHits.total)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-sm rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.breakdown.bigHits.items)}
                     </TooltipContent>
                   </Tooltip>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">The Big Hits (+$100)</p>
+                  <p className="text-xs font-semibold text-muted-foreground">The Big Hits (+$100)</p>
                 </div>
                 
                 <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
@@ -417,15 +417,15 @@ const TimeGlance = () => {
                 <div className="text-center space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="p-4 rounded-3xl bg-primary/10 border border-primary/20 shadow-sm cursor-help hover:scale-105 transition-transform">
+                      <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 shadow-sm cursor-help hover:scale-105 transition-transform">
                         <p className="text-2xl font-black text-primary">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-sm rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.breakdown.subscriptions.items)}
                     </TooltipContent>
                   </Tooltip>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Subscriptions</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Subscriptions</p>
                 </div>
 
                 <PlusIcon className="w-5 h-5 text-muted-foreground/40" />
@@ -433,15 +433,15 @@ const TimeGlance = () => {
                 <div className="text-center space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="p-4 rounded-3xl bg-warning-bg border border-warning-border shadow-sm cursor-help hover:scale-105 transition-transform">
+                      <div className="p-4 rounded-2xl bg-warning-bg border border-warning-border shadow-sm cursor-help hover:scale-105 transition-transform">
                         <p className="text-2xl font-black text-warning">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-sm rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.breakdown.dailyLife.items)}
                     </TooltipContent>
                   </Tooltip>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Daily Life</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Daily Life</p>
                 </div>
 
                 <Equal className="w-5 h-5 text-muted-foreground/40" />
@@ -453,17 +453,17 @@ const TimeGlance = () => {
                         <p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
+                    <TooltipContent side="top" align="center" className="p-0 border-0 shadow-sm rounded-xl overflow-hidden bg-card">
                       {renderTransactionList(stats.expenseTxns)}
                     </TooltipContent>
                   </Tooltip>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary">Total Spent</p>
+                  <p className="text-xs font-semibold text-primary">Total Spent</p>
                 </div>
               </div>
 
               {/* Plain English Summary */}
-              <div className="w-full lg:w-80 space-y-4 p-6 rounded-3xl bg-muted/30 border border-dashed">
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <div className="w-full lg:w-80 space-y-4 p-6 rounded-2xl bg-muted/30 border border-dashed">
+                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
                   <Info className="w-4 h-4" /> Plain English
                 </div>
                 <p className="text-sm leading-relaxed font-medium">
@@ -484,7 +484,7 @@ const TimeGlance = () => {
         {/* Left Column: Charts & Categories */}
         <div className="lg:col-span-8 space-y-8">
           {view !== 'day' && (
-            <Card className="border-0 shadow-xl animate-slide-up opacity-0 stagger-2">
+            <Card className="border-0 shadow-sm animate-slide-up opacity-0 stagger-2">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-primary" />
@@ -509,7 +509,7 @@ const TimeGlance = () => {
           )}
 
           {/* Category Breakdown with Tabs */}
-          <Card className="border-0 shadow-xl animate-slide-up opacity-0 stagger-3">
+          <Card className="border-0 shadow-sm animate-slide-up opacity-0 stagger-3">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -548,7 +548,7 @@ const TimeGlance = () => {
                                 <span className="font-bold truncate">{cat.name}</span>
                                 <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
                               </div>
-                              <span className="font-black tabular-nums text-rose-600">{formatCurrency(cat.total)}</span>
+                              <span className="font-bold tabular-nums text-rose-600">{formatCurrency(cat.total)}</span>
                             </div>
                             <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as React.CSSProperties & Record<string, string>} />
                             <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of expenses</span></div>
@@ -575,7 +575,7 @@ const TimeGlance = () => {
                                 <span className="font-bold truncate">{cat.name}</span>
                                 <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
                               </div>
-                              <span className="font-black tabular-nums text-emerald-600">{formatCurrency(cat.total)}</span>
+                              <span className="font-bold tabular-nums text-emerald-600">{formatCurrency(cat.total)}</span>
                             </div>
                             <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as React.CSSProperties & Record<string, string>} />
                             <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of income</span></div>
@@ -592,7 +592,7 @@ const TimeGlance = () => {
 
         {/* Right Column: Transaction List with Sorting & Filtering */}
         <div className="lg:col-span-4 space-y-8">
-          <Card className="border-0 shadow-xl overflow-hidden h-full flex flex-col animate-slide-up opacity-0 stagger-2">
+          <Card className="border-0 shadow-sm overflow-hidden h-full flex flex-col animate-slide-up opacity-0 stagger-2">
             <CardHeader className="bg-muted/20 border-b shrink-0 space-y-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -609,9 +609,9 @@ const TimeGlance = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => handleSort('date')} className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'date' && "bg-primary/10 text-primary")}>Date <ArrowUpDown className="w-3 h-3" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => handleSort('amount')} className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'amount' && "bg-primary/10 text-primary")}>Amount <ArrowUpDown className="w-3 h-3" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => handleSort('description')} className={cn("h-8 text-[10px] font-black uppercase tracking-widest rounded-lg gap-1.5", sortField === 'description' && "bg-primary/10 text-primary")}>Name <ArrowUpDown className="w-3 h-3" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleSort('date')} className={cn("h-8 text-xs font-semibold text-muted-foreground rounded-lg gap-1.5", sortField === 'date' && "bg-primary/10 text-primary")}>Date <ArrowUpDown className="w-3 h-3" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleSort('amount')} className={cn("h-8 text-xs font-semibold text-muted-foreground rounded-lg gap-1.5", sortField === 'amount' && "bg-primary/10 text-primary")}>Amount <ArrowUpDown className="w-3 h-3" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => handleSort('description')} className={cn("h-8 text-xs font-semibold text-muted-foreground rounded-lg gap-1.5", sortField === 'description' && "bg-primary/10 text-primary")}>Name <ArrowUpDown className="w-3 h-3" /></Button>
               </div>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-hidden">
@@ -623,7 +623,7 @@ const TimeGlance = () => {
                   </div>
                 ) : sortedTransactions.length === 0 ? (
                   <div className="p-20 text-center space-y-4">
-                    <div className="w-20 h-20 bg-muted rounded-3xl flex items-center justify-center mx-auto opacity-50">
+                    <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mx-auto opacity-50">
                       <History className="w-10 h-10 text-muted-foreground" />
                     </div>
                     <div>
@@ -645,10 +645,10 @@ const TimeGlance = () => {
                         <div className="min-w-0">
                           <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{t.description}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">
+                            <span className="text-xs font-semibold text-muted-foreground">
                               {format(parseISO(t.transaction_date), 'MMM dd')}
                             </span>
-                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-primary/10 bg-primary/5 text-primary">
+                            <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md font-semibold border-primary/10 bg-primary/5 text-primary">
                               {t.category_1}
                             </Badge>
                           </div>
@@ -656,7 +656,7 @@ const TimeGlance = () => {
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <p className={cn(
-                          "text-base font-black tabular-nums",
+                          "text-base font-bold tabular-nums",
                           t.amount > 0 ? "text-emerald-600" : "text-rose-600"
                         )}>
                           {formatCurrency(t.amount)}

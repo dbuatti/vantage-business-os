@@ -110,7 +110,7 @@ const AccountantSettings = () => {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-black tracking-tight">Accountant Configuration</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Accountant Configuration</h2>
           <p className="text-muted-foreground">Define how your tax deductions are calculated and identified.</p>
         </div>
         <Button onClick={handleSave} disabled={saving} className="rounded-xl gap-2">
@@ -121,7 +121,7 @@ const AccountantSettings = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Business Use Percentages */}
-        <Card className="border-0 shadow-xl">
+        <Card className="border-0 shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Percent className="w-5 h-5 text-primary" />
@@ -148,7 +148,7 @@ const AccountantSettings = () => {
         </Card>
 
         {/* Deduction Keywords */}
-        <Card className="border-0 shadow-xl">
+        <Card className="border-0 shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Tags className="w-5 h-5 text-primary" />
@@ -159,7 +159,7 @@ const AccountantSettings = () => {
           <CardContent className="space-y-8">
             {Object.entries(settings.deduction_keywords).map(([category, words]) => (
               <div key={category} className="space-y-3">
-                <Label className="capitalize font-bold text-xs uppercase tracking-widest text-muted-foreground">{category} Keywords</Label>
+                <Label className="capitalize font-semibold text-xs text-muted-foreground">{category} Keywords</Label>
                 <div className="flex flex-wrap gap-1.5">
                   {(words as string[]).map(word => (
                     <Badge key={word} variant="secondary" className="rounded-lg pl-2 pr-1 py-1 gap-1 bg-primary/5 text-primary border-primary/10">

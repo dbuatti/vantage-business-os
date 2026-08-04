@@ -111,19 +111,19 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
   ];
 
   return (
-    <Card className="w-full bg-card/40 backdrop-blur-xl border shadow-2xl animate-slide-up overflow-hidden">
+    <Card className="w-full bg-card/40 backdrop-blur-xl border shadow-xl animate-slide-up overflow-hidden">
       <CardHeader className="pb-4 border-b bg-muted/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
               <PlusCircle className="w-6 h-6" />
             </div>
             <div>
-              <CardTitle className="text-xl font-black tracking-tight">Log Weekly Entry</CardTitle>
-              <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Thursday Routine</p>
+              <CardTitle className="text-xl font-bold tracking-tight">Log Weekly Entry</CardTitle>
+              <p className="text-xs font-semibold text-muted-foreground">Thursday Routine</p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
             <Keyboard className="w-3.5 h-3.5" />
             <span>⌘ + Enter</span>
           </div>
@@ -134,7 +134,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
           <div className="space-y-6">
             {/* Date Field */}
             <div className="space-y-3">
-              <Label htmlFor="date" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+              <Label htmlFor="date" className="text-xs font-semibold text-muted-foreground ml-1">
                 Entry Date
               </Label>
               <div className="relative">
@@ -154,7 +154,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
                     key={days}
                     type="button"
                     className={cn(
-                      "h-8 text-[10px] px-4 rounded-full font-black uppercase tracking-tighter transition-all border",
+                      "h-8 text-xs px-4 rounded-full font-semibold transition-all border",
                       format(subDays(new Date(), days), 'yyyy-MM-dd') === date
                         ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
                         : "bg-muted/50 text-muted-foreground border-transparent hover:border-muted-foreground/20"
@@ -169,7 +169,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
 
             {/* Account Field */}
             <div className="space-y-3">
-              <Label htmlFor="account" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+              <Label htmlFor="account" className="text-xs font-semibold text-muted-foreground ml-1">
                 Account Type
               </Label>
               <Select value={account} onValueChange={(val) => setAccount(val as AccountType)}>
@@ -197,7 +197,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
               {/* Credit Was Field (Conditional) */}
               {account === 'Credit' && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-left-4 duration-300">
-                  <Label htmlFor="creditWas" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+                  <Label htmlFor="creditWas" className="text-xs font-semibold text-muted-foreground ml-1">
                     Previous Balance ($)
                   </Label>
                   <div className="relative">
@@ -219,7 +219,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
 
               {/* Amount Field */}
               <div className="space-y-3">
-                <Label htmlFor="amount" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+                <Label htmlFor="amount" className="text-xs font-semibold text-muted-foreground ml-1">
                   Current Balance ($)
                 </Label>
                 <div className="relative">
@@ -245,7 +245,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
             <Button 
               type="submit" 
               className={cn(
-                "h-16 rounded-2xl font-black text-lg transition-all duration-500 shadow-xl",
+                "h-16 rounded-2xl font-bold text-lg transition-all duration-500 shadow-xl",
                 justSubmitted 
                   ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" 
                   : "bg-primary hover:bg-primary/90 shadow-primary/20"

@@ -76,15 +76,15 @@ const SubscriptionAudit = ({ transactions }: SubscriptionAuditProps) => {
   if (auditData.length === 0) return null;
 
   return (
-    <Card className="border-0 shadow-2xl bg-card overflow-hidden animate-slide-up">
+    <Card className="border-0 shadow-xl bg-card overflow-hidden animate-slide-up">
       <CardHeader className="pb-4 border-b bg-muted/20">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
               <Repeat className="w-6 h-6" />
             </div>
             <div>
-              <CardTitle className="text-xl font-black tracking-tight">Subscription Audit</CardTitle>
+              <CardTitle className="text-xl font-bold tracking-tight">Subscription Audit</CardTitle>
               <CardDescription className="text-xs font-bold uppercase tracking-wider">
                 {auditData.length} active services detected
               </CardDescription>
@@ -110,7 +110,7 @@ const SubscriptionAudit = ({ transactions }: SubscriptionAuditProps) => {
                 <div className="min-w-0">
                   <p className="font-bold text-sm truncate group-hover:text-primary transition-colors">{sub.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <Badge variant="outline" className="text-[9px] h-4 px-1.5 rounded-md uppercase font-black">
+                    <Badge variant="outline" className="text-xs font-semibold text-muted-foreground h-4 px-1.5 rounded-md">
                       {sub.frequency}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground font-medium">
@@ -120,7 +120,7 @@ const SubscriptionAudit = ({ transactions }: SubscriptionAuditProps) => {
                 </div>
               </div>
               <div className="text-right shrink-0 ml-4">
-                <p className="text-base font-black tabular-nums">
+                <p className="text-base font-bold tabular-nums">
                   {formatCurrency(sub.latestAmount)}
                 </p>
                 <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">

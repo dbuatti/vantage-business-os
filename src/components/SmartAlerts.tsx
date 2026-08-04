@@ -118,13 +118,13 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center gap-2 px-2">
         <Zap className="w-4 h-4 text-primary" />
-        <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Proactive Alerts</h2>
+        <h2 className="text-xs font-semibold text-muted-foreground">Proactive Alerts</h2>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {alerts.map((alert) => (
           <Card key={alert.id} className={cn(
-            "border-0 shadow-lg overflow-hidden group hover:shadow-xl transition-all",
+            "border-0 shadow-sm overflow-hidden group hover:shadow-sm transition-all",
             alert.type === 'warning' ? "bg-danger-bg border-l-4 border-danger" :
             alert.type === 'opportunity' ? "bg-profit-bg border-l-4 border-profit" :
             "bg-info-bg border-l-4 border-info"
@@ -133,7 +133,7 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <h3 className={cn(
-                    "font-black text-sm uppercase tracking-tight",
+                    "font-bold text-sm uppercase tracking-tight",
                     alert.type === 'warning' ? "text-danger" :
                     alert.type === 'opportunity' ? "text-profit" :
                     "text-info"

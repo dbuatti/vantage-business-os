@@ -58,7 +58,7 @@ const PortalTotalsTable = ({
               {data.map(([groupName, groupData]) => (
                 <React.Fragment key={groupName}>
                   <TableRow className="bg-muted/20 hover:bg-muted/20">
-                    <TableCell className="pl-6 font-black uppercase tracking-wider text-xs text-primary">
+                    <TableCell className="pl-6 font-semibold uppercase tracking-wider text-xs text-primary">
                       {groupName}
                     </TableCell>
                     <TableCell className="text-right">
@@ -87,7 +87,7 @@ const PortalTotalsTable = ({
                         </Button>
                       ) : '—'}
                     </TableCell>
-                    <TableCell className={cn("text-right font-black pr-6", (groupData.income - groupData.expenses) >= 0 ? "text-profit" : "text-danger")}>
+                    <TableCell className={cn("text-right font-bold pr-6", (groupData.income - groupData.expenses) >= 0 ? "text-profit" : "text-danger")}>
                       {formatCurrency(groupData.income - groupData.expenses)}
                     </TableCell>
                   </TableRow>
@@ -126,7 +126,7 @@ const PortalTotalsTable = ({
                               </Button>
                             ) : '—'}
                           </TableCell>
-                          <TableCell className={cn("text-right text-sm font-black pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-profit" : "text-danger")}>
+                          <TableCell className={cn("text-right text-sm font-bold pr-6 tabular-nums", (catData.income - catData.expenses) >= 0 ? "text-profit" : "text-danger")}>
                             {formatCurrency(catData.income - catData.expenses)}
                           </TableCell>
                         </TableRow>

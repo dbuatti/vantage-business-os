@@ -178,7 +178,7 @@ const Tickets = () => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Tickets & Projects</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Tickets & Projects</h1>
           <p className="text-muted-foreground">Manage client requests, support tickets, and project tasks.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -213,19 +213,19 @@ const Tickets = () => {
             <p className="text-3xl font-black">{tickets.filter(t => t.status === 'open').length}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-indigo-600 text-white">
+        <Card className="border-0 shadow-sm bg-indigo-600 text-white">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">In Progress</p>
             <p className="text-3xl font-black">{tickets.filter(t => t.status === 'in_progress').length}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-rose-500 text-white">
+        <Card className="border-0 shadow-sm bg-rose-500 text-white">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">High Priority</p>
             <p className="text-3xl font-black">{tickets.filter(t => t.priority === 'high' && t.status !== 'closed').length}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-emerald-600 text-white">
+        <Card className="border-0 shadow-sm bg-emerald-600 text-white">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">Resolved (Total)</p>
             <p className="text-3xl font-black">{tickets.filter(t => t.status === 'resolved').length}</p>
@@ -233,7 +233,7 @@ const Tickets = () => {
         </Card>
       </div>
 
-      <Card className="border-0 shadow-xl overflow-hidden">
+      <Card className="border-0 shadow-sm overflow-hidden">
         <CardHeader className="pb-3 border-b bg-muted/30">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative flex-1">
@@ -295,8 +295,8 @@ const Tickets = () => {
                     <TableCell>
                       <p className="font-bold">{ticket.title}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-[9px] rounded-md uppercase font-bold tracking-tighter">{ticket.category}</Badge>
-                        {ticket.service_tier && <Badge variant="outline" className="text-[9px] rounded-md bg-primary/5 text-primary border-primary/10">{ticket.service_tier}</Badge>}
+                        <Badge variant="outline" className="text-xs font-semibold rounded-md text-muted-foreground">{ticket.category}</Badge>
+                        {ticket.service_tier && <Badge variant="outline" className="text-xs rounded-md bg-primary/5 text-primary border-primary/10">{ticket.service_tier}</Badge>}
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{ticket.client_display_name}</TableCell>

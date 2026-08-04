@@ -415,7 +415,7 @@ const AccountantPortal = () => {
             )}
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
                   <Calculator className="w-8 h-8 text-primary" />
                   Accountant Portal
                 </h1>
@@ -456,7 +456,7 @@ const AccountantPortal = () => {
         </div>
 
         {/* Tax Readiness Score */}
-        <Card className="border-0 shadow-xl bg-gradient-to-r from-primary/5 to-background print:hidden">
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 to-background print:hidden">
           <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-6">
               <div className="relative w-24 h-24">
@@ -475,7 +475,7 @@ const AccountantPortal = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-black">Tax Readiness Score</h3>
+                <h3 className="text-lg font-bold">Tax Readiness Score</h3>
                 <p className="text-sm text-muted-foreground max-w-xs">
                   {taxReadiness === 100 
                     ? "Your data is perfectly prepared for your accountant." 
@@ -502,7 +502,7 @@ const AccountantPortal = () => {
 
         {/* Share Link Quick Access */}
         {!isPublic && profile?.accountant_share_token && (
-          <Card className="border-0 shadow-lg bg-primary/5 border-primary/10 print:hidden">
+          <Card className="border-0 shadow-sm bg-primary/5 border-primary/10 print:hidden">
             <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -530,7 +530,7 @@ const AccountantPortal = () => {
 
         {/* Controls & Search */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
-          <Card className="lg:col-span-2 border-0 shadow-lg">
+          <Card className="lg:col-span-2 border-0 shadow-sm">
             <CardContent className="p-6 space-y-4">
               <div className="flex flex-wrap items-end gap-6">
                 <div className="space-y-2">
@@ -574,7 +574,7 @@ const AccountantPortal = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-warning-bg border-warning-border">
+          <Card className="border-0 shadow-sm bg-warning-bg border-warning-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-bold flex items-center gap-2 text-warning">
                 <ClipboardCheck className="w-4 h-4 text-warning" />
@@ -610,7 +610,7 @@ const AccountantPortal = () => {
               <p className="text-xs opacity-70 mt-1">{businessIncome.length} work transactions</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-danger text-danger-foreground">
+          <Card className="border-0 shadow-sm bg-danger text-danger-foreground">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium opacity-80">Business Expenses</p>
@@ -620,7 +620,7 @@ const AccountantPortal = () => {
               <p className="text-xs opacity-70 mt-1">{businessExpenses.length} work transactions</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-primary text-primary-foreground">
+          <Card className="border-0 shadow-sm bg-primary text-primary-foreground">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium opacity-80">Net Position</p>

@@ -81,21 +81,21 @@ const AppSidebar = () => {
     <Sidebar collapsible="icon" className="border-r bg-sidebar">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3 px-2">
-          <div className="p-2.5 bg-gradient-to-br from-primary to-indigo-600 rounded-2xl text-white shadow-xl shadow-primary/20">
+          <div className="p-2.5 bg-gradient-to-br from-primary to-indigo-600 rounded-xl text-white shadow-xl shadow-primary/20">
             <Sparkles className="w-6 h-6" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-black tracking-tighter text-2xl leading-none">
+            <span className="font-bold tracking-tighter text-2xl leading-none">
               Vantage
             </span>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Intelligent OS</span>
+            <span className="text-xs font-semibold text-muted-foreground mt-1">Intelligent OS</span>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-xs font-semibold text-muted-foreground/60">Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
@@ -118,7 +118,7 @@ const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Clients &amp; Billing</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-xs font-semibold text-muted-foreground/60">Clients &amp; Billing</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {businessItems.map((item) => (
@@ -141,7 +141,7 @@ const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Tax &amp; Reports</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-xs font-semibold text-muted-foreground/60">Tax &amp; Reports</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {taxItems.map((item) => (
@@ -164,7 +164,7 @@ const AppSidebar = () => {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Finance</SidebarGroupLabel>
+          <SidebarGroupLabel className="px-4 text-xs font-semibold text-muted-foreground/60">Finance</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {financeItems.map((item) => (
@@ -191,7 +191,7 @@ const AppSidebar = () => {
         <div className="px-4 py-3 rounded-2xl bg-muted/50 border group-data-[collapsible=icon]:hidden">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">System Status</span>
+            <span className="text-xs font-semibold text-muted-foreground">System Status</span>
           </div>
           <p className="text-[11px] font-medium leading-tight">All systems operational. Data synced 1m ago.</p>
         </div>
@@ -207,12 +207,12 @@ const AppSidebar = () => {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <div className="flex items-center gap-3 px-4 py-3 mb-2 group-data-[collapsible=icon]:hidden bg-primary/5 rounded-2xl border border-primary/10">
-              <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center text-sm font-black shadow-lg shadow-primary/20">
+              <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center text-sm font-bold shadow-sm shadow-primary/20">
                 {session?.user.email?.[0].toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-black truncate">{session?.user.email?.split('@')[0]}</p>
-                <p className="text-[9px] font-black text-primary uppercase tracking-widest">Pro Member</p>
+                <p className="text-xs font-semibold truncate">{session?.user.email?.split('@')[0]}</p>
+                <p className="text-xs font-semibold opacity-70">Pro Member</p>
               </div>
             </div>
           </SidebarMenuItem>

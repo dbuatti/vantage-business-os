@@ -128,7 +128,7 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
   };
 
   return (
-    <Card className="border-0 shadow-xl">
+    <Card className="border-0 shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
@@ -231,7 +231,7 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                     "group p-4 rounded-2xl border transition-all hover:shadow-md",
                     isComplete
                       ? "bg-gradient-to-br from-emerald-50 to-white border-emerald-200 dark:from-emerald-950 dark:to-card dark:border-emerald-800"
-                      : "bg-gradient-to-br from-white to-muted/30 hover:from-muted/20"
+                      : "bg-muted/30 hover:bg-muted/50"
                   )}
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -239,11 +239,11 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                       {isComplete ? (
                         <CheckCircle2 className="w-5 h-5 text-profit" />
                       ) : (
-                        <div className={cn("w-3 h-3 rounded-full bg-gradient-to-r", goal.color)} />
+                        <div className="w-3 h-3 rounded-full bg-primary" />
                       )}
                       <h3 className="font-bold">{goal.name}</h3>
                       {isComplete && (
-                        <span className="text-[10px] font-bold bg-profit-bg text-profit px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-semibold bg-profit-bg text-profit px-2 py-0.5 rounded-full">
                           <Sparkles className="w-2.5 h-2.5 inline mr-1" />
                           Complete!
                         </span>
@@ -279,7 +279,7 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                       value={percentage}
                       className={cn(
                         "h-2.5",
-                        isComplete ? "[&>div]:bg-emerald-500" : `[&>div]:bg-gradient-to-r [&>div]:${goal.color}`
+                        isComplete ? "[&>div]:bg-emerald-500" : "[&>div]:bg-primary"
                       )}
                     />
 

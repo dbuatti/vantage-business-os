@@ -202,7 +202,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
+      <DialogContent className="sm:max-w-lg rounded-2xl p-0 overflow-hidden border-0 shadow-2xl">
         <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6">
           <DialogHeader className="mb-6">
             <div className="flex items-center justify-between">
@@ -230,7 +230,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                   <div className="space-y-1">
                     <button 
                       onClick={() => setShowAllTransactions(!showAllTransactions)}
-                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                      className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-primary/80 transition-colors"
                     >
                       <Layers className="w-3 h-3" />
                       {currentGroup.transactions.length} Similar Transactions
@@ -245,7 +245,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                     )}>
                       {formatCurrency(currentGroup.totalAmount)}
                     </div>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Total Group Value</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Total Group Value</p>
                   </div>
                 </div>
 
@@ -263,7 +263,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                 {showAllTransactions ? (
                   <div className="pt-2 space-y-2 animate-fade-in">
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Full Transaction List:</p>
+                      <p className="text-xs font-semibold text-muted-foreground">Full Transaction List:</p>
                       <Button variant="ghost" size="sm" onClick={() => setShowAllTransactions(false)} className="h-6 text-[10px] rounded-md">
                         Hide List
                       </Button>
@@ -291,7 +291,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                 ) : (
                   /* Mini Timeline (Default View) */
                   <div className="pt-2 space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Recent occurrences:</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Recent occurrences:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {currentGroup.transactions.slice(0, 6).map((t, i) => (
                         <div key={i} className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 text-[10px] font-medium">
@@ -333,7 +333,7 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
                 </Button>
               </div>
 
-              <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+              <p className="text-center text-xs font-semibold text-muted-foreground">
                 Tip: This will update all {currentGroup.transactions.length} transactions at once
               </p>
             </div>

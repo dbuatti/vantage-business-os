@@ -191,9 +191,9 @@ const MasterTrackerMatrix = ({
         <Table className="border-collapse">
           <TableHeader className="sticky top-0 z-40 bg-background shadow-sm">
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="sticky left-0 bg-muted/50 z-50 min-w-[220px] font-black uppercase text-[10px] tracking-widest border-r">Category</TableHead>
+              <TableHead className="sticky left-0 bg-muted/50 z-50 min-w-[220px] text-xs font-semibold text-muted-foreground border-r">Category</TableHead>
               {intervals.map((interval, i) => (
-                <TableHead key={i} className="text-center min-w-[180px] font-black uppercase text-[10px] tracking-widest border-r last:border-r-0">
+                <TableHead key={i} className="text-center min-w-[180px] text-xs font-semibold text-muted-foreground border-r last:border-r-0">
                   {view === 'monthly' ? format(interval, 'MMMM') : 
                    view === 'daily' ? format(interval, 'MMM dd') : 
                    view === 'weekly' ? `Week of ${format(interval, 'MMM dd')}` :
@@ -207,7 +207,7 @@ const MasterTrackerMatrix = ({
               <React.Fragment key={group.groupName}>
                 {/* Group Header Row */}
                 <TableRow className="bg-primary/5 hover:bg-primary/10 border-y-2 border-primary/10 transition-colors">
-                  <TableCell className="sticky left-0 bg-primary/5 z-30 font-black text-xs uppercase tracking-widest text-primary flex items-center gap-2 border-r">
+                  <TableCell className="sticky left-0 bg-primary/5 z-30 text-xs font-semibold uppercase tracking-widest text-primary flex items-center gap-2 border-r">
                     <span className="text-lg">{group.icon}</span>
                     {group.groupName}
                   </TableCell>
@@ -218,10 +218,10 @@ const MasterTrackerMatrix = ({
                     return (
                       <TableCell key={i} className="text-center border-r last:border-r-0">
                         <div className="flex flex-col items-center gap-1">
-                          <span className="font-black text-sm">{formatCurrency(groupSpent)}</span>
+                          <span className="font-bold text-sm">{formatCurrency(groupSpent)}</span>
                           {groupBudget > 0 && (
                             <Badge variant="outline" className={cn(
-                              "text-[9px] font-black px-1.5 py-0",
+                              "text-xs font-semibold opacity-70 px-1.5 py-0",
                               groupPercent > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
                             )}>
                               {Math.round(groupPercent)}%
@@ -247,12 +247,12 @@ const MasterTrackerMatrix = ({
                       >
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className={cn("font-black tabular-nums text-sm", stat.spent > 0 ? "text-foreground" : "text-muted-foreground/20")}>
+                            <span className={cn("font-bold tabular-nums text-sm", stat.spent > 0 ? "text-foreground" : "text-muted-foreground/20")}>
                               {stat.spent > 0 ? formatCurrency(stat.spent) : '—'}
                             </span>
                             {stat.budget > 0 && (
                               <span className={cn(
-                                "text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter",
+                                "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
                                 stat.buffer >= 0 ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
                               )}>
                                 {stat.buffer >= 0 ? 'Safe' : 'Over'}
@@ -268,7 +268,7 @@ const MasterTrackerMatrix = ({
                                   style={{ width: `${Math.min(100, stat.percent)}%` }} 
                                 />
                               </div>
-                              <div className="flex justify-between text-[9px] font-bold uppercase tracking-tighter text-muted-foreground/60">
+                              <div className="flex justify-between text-xs font-semibold text-muted-foreground/60">
                                 <span>Buffer:</span>
                                 <span className={cn(stat.buffer >= 0 ? "text-profit" : "text-danger")}>
                                   {formatCurrency(stat.buffer)}
@@ -293,7 +293,7 @@ const MasterTrackerMatrix = ({
           <div key={group.groupName} className="space-y-4">
             <div className="flex items-center gap-2 px-2">
               <span className="text-xl">{group.icon}</span>
-              <h3 className="font-black text-sm uppercase tracking-widest text-primary">{group.groupName}</h3>
+              <h3 className="font-bold text-sm uppercase tracking-widest text-primary">{group.groupName}</h3>
             </div>
             
             <div className="grid grid-cols-1 gap-3">
@@ -307,13 +307,13 @@ const MasterTrackerMatrix = ({
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-bold text-sm">{row.category}</p>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{latestStat.label}</p>
+                          <p className="text-xs font-semibold text-muted-foreground">{latestStat.label}</p>
                         </div>
                         <div className="text-right">
                           <p className="font-black text-lg">{formatCurrency(latestStat.spent)}</p>
                           {latestStat.budget > 0 && (
                             <Badge variant="outline" className={cn(
-                              "text-[9px] font-black",
+                              "text-xs font-semibold opacity-70",
                               latestStat.percent > 100 ? "bg-danger-bg text-danger" : "bg-profit-bg text-profit"
                             )}>
                               {Math.round(latestStat.percent)}% of budget
@@ -325,7 +325,7 @@ const MasterTrackerMatrix = ({
                       {latestStat.budget > 0 && (
                         <div className="space-y-1.5">
                           <Progress value={latestStat.percent} className={cn("h-1.5", latestStat.percent > 100 ? "[&>div]:bg-danger" : "[&>div]:bg-primary")} />
-                          <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                          <div className="flex justify-between text-xs font-semibold text-muted-foreground">
                             <span>Remaining Buffer</span>
                             <span className={cn(latestStat.buffer >= 0 ? "text-profit" : "text-danger")}>
                               {formatCurrency(latestStat.buffer)}

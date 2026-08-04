@@ -71,7 +71,7 @@ export const TaxAveragingCalculator: React.FC<TaxAveragingCalculatorProps> = ({
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{stat.label}</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">{stat.label}</p>
               <p className={cn("text-2xl font-black tracking-tight", stat.color)}>{stat.value}</p>
             </CardContent>
           </Card>
@@ -84,7 +84,7 @@ export const TaxAveragingCalculator: React.FC<TaxAveragingCalculatorProps> = ({
         </div>
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-white/20 text-white border-white/30 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+            <Badge variant="outline" className="bg-white/20 text-white border-white/30 rounded-full px-3 py-1 text-xs font-semibold opacity-70">
               ATO Averaging Benefit
             </Badge>
           </div>
@@ -100,12 +100,12 @@ export const TaxAveragingCalculator: React.FC<TaxAveragingCalculatorProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary-foreground/70">Standard Tax</p>
+                  <p className="text-xs font-semibold text-primary-foreground/70">Standard Tax</p>
                   <p className="text-xl font-bold">{formatCurrency(result.taxWithoutAveraging)}</p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-primary-foreground/60" />
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary-foreground/70">Averaged Tax</p>
+                  <p className="text-xs font-semibold text-primary-foreground/70">Averaged Tax</p>
                   <p className="text-xl font-bold text-profit">{formatCurrency(result.taxWithAveraging)}</p>
                 </div>
               </div>

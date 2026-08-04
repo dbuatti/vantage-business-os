@@ -221,7 +221,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl rounded-3xl p-0 overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl rounded-2xl p-0 overflow-hidden border-0 shadow-sm max-h-[90vh] flex flex-col">
         {/* Header Section - Fixed */}
         <div className="bg-gradient-to-br from-primary/10 via-background to-background p-6 shrink-0">
           <DialogHeader className="mb-6">
@@ -248,7 +248,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Target className="w-4 h-4 opacity-70" />
-                    <span className="text-xs font-black uppercase tracking-widest opacity-70">I want to save...</span>
+                    <span className="text-xs font-semibold uppercase tracking-widest opacity-70">I want to save...</span>
                   </div>
                   
                   <div className="flex items-center gap-3">
@@ -268,7 +268,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => setSavingsType('percent')}
-                        className={cn("h-7 rounded-lg text-[10px] font-black uppercase", savingsType === 'percent' ? "bg-white text-primary" : "text-white hover:bg-white/10")}
+                        className={cn("h-7 rounded-lg text-[10px] font-bold uppercase", savingsType === 'percent' ? "bg-white text-primary" : "text-white hover:bg-white/10")}
                       >
                         Percent
                       </Button>
@@ -276,7 +276,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => setSavingsType('dollar')}
-                        className={cn("h-7 rounded-lg text-[10px] font-black uppercase", savingsType === 'dollar' ? "bg-white text-primary" : "text-white hover:bg-white/10")}
+                        className={cn("h-7 rounded-lg text-[10px] font-bold uppercase", savingsType === 'dollar' ? "bg-white text-primary" : "text-white hover:bg-white/10")}
                       >
                         Dollar
                       </Button>
@@ -294,8 +294,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                     <span>{formatCurrency(adjustedSuggestions.availableForExpenses)}</span>
                   </div>
                   <div className="pt-2 border-t border-white/10 flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-tighter opacity-60">Projected Annual Income</span>
-                    <span className="font-black">{formatCurrency(adjustedSuggestions.annualizedIncome)}</span>
+                    <span className="text-xs font-semibold opacity-70">Projected Annual Income</span>
+                    <span className="font-bold">{formatCurrency(adjustedSuggestions.annualizedIncome)}</span>
                   </div>
                 </div>
               </div>
@@ -306,12 +306,12 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         {/* Sub-header - Fixed */}
         <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b bg-background">
           <div className="flex items-center gap-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
             </h3>
             {adjustedSuggestions.scaleFactor !== 1 && (
               <Badge variant="outline" className={cn(
-                "text-[10px] font-black uppercase",
+                "text-xs font-semibold opacity-70",
                 adjustedSuggestions.scaleFactor < 1 ? "text-danger border-danger-border bg-danger-bg" : "text-profit border-profit-border bg-profit-bg"
               )}>
                 {adjustedSuggestions.scaleFactor < 1 ? 'Spending Cut Required' : 'Spending Increase Possible'}
@@ -323,7 +323,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
             size="sm" 
             onClick={applyAllSuggestions}
             disabled={analyzing}
-            className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-black uppercase"
+            className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-bold uppercase"
           >
             {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
             Apply All Suggestions
@@ -340,13 +340,13 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
             return (
               <div key={budget.category_name} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
                 <div className="flex items-center justify-between mb-3">
-                  <Label className="font-black uppercase text-[10px] tracking-widest text-muted-foreground">
+                  <Label className="text-xs font-semibold text-muted-foreground">
                     {budget.category_name}
                   </Label>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-[9px] font-bold text-muted-foreground uppercase">Current Annualized</p>
-                      <p className="text-xs font-black">{formatCurrency(historicalAnnual)}</p>
+                      <p className="text-xs font-semibold text-muted-foreground">Current Annualized</p>
+                      <p className="text-xs font-bold">{formatCurrency(historicalAnnual)}</p>
                     </div>
                     <button 
                       onClick={() => applySuggestion(budget.category_name)}
@@ -355,8 +355,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                         isDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
                       )}
                     >
-                      <span className="text-[8px] font-black uppercase">Suggested</span>
-                      <span className="text-xs font-black">{formatCurrency(suggestion)}</span>
+                      <span className="text-xs font-semibold opacity-70">Suggested</span>
+                      <span className="text-xs font-bold">{formatCurrency(suggestion)}</span>
                     </button>
                   </div>
                 </div>
@@ -382,7 +382,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         <div className="p-6 border-t bg-muted/10 shrink-0">
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="rounded-xl">Cancel</Button>
-            <Button onClick={handleSave} disabled={loading} className="rounded-xl px-10 h-12 font-black text-base gap-2 shadow-xl shadow-primary/20">
+            <Button onClick={handleSave} disabled={loading} className="rounded-xl px-10 h-12 font-bold text-base gap-2 shadow-xl shadow-primary/20">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save Strategy
             </Button>

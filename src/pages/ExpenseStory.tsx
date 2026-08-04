@@ -135,7 +135,7 @@ const ExpenseStory = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
               The Expense Story
             </h1>
             <p className="text-muted-foreground mt-1">A deep dive into your spending narrative.</p>
@@ -156,20 +156,20 @@ const ExpenseStory = () => {
       </header>
 
       <div className="flex items-center justify-center">
-        <Badge variant="secondary" className="px-6 py-2 rounded-full text-lg font-black tracking-tight bg-primary/5 text-primary border-primary/10">
+        <Badge variant="secondary" className="px-6 py-2 rounded-full text-lg font-bold tracking-tight bg-primary/5 text-primary border-primary/10">
           {getTitle()}
         </Badge>
       </div>
 
       {/* The Equation Visual */}
-      <Card className="border-0 shadow-2xl bg-card overflow-hidden">
+      <Card className="border-0 shadow-sm bg-card overflow-hidden">
         <CardHeader className="pb-4 border-b bg-primary/5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
               <Calculator className="w-6 h-6" />
             </div>
             <div>
-              <CardTitle className="text-xl font-black tracking-tight">The Visual Equation</CardTitle>
+              <CardTitle className="text-xl font-bold tracking-tight">The Visual Equation</CardTitle>
               <CardDescription className="text-xs font-bold uppercase tracking-wider">Breaking down {formatCurrency(stats.expenses)}</CardDescription>
             </div>
           </div>
@@ -180,7 +180,7 @@ const ExpenseStory = () => {
               <div className="p-6 rounded-[2.5rem] bg-danger-bg border-2 border-danger-border shadow-sm">
                 <p className="text-4xl font-black text-danger">{formatCurrency(stats.breakdown.bigHits.total)}</p>
               </div>
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">The Big Hits</p>
+              <p className="text-xs font-semibold text-muted-foreground">The Big Hits</p>
             </div>
 
             <PlusIcon className="w-6 h-6 text-muted-foreground/40" />
@@ -189,7 +189,7 @@ const ExpenseStory = () => {
               <div className="p-6 rounded-[2.5rem] bg-primary/10 border-2 border-primary/20 shadow-sm">
                 <p className="text-4xl font-black text-primary">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
               </div>
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Subscriptions</p>
+              <p className="text-xs font-semibold text-muted-foreground">Subscriptions</p>
             </div>
 
             <PlusIcon className="w-6 h-6 text-muted-foreground/40" />
@@ -198,16 +198,16 @@ const ExpenseStory = () => {
               <div className="p-6 rounded-[2.5rem] bg-warning-bg border-2 border-warning-border shadow-sm">
                 <p className="text-4xl font-black text-warning">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
               </div>
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Daily Life</p>
+              <p className="text-xs font-semibold text-muted-foreground">Daily Life</p>
             </div>
 
             <Equal className="w-6 h-6 text-muted-foreground/40" />
 
             <div className="text-center space-y-3">
-              <div className="p-8 rounded-[3rem] bg-primary text-primary-foreground shadow-2xl shadow-primary/30">
+              <div className="p-8 rounded-[3rem] bg-primary text-primary-foreground shadow-xl shadow-primary/30">
                 <p className="text-5xl font-black">{formatCurrency(stats.expenses)}</p>
               </div>
-              <p className="text-xs font-black uppercase tracking-widest text-primary">Total Spent</p>
+              <p className="text-xs font-semibold text-primary">Total Spent</p>
             </div>
           </div>
         </CardContent>
@@ -218,14 +218,14 @@ const ExpenseStory = () => {
         {/* Big Hits */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h3 className="text-sm font-black uppercase tracking-widest text-danger flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-danger flex items-center gap-2">
               <TrendingDown className="w-4 h-4" /> The Big Hits
             </h3>
             <Badge variant="outline" className="rounded-lg">{stats.breakdown.bigHits.items.length}</Badge>
           </div>
           <div className="space-y-3">
             {stats.breakdown.bigHits.items.map((t, i) => (
-              <Card key={i} className="border-0 shadow-lg hover:shadow-xl transition-all">
+              <Card key={i} className="border-0 shadow-sm hover:shadow-md transition-all">
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate">{t.description}</p>
@@ -244,14 +244,14 @@ const ExpenseStory = () => {
         {/* Subscriptions */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
               <CreditCard className="w-4 h-4" /> Subscriptions
             </h3>
             <Badge variant="outline" className="rounded-lg">{stats.breakdown.subscriptions.items.length}</Badge>
           </div>
           <div className="space-y-3">
             {stats.breakdown.subscriptions.items.map((t, i) => (
-              <Card key={i} className="border-0 shadow-lg hover:shadow-xl transition-all">
+              <Card key={i} className="border-0 shadow-sm hover:shadow-md transition-all">
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate">{t.description}</p>
@@ -270,14 +270,14 @@ const ExpenseStory = () => {
         {/* Daily Life */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h3 className="text-sm font-black uppercase tracking-widest text-warning flex items-center gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-warning flex items-center gap-2">
               <Zap className="w-4 h-4" /> Daily Life
             </h3>
             <Badge variant="outline" className="rounded-lg">{stats.breakdown.dailyLife.items.length}</Badge>
           </div>
           <div className="space-y-3">
             {stats.breakdown.dailyLife.items.map((t, i) => (
-              <Card key={i} className="border-0 shadow-lg hover:shadow-xl transition-all">
+              <Card key={i} className="border-0 shadow-sm hover:shadow-md transition-all">
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate">{t.description}</p>
@@ -295,13 +295,13 @@ const ExpenseStory = () => {
       </div>
 
       {/* Plain English Analysis */}
-      <Card className="border-0 shadow-2xl bg-slate-900 text-white overflow-hidden">
+      <Card className="border-0 shadow-sm bg-slate-900 text-white overflow-hidden">
         <CardContent className="p-8 space-y-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/10 rounded-xl">
               <Info className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-black">Plain English Analysis</h3>
+            <h3 className="text-xl font-bold">Plain English Analysis</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -316,8 +316,8 @@ const ExpenseStory = () => {
             </div>
             
             <div className="space-y-6">
-              <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center gap-2 text-amber-400 font-black uppercase tracking-widest text-xs">
+              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
                   <AlertTriangle className="w-4 h-4" /> Attention Needed
                 </div>
                 <p className="text-sm text-slate-400">
@@ -326,8 +326,8 @@ const ExpenseStory = () => {
                 </p>
               </div>
               
-              <div className="p-6 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-black uppercase tracking-widest text-xs">
+              <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
                   <CheckCircle2 className="w-4 h-4" /> Efficiency Tip
                 </div>
                 <p className="text-sm text-slate-400">

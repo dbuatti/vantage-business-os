@@ -105,7 +105,7 @@ const FinanceSummary = ({ entries }: FinanceSummaryProps) => {
             `stagger-${i + 1}`
           )}
         >
-          <div className={cn("absolute inset-0 bg-gradient-to-br", card.gradient)} />
+          <div className={cn("absolute inset-0", i === 0 ? cn("bg-gradient-to-br", card.gradient) : i === 1 ? "bg-warning" : i === 2 ? "bg-ai" : "bg-profit")} />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="relative p-5 text-white">
             <div className="flex items-start justify-between">

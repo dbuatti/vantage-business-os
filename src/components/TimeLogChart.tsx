@@ -23,7 +23,7 @@ const TimeLogChart = ({ data }: TimeLogChartProps) => {
   const avgHours = totalHours / data.length;
 
   return (
-    <Card className="border-0 shadow-xl bg-card">
+    <Card className="border-0 shadow-sm bg-card">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">

@@ -71,7 +71,7 @@ const MonthlySummary = ({ entries }: MonthlySummaryProps) => {
   if (months.length === 0) return null;
 
   return (
-    <Card className="border shadow-xl bg-card/80 backdrop-blur-sm animate-slide-up opacity-0 stagger-3">
+    <Card className="border shadow-sm bg-card/80 backdrop-blur-sm animate-slide-up opacity-0 stagger-3">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold flex items-center gap-2">
           <div className="p-2 rounded-xl bg-primary/10">
@@ -93,8 +93,8 @@ const MonthlySummary = ({ entries }: MonthlySummaryProps) => {
                 className={cn(
                   "p-4 rounded-2xl border transition-all hover:shadow-md",
                   isPositive && "bg-gradient-to-br from-emerald-50 to-white border-emerald-100 dark:from-emerald-950 dark:to-card dark:border-emerald-900",
-                  isNegative && "bg-gradient-to-br from-rose-50 to-white border-rose-100 dark:from-rose-950 dark:to-card dark:border-rose-900",
-                  !isPositive && !isNegative && "bg-gradient-to-br from-gray-50 to-white border-gray-100 dark:from-gray-900 dark:to-card"
+                  isNegative && "bg-danger-bg border-danger-border",
+                  !isPositive && !isNegative && "bg-muted/30 border-gray-100 dark:bg-muted/30 dark:border-gray-900"
                 )}
               >
                 <div className="flex items-center justify-between mb-3">

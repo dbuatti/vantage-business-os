@@ -30,17 +30,17 @@ const TrackerDrilldown = ({ open, onOpenChange, category, periodLabel, transacti
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md flex flex-col p-0 border-l-0 shadow-2xl">
+      <SheetContent className="sm:max-w-md flex flex-col p-0 border-l-0 shadow-sm">
         <SheetHeader className="p-6 bg-muted/20 border-b">
           <div className="flex items-center gap-2 mb-2">
             <div className="p-2 rounded-xl bg-primary/10 text-primary">
               <History className="w-5 h-5" />
             </div>
-            <Badge variant="outline" className="rounded-lg font-black uppercase tracking-tighter">
+            <Badge variant="outline" className="rounded-lg text-xs font-semibold text-muted-foreground">
               {periodLabel}
             </Badge>
           </div>
-          <SheetTitle className="text-2xl font-black tracking-tight">{category}</SheetTitle>
+          <SheetTitle className="text-2xl font-bold tracking-tight">{category}</SheetTitle>
           <SheetDescription className="text-sm font-medium">
             Reviewing {transactions.length} transactions for this period.
           </SheetDescription>
@@ -48,14 +48,14 @@ const TrackerDrilldown = ({ open, onOpenChange, category, periodLabel, transacti
 
         <div className="p-6 grid grid-cols-2 gap-4 border-b bg-background">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Spent</p>
+            <p className="text-xs font-semibold text-muted-foreground">Total Spent</p>
             <p className={cn("text-2xl font-black", isOver ? "text-danger" : "text-foreground")}>
               {formatCurrency(total)}
             </p>
           </div>
           {budget > 0 && (
             <div className="space-y-1 text-right">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Budget Target</p>
+              <p className="text-xs font-semibold text-muted-foreground">Budget Target</p>
               <p className="text-2xl font-black text-muted-foreground/60">{formatCurrency(budget)}</p>
             </div>
           )}
@@ -65,7 +65,7 @@ const TrackerDrilldown = ({ open, onOpenChange, category, periodLabel, transacti
           <div className="divide-y">
             {transactions.length === 0 ? (
               <div className="p-12 text-center space-y-3">
-                <div className="w-12 h-12 mx-auto rounded-2xl bg-muted flex items-center justify-center opacity-50">
+                <div className="w-12 h-12 mx-auto rounded-xl bg-muted flex items-center justify-center opacity-50">
                   <Receipt className="w-6 h-6" />
                 </div>
                 <p className="text-sm font-bold text-muted-foreground">No transactions found.</p>
@@ -79,19 +79,19 @@ const TrackerDrilldown = ({ open, onOpenChange, category, periodLabel, transacti
                         {t.description}
                       </p>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase">
+                        <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                           <Calendar className="w-3 h-3" />
                           {format(new Date(t.transaction_date), 'MMM dd')}
                         </span>
                         {t.category_2 && (
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase">
+                          <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                             <Tag className="w-3 h-3" />
                             {t.category_2}
                           </span>
                         )}
                       </div>
                     </div>
-                    <p className="font-black text-sm tabular-nums text-danger">
+                    <p className="font-bold text-sm tabular-nums text-danger">
                       {formatCurrency(Math.abs(t.amount))}
                     </p>
                   </div>
@@ -107,7 +107,7 @@ const TrackerDrilldown = ({ open, onOpenChange, category, periodLabel, transacti
         </ScrollArea>
 
         <div className="p-6 bg-muted/10 border-t">
-          <p className="text-[10px] text-center font-bold text-muted-foreground uppercase tracking-widest">
+          <p className="text-xs text-center font-semibold text-muted-foreground">
             End of list
           </p>
         </div>

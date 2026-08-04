@@ -173,7 +173,7 @@ const Clients = () => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight">Clients</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
             <p className="text-muted-foreground">Manage your business relationships and billing history.</p>
             {lastRefreshed && (
               <p className="text-[10px] text-muted-foreground mt-1">
@@ -198,7 +198,7 @@ const Clients = () => {
             <p className="text-3xl font-black">{clients.length}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-emerald-600 text-white">
+        <Card className="border-0 shadow-sm bg-emerald-600 text-white">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">Total Invoiced</p>
             <p className="text-3xl font-black">
@@ -206,7 +206,7 @@ const Clients = () => {
             </p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-amber-500 text-white">
+        <Card className="border-0 shadow-sm bg-amber-500 text-white">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">Outstanding Balance</p>
             <p className="text-3xl font-black">
@@ -216,7 +216,7 @@ const Clients = () => {
         </Card>
       </div>
 
-      <Card className="border-0 shadow-xl overflow-hidden">
+      <Card className="border-0 shadow-sm overflow-hidden">
         <CardHeader className="pb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

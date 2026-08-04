@@ -211,7 +211,7 @@ const ClientDetail = () => {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-black tracking-tight">{client.display_name}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{client.display_name}</h1>
               <Badge variant="outline" className="rounded-lg">
                 {client.is_company ? 'Company' : 'Individual'}
               </Badge>
@@ -236,7 +236,7 @@ const ClientDetail = () => {
         <div className="space-y-6">
           <Card className="border-0 shadow-xl overflow-hidden">
             <CardHeader className="bg-primary text-primary-foreground pb-6">
-              <CardTitle className="text-sm font-bold uppercase tracking-widest opacity-80">Financial Summary</CardTitle>
+              <CardTitle className="text-sm font-semibold opacity-80">Financial Summary</CardTitle>
               <div className="mt-4 space-y-4">
                 <div>
                   <p className="text-xs opacity-70">Total Invoiced</p>
@@ -252,14 +252,14 @@ const ClientDetail = () => {
               <div className="flex items-center gap-3 text-sm">
                 <div className="p-2 rounded-lg bg-muted"><Mail className="w-4 h-4 text-muted-foreground" /></div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground font-bold uppercase">Email</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Email</p>
                   <p className="font-medium truncate">{client.email || 'No email provided'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <div className="p-2 rounded-lg bg-muted"><Phone className="w-4 h-4 text-muted-foreground" /></div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground font-bold uppercase">Phone</p>
+                  <p className="text-xs font-semibold text-muted-foreground">Phone</p>
                   <p className="font-medium">{client.phone || 'No phone provided'}</p>
                 </div>
               </div>
@@ -267,7 +267,7 @@ const ClientDetail = () => {
                 <div className="flex items-center gap-3 text-sm">
                   <div className="p-2 rounded-lg bg-muted"><Building2 className="w-4 h-4 text-muted-foreground" /></div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground font-bold uppercase">Tax ID / ABN</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Tax ID / ABN</p>
                     <p className="font-medium">{client.tax_id}</p>
                   </div>
                 </div>
@@ -276,7 +276,7 @@ const ClientDetail = () => {
           </Card>
 
           {/* Client Assets / Notes */}
-          <Card className="border-0 shadow-lg">
+          <Card className="border-0 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg">Client Assets</CardTitle>
               <Button variant="ghost" size="icon" onClick={() => setShowAssetDialog(true)} className="h-8 w-8 rounded-lg">
@@ -294,7 +294,7 @@ const ClientDetail = () => {
                         {asset.asset_type === 'Credential' ? <Key className="w-3.5 h-3.5 text-warning" /> :
                          asset.asset_type === 'Technical' ? <Shield className="w-3.5 h-3.5 text-primary" /> :
                          <Info className="w-3.5 h-3.5 text-primary" />}
-                        <span className="text-xs font-bold uppercase tracking-wider">{asset.name}</span>
+                        <span className="text-xs font-semibold">{asset.name}</span>
                       </div>
                       <Button variant="ghost" size="icon" onClick={() => deleteAsset(asset.id)} className="h-5 w-5 rounded opacity-0 group-hover:opacity-100 text-danger">
                         <Trash2 className="w-3 h-3" />
@@ -321,7 +321,7 @@ const ClientDetail = () => {
             </TabsList>
 
             <TabsContent value="invoices" className="animate-fade-in">
-              <Card className="border-0 shadow-xl overflow-hidden">
+              <Card className="border-0 shadow-sm overflow-hidden">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                   <Table>
@@ -352,7 +352,7 @@ const ClientDetail = () => {
                             </TableCell>
                             <TableCell>
                               <Badge className={cn(
-                                "rounded-lg text-[10px] font-bold uppercase",
+                                "rounded-lg text-xs font-semibold",
                                 invoice.status === 'Paid' ? "bg-profit-bg text-profit border-profit-border" :
                                 invoice.status === 'Overdue' ? "bg-danger-bg text-danger border-danger-border" :
                                 "bg-primary/10 text-primary border-primary/20"
@@ -381,7 +381,7 @@ const ClientDetail = () => {
             </TabsContent>
 
             <TabsContent value="tickets" className="animate-fade-in">
-              <Card className="border-0 shadow-xl overflow-hidden">
+              <Card className="border-0 shadow-sm overflow-hidden">
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                   <Table>
@@ -410,14 +410,14 @@ const ClientDetail = () => {
                             </TableCell>
                             <TableCell>
                               <Badge className={cn(
-                                "rounded-lg text-[10px] font-bold uppercase",
+                                "rounded-lg text-xs font-semibold",
                                 ticket.priority === 'high' ? "bg-danger-bg text-danger" : "bg-muted text-muted-foreground"
                               )}>
                                 {ticket.priority}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="rounded-lg text-[10px] font-bold uppercase">
+                              <Badge variant="outline" className="rounded-lg text-xs font-semibold">
                                 {ticket.status}
                               </Badge>
                             </TableCell>

@@ -159,7 +159,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
   return (
     <div className="space-y-6">
       {/* Key Metrics */}
-      <Card className="border-0 shadow-xl">
+      <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <BarChart3 className="w-5 h-5 text-primary" />
@@ -183,7 +183,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       </Card>
 
       {/* Notable Transactions */}
-      <Card className="border-0 shadow-xl">
+      <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Notable Transactions</CardTitle>
         </CardHeader>
@@ -191,7 +191,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Largest Expense */}
             {stats.largestExpense && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-danger-bg to-card">
+              <div className="p-4 rounded-xl border bg-danger-bg">
                 <div className="flex items-center gap-2 mb-2">
                   <ArrowDownRight className="w-4 h-4 text-danger" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Largest Expense</span>
@@ -210,7 +210,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
 
             {/* Largest Income */}
             {stats.largestIncome && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-profit-bg to-card">
+              <div className="p-4 rounded-xl border bg-profit-bg">
                 <div className="flex items-center gap-2 mb-2">
                   <ArrowUpRight className="w-4 h-4 text-profit" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Largest Income</span>
@@ -229,7 +229,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
 
             {/* Most Expensive Month */}
             {stats.mostExpensiveMonth && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-warning-bg to-card">
+              <div className="p-4 rounded-xl border bg-warning-bg">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-4 h-4 text-warning" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Highest Spending Month</span>
@@ -245,7 +245,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
 
             {/* Most Active Day */}
             {stats.mostActiveDay && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-info-bg to-card">
+              <div className="p-4 rounded-xl border bg-info-bg">
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className="w-4 h-4 text-info" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Most Active Day</span>
@@ -263,7 +263,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       </Card>
 
       {/* Averages */}
-      <Card className="border-0 shadow-xl">
+      <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Averages</CardTitle>
         </CardHeader>
