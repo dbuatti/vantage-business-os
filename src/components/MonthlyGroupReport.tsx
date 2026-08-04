@@ -46,18 +46,18 @@ interface MonthlyGroupReportProps {
 }
 
 const INCOME_GROUPS = [
-  { name: '💰 Regular Income', color: 'bg-emerald-500', lightColor: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: '💰' },
-  { name: '🎵 Music Performance', color: 'bg-blue-500', lightColor: 'bg-blue-50 text-blue-700 border-blue-200', icon: '🎵' },
-  { name: '🎹 Music Services', color: 'bg-violet-500', lightColor: 'bg-violet-50 text-violet-700 border-violet-200', icon: '🎹' },
-  { name: '📋 Other Income', color: 'bg-amber-500', lightColor: 'bg-amber-50 text-amber-700 border-amber-200', icon: '📋' },
+  { name: '💰 Regular Income', color: 'bg-profit', lightColor: 'bg-profit-bg text-profit border-profit-border', icon: '💰' },
+  { name: '🎵 Music Performance', color: 'bg-primary', lightColor: 'bg-primary/10 text-primary border-primary/20', icon: '🎵' },
+  { name: '🎹 Music Services', color: 'bg-ai', lightColor: 'bg-ai-bg text-ai border-ai-border', icon: '🎹' },
+  { name: '📋 Other Income', color: 'bg-warning', lightColor: 'bg-warning-bg text-warning border-warning-border', icon: '📋' },
 ];
 
 const EXPENSE_GROUPS = [
-  { name: 'Fixed Essentials', color: 'bg-blue-500', lightColor: 'bg-blue-50 text-blue-700 border-blue-200', icon: '🏠' },
-  { name: 'Flexible Essentials', color: 'bg-amber-500', lightColor: 'bg-amber-50 text-amber-700 border-amber-200', icon: '🛒' },
-  { name: 'Sustenance', color: 'bg-emerald-500', lightColor: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: '🍽️' },
-  { name: 'Wellness & Growth', color: 'bg-violet-500', lightColor: 'bg-violet-50 text-violet-700 border-violet-200', icon: '🌱' },
-  { name: 'Lifestyle & Discretionary', color: 'bg-rose-500', lightColor: 'bg-rose-50 text-rose-700 border-rose-200', icon: '🎭' },
+  { name: 'Fixed Essentials', color: 'bg-primary', lightColor: 'bg-primary/10 text-primary border-primary/20', icon: '🏠' },
+  { name: 'Flexible Essentials', color: 'bg-warning', lightColor: 'bg-warning-bg text-warning border-warning-border', icon: '🛒' },
+  { name: 'Sustenance', color: 'bg-profit', lightColor: 'bg-profit-bg text-profit border-profit-border', icon: '🍽️' },
+  { name: 'Wellness & Growth', color: 'bg-ai', lightColor: 'bg-ai-bg text-ai border-ai-border', icon: '🌱' },
+  { name: 'Lifestyle & Discretionary', color: 'bg-danger', lightColor: 'bg-danger-bg text-danger border-danger-border', icon: '🎭' },
 ];
 
 const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReportProps) => {
@@ -170,7 +170,7 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
     return (
       <div className="space-y-3">
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-          {isIncome ? <ArrowUpRight className="w-3 h-3 text-emerald-500" /> : <ArrowDownRight className="w-3 h-3 text-rose-500" />}
+          {isIncome ? <ArrowUpRight className="w-3 h-3 text-profit" /> : <ArrowDownRight className="w-3 h-3 text-danger" />}
           {title}
         </p>
         {activeGroups.map(group => {
@@ -313,21 +313,21 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
           <CardContent>
             {/* Month Summary */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950">
+              <div className="p-4 rounded-xl bg-profit-bg">
                 <div className="flex items-center gap-1.5 mb-1">
                   <ArrowUpRight className="w-4 h-4 text-profit" />
                   <span className="text-xs text-profit font-medium">Income</span>
                 </div>
                 <p className="text-2xl font-bold text-profit">{formatCurrency(totalIncome)}</p>
               </div>
-              <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950">
+              <div className="p-4 rounded-xl bg-danger-bg">
                 <div className="flex items-center gap-1.5 mb-1">
                   <ArrowDownRight className="w-4 h-4 text-danger" />
                   <span className="text-xs text-danger font-medium">Expenses</span>
                 </div>
                 <p className="text-2xl font-bold text-danger">{formatCurrency(-totalExpenses)}</p>
               </div>
-              <div className={cn("p-4 rounded-xl", totalNet >= 0 ? "bg-blue-50 dark:bg-blue-950" : "bg-amber-50 dark:bg-amber-950")}>
+              <div className={cn("p-4 rounded-xl", totalNet >= 0 ? "bg-info-bg" : "bg-warning-bg")}>
                 <div className="flex items-center gap-1.5 mb-1">
                   <TrendingUp className={cn("w-4 h-4", totalNet >= 0 ? "text-info" : "text-warning")} />
                   <span className={cn("text-xs font-medium", totalNet >= 0 ? "text-info" : "text-warning")}>Net</span>
@@ -344,7 +344,7 @@ const MonthlyGroupReport = ({ transactions, categoryGroups }: MonthlyGroupReport
 
             {/* Unmapped */}
             {groupedData['Unmapped'] && groupedData['Unmapped'].transactions.length > 0 && (
-              <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 overflow-hidden mt-3">
+              <div className="rounded-xl border border-dashed border-warning-border bg-warning-bg/50 overflow-hidden mt-3">
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">❓</span>

@@ -256,7 +256,7 @@ const AccountantReport = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setShowWizard(true)} className="rounded-xl gap-2 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"><Wand2 className="w-4 h-4" />Work Wizard</Button>
+            <Button variant="outline" onClick={() => setShowWizard(true)} className="rounded-xl gap-2 bg-warning-bg border-warning-border text-warning hover:bg-warning-bg/70"><Wand2 className="w-4 h-4" />Work Wizard</Button>
             <Button variant="outline" onClick={() => window.print()} className="rounded-xl gap-2"><Printer className="w-4 h-4" />Print PDF</Button>
             <Button onClick={exportReport} className="rounded-xl gap-2"><Download className="w-4 h-4" />Export CSV</Button>
           </div>
@@ -315,10 +315,10 @@ const AccountantReport = () => {
         </Card>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border-0 shadow-lg bg-emerald-600 text-white"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Work Income</p><TrendingUp className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.income)}</p></CardContent></Card>
-          <Card className="border-0 shadow-lg bg-rose-600 text-white"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Work Expenses</p><TrendingDown className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p></CardContent></Card>
-          <Card className="border-0 shadow-lg bg-primary text-white"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Net Business Position</p><Briefcase className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.net)}</p></CardContent></Card>
-          <Card className="border-0 shadow-lg bg-amber-500 text-white relative overflow-hidden"><div className="absolute -right-4 -bottom-4 opacity-10"><ShieldAlert className="w-24 h-24" /></div><CardContent className="p-6 relative"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Est. Tax Liability</p><div className="flex items-center gap-1 bg-white/20 rounded px-1.5 py-0.5"><Input type="number" value={taxRate} onChange={(e) => setTaxRate(parseInt(e.target.value) || 0)} className="w-8 h-5 p-0 bg-transparent border-0 text-white text-xs font-bold text-center focus-visible:ring-0" /><span className="text-[10px] font-bold">%</span></div></div><p className="text-3xl font-black">{formatCurrency(stats.estimatedTax)}</p><p className="text-[10px] opacity-70 mt-1 italic">Based on {taxRate}% flat rate</p></CardContent></Card>
+          <Card className="border-0 shadow-lg bg-profit text-profit-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Work Income</p><TrendingUp className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.income)}</p></CardContent></Card>
+          <Card className="border-0 shadow-lg bg-danger text-danger-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Work Expenses</p><TrendingDown className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.expenses)}</p></CardContent></Card>
+          <Card className="border-0 shadow-lg bg-primary text-primary-foreground"><CardContent className="p-6"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Net Business Position</p><Briefcase className="w-5 h-5 opacity-50" /></div><p className="text-3xl font-black">{formatCurrency(stats.net)}</p></CardContent></Card>
+          <Card className="border-0 shadow-lg bg-warning text-warning-foreground relative overflow-hidden"><div className="absolute -right-4 -bottom-4 opacity-10"><ShieldAlert className="w-24 h-24" /></div><CardContent className="p-6 relative"><div className="flex items-center justify-between mb-2"><p className="text-sm font-medium opacity-80">Est. Tax Liability</p><div className="flex items-center gap-1 bg-white/20 rounded px-1.5 py-0.5"><Input type="number" value={taxRate} onChange={(e) => setTaxRate(parseInt(e.target.value) || 0)} className="w-8 h-5 p-0 bg-transparent border-0 text-warning-foreground text-xs font-bold text-center focus-visible:ring-0" /><span className="text-[10px] font-bold">%</span></div></div><p className="text-3xl font-black">{formatCurrency(stats.estimatedTax)}</p><p className="text-[10px] opacity-70 mt-1 italic">Based on {taxRate}% flat rate</p></CardContent></Card>
         </div>
 
         {/* Data Quality Audit Section */}
@@ -328,7 +328,7 @@ const AccountantReport = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <CardTitle className="text-lg font-black flex items-center gap-2 text-warning">
-                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                    <AlertTriangle className="w-5 h-5 text-warning" />
                     Data Quality Audit
                   </CardTitle>
                   <CardDescription className="text-warning">
@@ -336,12 +336,12 @@ const AccountantReport = () => {
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200 font-bold">
+                  <Badge variant="outline" className="bg-warning-bg text-warning border-warning-border font-bold">
                     {stats.missingNotes.length + stats.unmapped.length} Items
                   </Badge>
-                  <Button 
+                  <Button
                     onClick={() => setShowQuickNotes(true)}
-                    className="rounded-xl gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-lg shadow-amber-200"
+                    className="rounded-xl gap-2 bg-warning hover:bg-warning/90 text-warning-foreground font-bold shadow-lg shadow-warning/20"
                   >
                     <Zap className="w-4 h-4" /> Power Entry
                   </Button>
@@ -351,23 +351,23 @@ const AccountantReport = () => {
             <CardContent className="p-0">
               <div className="divide-y divide-warning-border/50">
                 {[...stats.unmapped, ...stats.missingNotes].map((t) => (
-                  <div key={t.id} className="p-4 flex items-center justify-between hover:bg-amber-100/30 transition-colors group">
+                  <div key={t.id} className="p-4 flex items-center justify-between hover:bg-warning-bg/50 transition-colors group">
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-warning-bg flex items-center justify-center text-warning shrink-0">
                         {!t.category_1 ? <PieChart className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold truncate">{t.description}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-bold text-amber-700 uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</span>
-                          {!t.category_1 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-amber-300 text-amber-700">Missing Category</Badge>}
-                          {!t.notes && Math.abs(t.amount) > 50 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-amber-300 text-amber-700">Missing Note</Badge>}
+                          <span className="text-[10px] font-bold text-warning uppercase">{format(parseISO(t.transaction_date), 'MMM dd')}</span>
+                          {!t.category_1 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-warning-border text-warning">Missing Category</Badge>}
+                          {!t.notes && Math.abs(t.amount) > 50 && <Badge variant="outline" className="text-[8px] h-4 px-1.5 rounded-md uppercase font-black border-warning-border text-warning">Missing Note</Badge>}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <p className="text-sm font-black tabular-nums text-amber-900">{formatCurrency(t.amount)}</p>
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="h-8 w-8 rounded-lg hover:bg-amber-200/50 text-amber-700">
+                      <p className="text-sm font-black tabular-nums text-warning">{formatCurrency(t.amount)}</p>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(t)} className="h-8 w-8 rounded-lg hover:bg-warning-bg text-warning">
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -385,7 +385,7 @@ const AccountantReport = () => {
               <TableHeader><TableRow><TableHead>Category</TableHead><TableHead className="text-right">Total Amount</TableHead><TableHead className="text-right">Count</TableHead><TableHead className="w-1/3">Percentage</TableHead></TableRow></TableHeader>
               <TableBody>
                 {Object.entries(stats.categoryBreakdown).sort((a, b) => b[1] - a[1]).map(([cat, amount]) => (
-                  <TableRow key={cat}><TableCell className="font-medium">{cat}</TableCell><TableCell className="text-right font-bold text-rose-600">{formatCurrency(-amount)}</TableCell><TableCell className="text-right text-muted-foreground">{workTransactions.filter(t => t.category_1 === cat).length}</TableCell><TableCell><div className="flex items-center gap-2"><div className="flex-1 h-2 bg-muted rounded-full overflow-hidden"><div className="h-full bg-primary" style={{ width: `${(amount / stats.expenses) * 100}%` }} /></div><span className="text-xs text-muted-foreground w-10 text-right">{((amount / stats.expenses) * 100).toFixed(0)}%</span></div></TableCell></TableRow>
+                  <TableRow key={cat}><TableCell className="font-medium">{cat}</TableCell><TableCell className="text-right font-bold text-danger">{formatCurrency(-amount)}</TableCell><TableCell className="text-right text-muted-foreground">{workTransactions.filter(t => t.category_1 === cat).length}</TableCell><TableCell><div className="flex items-center gap-2"><div className="flex-1 h-2 bg-muted rounded-full overflow-hidden"><div className="h-full bg-primary" style={{ width: `${(amount / stats.expenses) * 100}%` }} /></div><span className="text-xs text-muted-foreground w-10 text-right">{((amount / stats.expenses) * 100).toFixed(0)}%</span></div></TableCell></TableRow>
                 ))}
               </TableBody>
             </Table>

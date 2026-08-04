@@ -62,11 +62,11 @@ import TrackerDrilldown from '@/components/TrackerDrilldown';
 import { showSuccess, showError } from '@/utils/toast';
 
 const EXPENSE_GROUPS = [
-  { name: 'Fixed Essentials', icon: '🏠', color: 'text-blue-600', bg: 'bg-blue-50' },
-  { name: 'Flexible Essentials', icon: '🛒', color: 'text-amber-600', bg: 'bg-amber-50' },
-  { name: 'Sustenance', icon: '🍽️', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { name: 'Wellness & Growth', icon: '🌱', color: 'text-violet-600', bg: 'bg-violet-50' },
-  { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-rose-600', bg: 'bg-rose-50' },
+  { name: 'Fixed Essentials', icon: '🏠', color: 'text-primary', bg: 'bg-primary/10' },
+  { name: 'Flexible Essentials', icon: '🛒', color: 'text-warning', bg: 'bg-warning-bg' },
+  { name: 'Sustenance', icon: '🍽️', color: 'text-profit', bg: 'bg-profit-bg' },
+  { name: 'Wellness & Growth', icon: '🌱', color: 'text-ai', bg: 'bg-ai-bg' },
+  { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-danger', bg: 'bg-danger-bg' },
 ];
 
 export type TrackerView = 'daily' | 'weekly' | 'monthly' | 'yearly';
@@ -246,7 +246,7 @@ const MasterTracker = () => {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+            <div className="p-2.5 bg-primary rounded-2xl text-primary-foreground shadow-lg shadow-primary/20">
               <Target className="w-7 h-7" />
             </div>
             Master Tracker {year}
@@ -263,7 +263,7 @@ const MasterTracker = () => {
           </Button>
           <Badge variant="outline" className={cn(
             "px-4 py-1.5 rounded-full font-bold text-sm",
-            matrixStats.percentUtilized > 100 ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+            matrixStats.percentUtilized > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
           )}>
             {matrixStats.percentUtilized > 100 ? 'OVER BUDGET' : `${Math.round(100 - matrixStats.percentUtilized)}% UNDER BUDGET`}
           </Badge>
@@ -272,7 +272,7 @@ const MasterTracker = () => {
 
       {/* YTD Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
-        <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">YTD Total Spent</p>
@@ -290,7 +290,7 @@ const MasterTracker = () => {
         <Card className="border-0 shadow-xl bg-card overflow-hidden">
           <CardContent className="p-5">
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Remaining Buffer</p>
-            <p className={cn("text-2xl font-black", matrixStats.remaining >= 0 ? "text-emerald-600" : "text-rose-600")}>
+            <p className={cn("text-2xl font-black", matrixStats.remaining >= 0 ? "text-profit" : "text-danger")}>
               {formatCurrency(matrixStats.remaining)}
             </p>
             <p className="text-[10px] text-muted-foreground font-bold mt-1">For the rest of {year}</p>
@@ -349,7 +349,7 @@ const MasterTracker = () => {
                     <div className="text-right">
                       <p className={cn(
                         "text-lg font-black",
-                        group.percent > 100 ? "text-rose-600" : "text-emerald-600"
+                        group.percent > 100 ? "text-danger" : "text-profit"
                       )}>
                         {Math.round(group.percent)}%
                       </p>
@@ -366,11 +366,11 @@ const MasterTracker = () => {
                   <div className="space-y-2">
                     <Progress 
                       value={group.percent} 
-                      className={cn("h-2", group.percent > 100 ? "[&>div]:bg-rose-500" : "[&>div]:bg-emerald-500")} 
+                      className={cn("h-2", group.percent > 100 ? "[&>div]:bg-danger" : "[&>div]:bg-profit")}
                     />
                     <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tighter">
                       <span className="text-muted-foreground">Left:</span>
-                      <span className={cn(group.remaining >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                      <span className={cn(group.remaining >= 0 ? "text-profit" : "text-danger")}>
                         {formatCurrency(group.remaining)}
                       </span>
                     </div>
@@ -413,7 +413,7 @@ const MasterTracker = () => {
                     onCheckedChange={setShowOverBudgetOnly} 
                   />
                   <Label htmlFor="over-budget" className="text-xs font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1.5">
-                    <AlertCircle className="w-3 h-3 text-rose-500" />
+                    <AlertCircle className="w-3 h-3 text-danger" />
                     Over Budget Only
                   </Label>
                 </div>

@@ -128,7 +128,7 @@ const ProjectROI = () => {
           </Button>
           <div>
             <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-600 rounded-2xl text-white shadow-lg shadow-emerald-200">
+              <div className="p-2.5 bg-profit rounded-2xl text-profit-foreground shadow-lg shadow-profit/20">
                 <TrendingUp className="w-7 h-7" />
               </div>
               Project ROI Engine
@@ -140,7 +140,7 @@ const ProjectROI = () => {
 
       {globalStats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
-          <Card className="border-0 shadow-xl bg-primary text-white overflow-hidden relative">
+          <Card className="border-0 shadow-xl bg-primary text-primary-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Avg. Effective Rate</p>
@@ -148,7 +148,7 @@ const ProjectROI = () => {
               <p className="text-xs opacity-70 mt-2">Across all logged projects</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-emerald-600 text-white overflow-hidden relative">
+          <Card className="border-0 shadow-xl bg-profit text-profit-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Attributed Revenue</p>
@@ -156,7 +156,7 @@ const ProjectROI = () => {
               <p className="text-xs opacity-70 mt-2">From {metrics.length} projects</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-indigo-600 text-white overflow-hidden relative">
+          <Card className="border-0 shadow-xl bg-ai text-ai-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Estimation Accuracy</p>
@@ -164,7 +164,7 @@ const ProjectROI = () => {
               <p className="text-xs opacity-70 mt-2">Actual vs. Estimated hours</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-amber-500 text-white overflow-hidden relative">
+          <Card className="border-0 shadow-xl bg-warning text-warning-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Total Time Investment</p>
@@ -196,7 +196,7 @@ const ProjectROI = () => {
                         <h3 className="font-black text-lg truncate group-hover:text-primary transition-colors">{m.title}</h3>
                         <Badge className={cn(
                           "text-[9px] font-black uppercase rounded-md",
-                          m.hourlyRate > (globalStats?.avgRate || 0) ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+                          m.hourlyRate > (globalStats?.avgRate || 0) ? "bg-profit-bg text-profit" : "bg-muted text-muted-foreground"
                         )}>
                           {m.hourlyRate > (globalStats?.avgRate || 0) ? 'High Yield' : 'Standard'}
                         </Badge>
@@ -219,7 +219,7 @@ const ProjectROI = () => {
                         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Effective Rate</p>
                         <p className={cn(
                           "text-2xl font-black tabular-nums",
-                          m.hourlyRate > (globalStats?.avgRate || 0) ? "text-emerald-600" : "text-foreground"
+                          m.hourlyRate > (globalStats?.avgRate || 0) ? "text-profit" : "text-foreground"
                         )}>
                           {formatCurrency(m.hourlyRate)}<span className="text-xs">/h</span>
                         </p>

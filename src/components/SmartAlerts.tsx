@@ -125,9 +125,9 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
         {alerts.map((alert) => (
           <Card key={alert.id} className={cn(
             "border-0 shadow-lg overflow-hidden group hover:shadow-xl transition-all",
-            alert.type === 'warning' ? "bg-rose-50 border-l-4 border-rose-500" :
-            alert.type === 'opportunity' ? "bg-emerald-50 border-l-4 border-emerald-500" :
-            "bg-blue-50 border-l-4 border-blue-500"
+            alert.type === 'warning' ? "bg-danger-bg border-l-4 border-danger" :
+            alert.type === 'opportunity' ? "bg-profit-bg border-l-4 border-profit" :
+            "bg-info-bg border-l-4 border-info"
           )}>
             <CardContent className="p-5 space-y-4">
               <div className="flex items-start justify-between gap-4">
@@ -156,7 +156,7 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
                   size="sm" 
                   asChild 
                   className={cn(
-                    "w-full rounded-xl h-9 text-xs font-bold gap-2 group-hover:bg-white/50 transition-colors",
+                    "w-full rounded-xl h-9 text-xs font-bold gap-2 group-hover:bg-card/50 transition-colors",
                     alert.type === 'warning' ? "text-danger " :
                     alert.type === 'opportunity' ? "text-profit " :
                     "text-info "

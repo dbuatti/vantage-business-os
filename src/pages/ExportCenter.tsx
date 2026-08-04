@@ -166,7 +166,7 @@ const ExportCenter = () => {
     <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
       <header className="space-y-2 animate-fade-in">
         <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-600 rounded-2xl text-white shadow-lg shadow-emerald-200">
+          <div className="p-2.5 bg-profit rounded-2xl text-profit-foreground shadow-lg shadow-profit/20">
             <FileSpreadsheet className="w-7 h-7" />
           </div>
           Export Center
@@ -216,27 +216,27 @@ const ExportCenter = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-profit-bg border border-profit-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                  <div className="p-2 bg-profit/10 rounded-lg text-profit">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-emerald-900">{periodLabel}</p>
-                    <p className="text-xs text-emerald-700 opacity-80">
+                    <p className="text-sm font-black text-profit">{periodLabel}</p>
+                    <p className="text-xs text-profit opacity-80">
                       {format(reportInterval.start, 'MMM dd, yyyy')} — {format(reportInterval.end, 'MMM dd, yyyy')}
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-emerald-600 text-white border-0">
+                <Badge className="bg-profit text-profit-foreground border-0">
                   {data.transactions.length} Items Found
                 </Badge>
               </div>
 
-              <Button 
-                onClick={handleExport} 
+              <Button
+                onClick={handleExport}
                 disabled={exporting || data.transactions.length === 0}
-                className="w-full h-16 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xl shadow-xl shadow-emerald-200 gap-3 transition-all active:scale-[0.98]"
+                className="w-full h-16 rounded-2xl bg-profit hover:bg-profit/90 text-profit-foreground font-black text-xl shadow-xl shadow-profit/20 gap-3 transition-all active:scale-[0.98]"
               >
                 {exporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Download className="w-6 h-6" />}
                 Download Excel Workbook
@@ -245,23 +245,23 @@ const ExportCenter = () => {
           </Card>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card className="border-0 shadow-lg bg-blue-50 border-l-4 border-blue-500">
+            <Card className="border-0 shadow-lg bg-primary/10 border-l-4 border-primary">
               <CardContent className="p-4 flex items-start gap-3">
-                <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-xs font-black uppercase text-blue-900">What's included?</p>
-                  <p className="text-xs text-blue-800 leading-relaxed">
+                  <p className="text-xs font-black uppercase text-primary">What's included?</p>
+                  <p className="text-xs text-primary/80 leading-relaxed">
                     Summary P&L, Monthly Matrix, Category Totals, and Invoice History.
                   </p>
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-amber-50 border-l-4 border-amber-500">
+            <Card className="border-0 shadow-lg bg-warning-bg border-l-4 border-warning">
               <CardContent className="p-4 flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-xs font-black uppercase text-amber-900">Accountant Ready</p>
-                  <p className="text-xs text-amber-800 leading-relaxed">
+                  <p className="text-xs font-black uppercase text-warning">Accountant Ready</p>
+                  <p className="text-xs text-warning/80 leading-relaxed">
                     Formatted for easy import into Xero, MYOB, or QuickBooks.
                   </p>
                 </div>
@@ -279,7 +279,7 @@ const ExportCenter = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", checklist.workIdentified ? "bg-emerald-500 border-emerald-500" : "border-white/20")}>
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", checklist.workIdentified ? "bg-profit border-profit" : "border-white/20")}>
                       {checklist.workIdentified && <CheckCircle2 className="w-3.5 h-3.5" />}
                     </div>
                     <span className="font-medium">Work items identified</span>
@@ -288,13 +288,13 @@ const ExportCenter = () => {
 
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", (checklist.allNotes || !checklist.hasTransactions) ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", (checklist.allNotes || !checklist.hasTransactions) ? "bg-profit border-profit" : "bg-warning border-warning")}>
                       {(checklist.allNotes || !checklist.hasTransactions) ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                     </div>
                     <span className="font-medium">Notes for large items</span>
                   </div>
                   {!checklist.allNotes && checklist.hasTransactions && (
-                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-400">
+                    <Badge variant="outline" className="text-[10px] border-warning text-warning">
                       {checklist.missingNotesCount} missing
                     </Badge>
                   )}
@@ -302,13 +302,13 @@ const ExportCenter = () => {
 
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", (checklist.allCategories || !checklist.hasTransactions) ? "bg-emerald-500 border-emerald-500" : "bg-amber-500 border-amber-500")}>
+                    <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", (checklist.allCategories || !checklist.hasTransactions) ? "bg-profit border-profit" : "bg-warning border-warning")}>
                       {(checklist.allCategories || !checklist.hasTransactions) ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                     </div>
                     <span className="font-medium">Categories assigned</span>
                   </div>
                   {!checklist.allCategories && checklist.hasTransactions && (
-                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-400">
+                    <Badge variant="outline" className="text-[10px] border-warning text-warning">
                       {checklist.missingCategoriesCount} missing
                     </Badge>
                   )}

@@ -103,7 +103,7 @@ const SubscriptionAudit = ({ transactions }: SubscriptionAuditProps) => {
               <div className="flex items-center gap-4 min-w-0">
                 <div className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-colors",
-                  sub.isHighCost ? "bg-rose-50 border-rose-100 text-rose-600" : "bg-primary/5 border-primary/10 text-primary"
+                  sub.isHighCost ? "bg-danger-bg border-danger-border text-danger" : "bg-primary/5 border-primary/10 text-primary"
                 )}>
                   <CreditCard className="w-5 h-5" />
                 </div>

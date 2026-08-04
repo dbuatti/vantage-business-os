@@ -59,11 +59,11 @@ interface MasterTrackerMatrixProps {
 }
 
 const EXPENSE_GROUPS = [
-  { name: 'Fixed Essentials', icon: '🏠', color: 'text-blue-600' },
-  { name: 'Flexible Essentials', icon: '🛒', color: 'text-amber-600' },
-  { name: 'Sustenance', icon: '🍽️', color: 'text-emerald-600' },
-  { name: 'Wellness & Growth', icon: '🌱', color: 'text-violet-600' },
-  { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-rose-600' },
+  { name: 'Fixed Essentials', icon: '🏠', color: 'text-primary' },
+  { name: 'Flexible Essentials', icon: '🛒', color: 'text-warning' },
+  { name: 'Sustenance', icon: '🍽️', color: 'text-profit' },
+  { name: 'Wellness & Growth', icon: '🌱', color: 'text-ai' },
+  { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-danger' },
 ];
 
 const MasterTrackerMatrix = ({ 
@@ -222,7 +222,7 @@ const MasterTrackerMatrix = ({
                           {groupBudget > 0 && (
                             <Badge variant="outline" className={cn(
                               "text-[9px] font-black px-1.5 py-0",
-                              groupPercent > 100 ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              groupPercent > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
                             )}>
                               {Math.round(groupPercent)}%
                             </Badge>
@@ -253,7 +253,7 @@ const MasterTrackerMatrix = ({
                             {stat.budget > 0 && (
                               <span className={cn(
                                 "text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter",
-                                stat.buffer >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"
+                                stat.buffer >= 0 ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
                               )}>
                                 {stat.buffer >= 0 ? 'Safe' : 'Over'}
                               </span>
@@ -264,13 +264,13 @@ const MasterTrackerMatrix = ({
                             <div className="space-y-1">
                               <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                 <div 
-                                  className={cn("h-full rounded-full transition-all duration-500", stat.percent > 100 ? "bg-rose-500" : "bg-primary")} 
+                                  className={cn("h-full rounded-full transition-all duration-500", stat.percent > 100 ? "bg-danger" : "bg-primary")}
                                   style={{ width: `${Math.min(100, stat.percent)}%` }} 
                                 />
                               </div>
                               <div className="flex justify-between text-[9px] font-bold uppercase tracking-tighter text-muted-foreground/60">
                                 <span>Buffer:</span>
-                                <span className={cn(stat.buffer >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                                <span className={cn(stat.buffer >= 0 ? "text-profit" : "text-danger")}>
                                   {formatCurrency(stat.buffer)}
                                 </span>
                               </div>
@@ -314,7 +314,7 @@ const MasterTrackerMatrix = ({
                           {latestStat.budget > 0 && (
                             <Badge variant="outline" className={cn(
                               "text-[9px] font-black",
-                              latestStat.percent > 100 ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
+                              latestStat.percent > 100 ? "bg-danger-bg text-danger" : "bg-profit-bg text-profit"
                             )}>
                               {Math.round(latestStat.percent)}% of budget
                             </Badge>
@@ -324,10 +324,10 @@ const MasterTrackerMatrix = ({
                       
                       {latestStat.budget > 0 && (
                         <div className="space-y-1.5">
-                          <Progress value={latestStat.percent} className={cn("h-1.5", latestStat.percent > 100 ? "[&>div]:bg-rose-500" : "[&>div]:bg-primary")} />
+                          <Progress value={latestStat.percent} className={cn("h-1.5", latestStat.percent > 100 ? "[&>div]:bg-danger" : "[&>div]:bg-primary")} />
                           <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
                             <span>Remaining Buffer</span>
-                            <span className={cn(latestStat.buffer >= 0 ? "text-emerald-600" : "text-rose-600")}>
+                            <span className={cn(latestStat.buffer >= 0 ? "text-profit" : "text-danger")}>
                               {formatCurrency(latestStat.buffer)}
                             </span>
                           </div>

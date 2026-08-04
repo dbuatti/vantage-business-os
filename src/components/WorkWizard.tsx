@@ -184,8 +184,8 @@ const WorkWizard = ({ transactions, onComplete, open, onOpenChange }: WorkWizard
             </DialogTitle>
           </DialogHeader>
           <div className="py-12 text-center space-y-4">
-            <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            <div className="w-16 h-16 bg-profit-bg rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8 text-profit" />
             </div>
             <div className="space-y-1">
               <p className="font-bold text-lg">All caught up!</p>

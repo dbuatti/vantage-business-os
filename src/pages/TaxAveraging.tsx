@@ -90,11 +90,11 @@ const TaxAveraging = () => {
       <div className="space-y-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">Tax Averaging</h1>
-            <p className="text-slate-500 font-medium mt-1">Manage business streams and ATO special professional averaging.</p>
+            <h1 className="text-4xl font-black tracking-tight text-foreground">Tax Averaging</h1>
+            <p className="text-muted-foreground font-medium mt-1">Manage business streams and ATO special professional averaging.</p>
           </div>
-          <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border shadow-sm">
-            <div className="flex items-center gap-2 px-3 text-slate-400">
+          <div className="flex items-center gap-3 bg-card p-1.5 rounded-2xl border shadow-sm">
+            <div className="flex items-center gap-2 px-3 text-muted-foreground">
               <Filter className="h-4 w-4" />
               <span className="text-[10px] font-black uppercase tracking-widest">Financial Year</span>
             </div>
@@ -111,16 +111,16 @@ const TaxAveraging = () => {
         </div>
 
         <Tabs defaultValue="averaging" className="space-y-8">
-          <TabsList className="bg-slate-100/50 p-1 rounded-2xl border w-full md:w-auto">
-            <TabsTrigger value="averaging" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+          <TabsList className="bg-muted/50 p-1 rounded-2xl border w-full md:w-auto">
+            <TabsTrigger value="averaging" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-card data-[state=active]:shadow-sm gap-2">
               <Calculator className="h-4 w-4" />
               <span className="font-bold">Tax Averaging</span>
             </TabsTrigger>
-            <TabsTrigger value="music" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+            <TabsTrigger value="music" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-card data-[state=active]:shadow-sm gap-2">
               <Music className="h-4 w-4" />
               <span className="font-bold">Music Stream</span>
             </TabsTrigger>
-            <TabsTrigger value="kinesiology" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2">
+            <TabsTrigger value="kinesiology" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-card data-[state=active]:shadow-sm gap-2">
               <Sparkles className="h-4 w-4" />
               <span className="font-bold">Kinesiology</span>
             </TabsTrigger>
@@ -135,8 +135,8 @@ const TaxAveraging = () => {
                   historicalTPIs={historicalTPIs}
                 />
                 
-                <Card className="border-slate-100 shadow-sm overflow-hidden">
-                  <CardHeader className="bg-slate-50/50 border-b">
+                <Card className="border-border shadow-sm overflow-hidden">
+                  <CardHeader className="bg-muted/50 border-b">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-ai" />
                       Income Breakdown
@@ -146,41 +146,41 @@ const TaxAveraging = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x">
                       <div className="p-6 space-y-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold text-slate-500">Music (Professional)</p>
-                          <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-none">Averagable</Badge>
+                          <p className="text-sm font-bold text-muted-foreground">Music (Professional)</p>
+                          <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-none">Averagable</Badge>
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Income</span>
+                            <span className="text-muted-foreground">Income</span>
                             <span className="font-bold text-profit">{formatCurrency(musicIncome)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Expenses</span>
+                            <span className="text-muted-foreground">Expenses</span>
                             <span className="font-bold text-danger">-{formatCurrency(musicExpenses)}</span>
                           </div>
                           <div className="pt-2 border-t flex justify-between">
-                            <span className="font-black text-slate-900">Net Professional</span>
+                            <span className="font-black text-foreground">Net Professional</span>
                             <span className="font-black text-ai">{formatCurrency(musicNet)}</span>
                           </div>
                         </div>
                       </div>
                       <div className="p-6 space-y-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold text-slate-500">Kinesiology (Other)</p>
-                          <Badge variant="outline" className="text-slate-400 border-slate-200">Standard</Badge>
+                          <p className="text-sm font-bold text-muted-foreground">Kinesiology (Other)</p>
+                          <Badge variant="outline" className="text-muted-foreground border-border">Standard</Badge>
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Income</span>
+                            <span className="text-muted-foreground">Income</span>
                             <span className="font-bold text-profit">{formatCurrency(kineIncome)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Expenses</span>
+                            <span className="text-muted-foreground">Expenses</span>
                             <span className="font-bold text-danger">-{formatCurrency(kineExpenses)}</span>
                           </div>
                           <div className="pt-2 border-t flex justify-between">
-                            <span className="font-black text-slate-900">Net Other</span>
-                            <span className="font-black text-slate-600">{formatCurrency(kineNet)}</span>
+                            <span className="font-black text-foreground">Net Other</span>
+                            <span className="font-black text-foreground">{formatCurrency(kineNet)}</span>
                           </div>
                         </div>
                       </div>
@@ -188,13 +188,13 @@ const TaxAveraging = () => {
                   </CardContent>
                 </Card>
               </div>
-              
+
               <div className="space-y-8">
                 <HistoricalTPIForm onUpdate={fetchData} />
-                
-                <Card className="bg-amber-50 border-amber-100 shadow-sm">
+
+                <Card className="bg-warning-bg border-warning-border shadow-sm">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-black uppercase tracking-widest text-amber-800 flex items-center gap-2">
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-warning flex items-center gap-2">
                       <Info className="h-4 w-4" />
                       ATO Rule Reminder
                     </CardTitle>
@@ -213,26 +213,26 @@ const TaxAveraging = () => {
 
           <TabsContent value="music" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-indigo-50 border-indigo-100">
+              <Card className="bg-ai-bg border-ai-border">
                 <CardContent className="pt-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Music Income</p>
-                  <p className="text-2xl font-black text-indigo-700">{formatCurrency(musicIncome)}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-ai mb-1">Music Income</p>
+                  <p className="text-2xl font-black text-ai">{formatCurrency(musicIncome)}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-rose-50 border-rose-100">
+              <Card className="bg-danger-bg border-danger-border">
                 <CardContent className="pt-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-1">Music Expenses</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-danger mb-1">Music Expenses</p>
                   <p className="text-2xl font-black text-danger">{formatCurrency(musicExpenses)}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-emerald-50 border-emerald-100">
+              <Card className="bg-profit-bg border-profit-border">
                 <CardContent className="pt-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Net Music Profit</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-profit mb-1">Net Music Profit</p>
                   <p className="text-2xl font-black text-profit">{formatCurrency(musicNet)}</p>
                 </CardContent>
               </Card>
             </div>
-            <Card className="border-slate-100 shadow-sm">
+            <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Music Transactions</CardTitle>
                 <CardDescription>All transactions tagged as 'Music' for the selected period.</CardDescription>
@@ -258,26 +258,26 @@ const TaxAveraging = () => {
 
           <TabsContent value="kinesiology" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-emerald-50 border-emerald-100">
+              <Card className="bg-profit-bg border-profit-border">
                 <CardContent className="pt-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">Kinesiology Income</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-profit mb-1">Kinesiology Income</p>
                   <p className="text-2xl font-black text-profit">{formatCurrency(kineIncome)}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-rose-50 border-rose-100">
+              <Card className="bg-danger-bg border-danger-border">
                 <CardContent className="pt-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-rose-400 mb-1">Kinesiology Expenses</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-danger mb-1">Kinesiology Expenses</p>
                   <p className="text-2xl font-black text-danger">{formatCurrency(kineExpenses)}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-blue-50 border-blue-100">
+              <Card className="bg-info-bg border-info-border">
                 <CardContent className="pt-6">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Net Kinesiology Profit</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-info mb-1">Net Kinesiology Profit</p>
                   <p className="text-2xl font-black text-info">{formatCurrency(kineNet)}</p>
                 </CardContent>
               </Card>
             </div>
-            <Card className="border-slate-100 shadow-sm">
+            <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Kinesiology Transactions</CardTitle>
                 <CardDescription>All transactions tagged as 'Kinesiology' for the selected period.</CardDescription>

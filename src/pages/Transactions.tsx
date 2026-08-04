@@ -491,7 +491,7 @@ const Transactions = () => {
               variant="outline" 
               size="sm" 
               onClick={() => setShowWizard(true)}
-              className="rounded-xl gap-2 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+              className="rounded-xl gap-2 bg-warning-bg border-warning-border text-warning hover:bg-warning-bg/70"
             >
               <Wand2 className="w-4 h-4" />
               <span className="hidden sm:inline">Work Wizard</span>

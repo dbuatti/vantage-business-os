@@ -77,11 +77,11 @@ const SpendingHeatmap = ({ transactions }: SpendingHeatmapProps) => {
   const getIntensity = (amount: number): string => {
     if (amount === 0) return 'bg-muted/50';
     const ratio = amount / maxSpending;
-    if (ratio < 0.2) return 'bg-emerald-100 dark:bg-emerald-900/40';
-    if (ratio < 0.4) return 'bg-emerald-200 dark:bg-emerald-800/50';
-    if (ratio < 0.6) return 'bg-emerald-300 dark:bg-emerald-700/60';
-    if (ratio < 0.8) return 'bg-emerald-400 dark:bg-emerald-600/70';
-    return 'bg-emerald-500 dark:bg-emerald-500/80';
+    if (ratio < 0.2) return 'bg-danger/10';
+    if (ratio < 0.4) return 'bg-danger/25';
+    if (ratio < 0.6) return 'bg-danger/40';
+    if (ratio < 0.8) return 'bg-danger/60';
+    return 'bg-danger/80';
   };
 
   const formatCurrency = (val: number) => {
@@ -177,11 +177,11 @@ const SpendingHeatmap = ({ transactions }: SpendingHeatmapProps) => {
             <div className="flex items-center justify-end gap-1 mt-3">
               <span className="text-[10px] text-muted-foreground">Less</span>
               <div className="w-3 h-3 rounded-sm bg-muted/50" />
-              <div className="w-3 h-3 rounded-sm bg-emerald-100 dark:bg-emerald-900/40" />
-              <div className="w-3 h-3 rounded-sm bg-emerald-200 dark:bg-emerald-800/50" />
-              <div className="w-3 h-3 rounded-sm bg-emerald-300 dark:bg-emerald-700/60" />
-              <div className="w-3 h-3 rounded-sm bg-emerald-400 dark:bg-emerald-600/70" />
-              <div className="w-3 h-3 rounded-sm bg-emerald-500 dark:bg-emerald-500/80" />
+              <div className="w-3 h-3 rounded-sm bg-danger/10" />
+              <div className="w-3 h-3 rounded-sm bg-danger/25" />
+              <div className="w-3 h-3 rounded-sm bg-danger/40" />
+              <div className="w-3 h-3 rounded-sm bg-danger/60" />
+              <div className="w-3 h-3 rounded-sm bg-danger/80" />
               <span className="text-[10px] text-muted-foreground">More</span>
             </div>
           </div>

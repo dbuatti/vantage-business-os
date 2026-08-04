@@ -248,25 +248,25 @@ const Index = () => {
         <div className="lg:col-span-2 space-y-8">
           {/* Business Health Hero */}
           {businessStats && (
-            <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-700 text-white overflow-hidden relative group animate-slide-up">
+            <Card className="border-0 shadow-2xl bg-gradient-to-br from-primary via-primary/80 to-ai text-primary-foreground overflow-hidden relative group animate-slide-up">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-8 relative">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <p className="text-xs font-black uppercase tracking-widest opacity-70">Business Health</p>
                     <p className="text-5xl font-black tracking-tighter">
-                      <AnimatedNumber 
-                        value={businessStats.outstandingAmount} 
-                        formatter={(val) => formatCurrency(val)} 
+                      <AnimatedNumber
+                        value={businessStats.outstandingAmount}
+                        formatter={(val) => formatCurrency(val)}
                       />
                     </p>
                     <p className="text-sm font-medium opacity-80">Outstanding Receivables ({selectedYear})</p>
                   </div>
-                  <div className="p-4 bg-white/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
+                  <div className="p-4 bg-primary-foreground/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
                     <Briefcase className="w-10 h-10" />
                   </div>
                 </div>
-                
+
                 <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -274,18 +274,18 @@ const Index = () => {
                         <span className="opacity-70">Tax Readiness</span>
                         <span>{businessStats.taxReadiness}%</span>
                       </div>
-                      <Progress value={businessStats.taxReadiness} className="h-2 bg-white/20 [&>div]:bg-white" />
+                      <Progress value={businessStats.taxReadiness} className="h-2 bg-primary-foreground/20 [&>div]:bg-primary-foreground" />
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                      <div className="p-3 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
                         <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Burn Rate</p>
                         <p className="text-lg font-black">
                           {formatCurrency(businessStats.burnRate)}
                           <span className="text-[10px] font-medium opacity-60">/mo</span>
                         </p>
                       </div>
-                      <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                      <div className="p-3 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
                         <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Runway</p>
                         <p className="text-lg font-black">
                           {businessStats.runway.toFixed(1)}
@@ -298,7 +298,7 @@ const Index = () => {
                     <Button variant="secondary" asChild className="rounded-2xl font-bold px-6 h-12 shadow-xl">
                       <Link to="/invoices">Invoices</Link>
                     </Button>
-                    <Button variant="outline" asChild className="rounded-2xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold px-6 h-12">
+                    <Button variant="outline" asChild className="rounded-2xl bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20 text-primary-foreground font-bold px-6 h-12">
                       <Link to="/clients">Clients</Link>
                     </Button>
                   </div>
@@ -429,7 +429,7 @@ const Index = () => {
                         <div className="flex items-center gap-4 min-w-0">
                           <div className={cn(
                             "w-3 h-3 rounded-full shrink-0 shadow-sm",
-                            t.amount > 0 ? "bg-emerald-500" : "bg-rose-500"
+                            t.amount > 0 ? "bg-profit" : "bg-danger"
                           )} />
                           <div className="min-w-0">
                             <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{t.description}</p>
@@ -439,7 +439,7 @@ const Index = () => {
                         <div className="text-right shrink-0">
                           <span className={cn(
                             "text-base font-black tabular-nums",
-                            t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                            t.amount > 0 ? "text-profit" : "text-danger"
                           )}>
                             {formatCurrency(t.amount)}
                           </span>
@@ -457,11 +457,11 @@ const Index = () => {
         {/* Sidebar Column */}
         <div className="space-y-8">
           {/* Project ROI Reminder */}
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white overflow-hidden relative group animate-slide-up">
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-profit to-info text-profit-foreground overflow-hidden relative group animate-slide-up">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative space-y-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-white/20 rounded-xl">
+                <div className="p-2 bg-profit-foreground/20 rounded-xl">
                   <TrendingUp className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest opacity-80">Profitability</span>
@@ -481,11 +481,11 @@ const Index = () => {
           </Card>
 
           {/* Weekly Routine Reminder */}
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative group animate-slide-up">
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-warning to-warning/70 text-warning-foreground overflow-hidden relative group animate-slide-up">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative space-y-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-white/20 rounded-xl">
+                <div className="p-2 bg-warning-foreground/20 rounded-xl">
                   <CalendarCheck className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest opacity-80">Weekly Routine</span>
@@ -517,7 +517,7 @@ const Index = () => {
             <CardContent className="p-2 grid grid-cols-1 gap-1">
               <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
                 <Link to="/time-glance">
-                  <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
                     <CalendarRange className="w-5 h-5" />
                   </div>
                   <div className="text-left">
@@ -528,7 +528,7 @@ const Index = () => {
               </Button>
               <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
                 <Link to="/insights">
-                  <div className="p-2 rounded-lg bg-violet-100 text-violet-600 group-hover:scale-110 transition-transform">
+                  <div className="p-2 rounded-lg bg-ai-bg text-ai group-hover:scale-110 transition-transform">
                     <Brain className="w-5 h-5" />
                   </div>
                   <div className="text-left">
@@ -539,7 +539,7 @@ const Index = () => {
               </Button>
               <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
                 <Link to="/transactions">
-                  <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 group-hover:scale-110 transition-transform">
+                  <div className="p-2 rounded-lg bg-profit-bg text-profit group-hover:scale-110 transition-transform">
                     <ListFilter className="w-5 h-5" />
                   </div>
                   <div className="text-left">

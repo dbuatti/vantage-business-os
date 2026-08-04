@@ -105,7 +105,7 @@ const MonthlySummary = ({ entries }: MonthlySummaryProps) => {
                     "inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg",
                     isPositive && "bg-profit-bg text-profit",
                     isNegative && "bg-danger-bg text-danger",
-                    !isPositive && !isNegative && "bg-gray-100 text-gray-500"
+                    !isPositive && !isNegative && "bg-muted text-muted-foreground"
                   )}>
                     {isPositive && <ArrowUpRight className="w-3 h-3" />}
                     {isNegative && <ArrowDownRight className="w-3 h-3" />}

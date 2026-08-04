@@ -183,11 +183,11 @@ const AccountantPortal = () => {
 
   const expenseGroups = useMemo(() => {
     const buckets = {
-      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', text: 'text-blue-900', keywords: deductionKeywords.rent, items: [] as Transaction[] },
-      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50', text: 'text-amber-900', keywords: deductionKeywords.bills, items: [] as Transaction[] },
-      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-purple-600', bg: 'bg-purple-50', text: 'text-purple-900', keywords: deductionKeywords.phone, items: [] as Transaction[] },
-      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-orange-600', bg: 'bg-orange-50', text: 'text-orange-900', keywords: deductionKeywords.fuel, items: [] as Transaction[] },
-      other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-900', keywords: [], items: [] as Transaction[] }
+      rent: { label: 'Rent & Home Office', icon: Home, color: 'text-primary', bg: 'bg-primary/10', text: 'text-primary', keywords: deductionKeywords.rent, items: [] as Transaction[] },
+      bills: { label: 'Utilities & Bills', icon: Zap, color: 'text-warning', bg: 'bg-warning-bg', text: 'text-warning', keywords: deductionKeywords.bills, items: [] as Transaction[] },
+      phone: { label: 'Phone & Internet', icon: Phone, color: 'text-ai', bg: 'bg-ai-bg', text: 'text-ai', keywords: deductionKeywords.phone, items: [] as Transaction[] },
+      fuel: { label: 'Fuel & Transport', icon: Fuel, color: 'text-warning', bg: 'bg-warning-bg', text: 'text-warning', keywords: deductionKeywords.fuel, items: [] as Transaction[] },
+      other: { label: 'Direct Work Expenses', icon: Briefcase, color: 'text-profit', bg: 'bg-profit-bg', text: 'text-profit', keywords: [], items: [] as Transaction[] }
     };
 
     workTransactions.forEach(t => {
@@ -283,46 +283,46 @@ const AccountantPortal = () => {
       
       let groupKey = '';
       let icon = Info;
-      let color = 'text-gray-600';
-      let bg = 'bg-gray-50';
+      let color = 'text-muted-foreground';
+      let bg = 'bg-muted';
 
       if (deductionKeywords.rent.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Rent & Home Office';
         icon = Home;
-        color = 'text-blue-600';
-        bg = 'bg-blue-50';
+        color = 'text-primary';
+        bg = 'bg-primary/10';
       } else if (deductionKeywords.bills.some(k => desc.includes(k) || cat.includes(k))) {
         if (desc.includes('internet') || subCat.includes('internet') || cat.includes('internet')) {
           groupKey = 'Utilities: Internet';
           icon = Wifi;
-          color = 'text-indigo-600';
-          bg = 'bg-indigo-50';
+          color = 'text-ai';
+          bg = 'bg-ai-bg';
         } else if (desc.includes('electricity') || subCat.includes('electricity') || desc.includes('power') || subCat.includes('power')) {
           groupKey = 'Utilities: Electricity';
           icon = Zap;
-          color = 'text-amber-600';
-          bg = 'bg-amber-50';
+          color = 'text-warning';
+          bg = 'bg-warning-bg';
         } else if (desc.includes('gas') || subCat.includes('gas')) {
           groupKey = 'Utilities: Gas';
           icon = Flame;
-          color = 'text-orange-600';
-          bg = 'bg-orange-50';
+          color = 'text-warning';
+          bg = 'bg-warning-bg';
         } else if (desc.includes('water') || subCat.includes('water')) {
           groupKey = 'Utilities: Water';
           icon = Droplets;
-          color = 'text-cyan-600';
-          bg = 'bg-cyan-50';
+          color = 'text-info';
+          bg = 'bg-info-bg';
         }
       } else if (deductionKeywords.phone.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Phone & Internet';
         icon = Phone;
-        color = 'text-purple-600';
-        bg = 'bg-purple-50';
+        color = 'text-ai';
+        bg = 'bg-ai-bg';
       } else if (deductionKeywords.fuel.some(k => desc.includes(k) || cat.includes(k))) {
         groupKey = 'Fuel & Transport';
         icon = Fuel;
-        color = 'text-rose-600';
-        bg = 'bg-rose-50';
+        color = 'text-danger';
+        bg = 'bg-danger-bg';
       }
 
       if (groupKey) {
@@ -400,7 +400,7 @@ const AccountantPortal = () => {
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
   if (isLoading || authLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-rose-600 font-bold">Error loading portal data. Please check your link.</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-danger font-bold">Error loading portal data. Please check your link.</div>;
 
   return (
     <div className={cn("min-h-screen bg-background pb-20 print:bg-white print:pb-0", isPublic && "pt-8")}>
@@ -420,7 +420,7 @@ const AccountantPortal = () => {
                   Accountant Portal
                 </h1>
                 {isPublic && (
-                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 rounded-full px-3 py-1 gap-1.5">
+                  <Badge className="bg-primary/10 text-primary border-primary/20 rounded-full px-3 py-1 gap-1.5">
                     <Lock className="w-3 h-3" /> Read-Only Access
                   </Badge>
                 )}
@@ -490,11 +490,11 @@ const AccountantPortal = () => {
               </div>
               <div className="text-center">
                 <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Missing Notes</p>
-                <Badge variant="outline" className="rounded-lg text-rose-600 border-rose-200">{workTransactions.filter(t => !t.notes).length}</Badge>
+                <Badge variant="outline" className="rounded-lg text-danger border-danger-border">{workTransactions.filter(t => !t.notes).length}</Badge>
               </div>
               <div className="text-center">
                 <p className="text-xs font-bold uppercase text-muted-foreground mb-1">Unmapped</p>
-                <Badge variant="outline" className="rounded-lg text-amber-600 border-amber-200">{workTransactions.filter(t => !t.category_1).length}</Badge>
+                <Badge variant="outline" className="rounded-lg text-warning border-warning-border">{workTransactions.filter(t => !t.category_1).length}</Badge>
               </div>
             </div>
           </CardContent>
@@ -583,13 +583,13 @@ const AccountantPortal = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2 text-xs">
-                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", businessIncome.length > 0 ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white")}>
+                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", businessIncome.length > 0 ? "bg-profit border-profit text-profit-foreground" : "bg-card")}>
                   {businessIncome.length > 0 && <CheckCircle2 className="w-3 h-3" />}
                 </div>
                 <span className={businessIncome.length > 0 ? "line-through opacity-50" : ""}>Income Categorized</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", businessExpenses.length > 0 ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white")}>
+                <div className={cn("w-4 h-4 rounded border flex items-center justify-center", businessExpenses.length > 0 ? "bg-profit border-profit text-profit-foreground" : "bg-card")}>
                   {businessExpenses.length > 0 && <CheckCircle2 className="w-3 h-3" />}
                 </div>
                 <span className={businessExpenses.length > 0 ? "line-through opacity-50" : ""}>Expenses Categorized</span>
@@ -600,7 +600,7 @@ const AccountantPortal = () => {
 
         {/* High Level P&L Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-0 shadow-xl bg-emerald-600 text-white">
+          <Card className="border-0 shadow-xl bg-profit text-profit-foreground">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium opacity-80">Business Income</p>
@@ -610,7 +610,7 @@ const AccountantPortal = () => {
               <p className="text-xs opacity-70 mt-1">{businessIncome.length} work transactions</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-rose-600 text-white">
+          <Card className="border-0 shadow-xl bg-danger text-danger-foreground">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium opacity-80">Business Expenses</p>
@@ -620,7 +620,7 @@ const AccountantPortal = () => {
               <p className="text-xs opacity-70 mt-1">{businessExpenses.length} work transactions</p>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-xl bg-primary text-white">
+          <Card className="border-0 shadow-xl bg-primary text-primary-foreground">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium opacity-80">Net Position</p>

@@ -364,13 +364,13 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
             </div>
 
             {unmappedCategories.length > 0 && (
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-warning-bg border border-warning-border flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-warning-bg text-warning">
                   <Tags className="w-4 h-4" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-amber-800">New Categories Detected</p>
-                  <p className="text-[10px] text-amber-700">You'll be asked to map {unmappedCategories.length} new categories in the next step.</p>
+                  <p className="text-xs font-bold text-warning">New Categories Detected</p>
+                  <p className="text-[10px] text-warning/80">You'll be asked to map {unmappedCategories.length} new categories in the next step.</p>
                 </div>
               </div>
             )}
@@ -387,7 +387,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
                 </TableHeader>
                 <TableBody>
                   {preview.map((t, i) => (
-                    <TableRow key={i} className={cn(t._isDuplicate && "opacity-50 bg-amber-50/50")}>
+                    <TableRow key={i} className={cn(t._isDuplicate && "opacity-50 bg-warning-bg/50")}>
                       <TableCell className="text-sm">{t.transaction_date}</TableCell>
                       <TableCell className="text-sm max-w-[200px] truncate">{t.description}</TableCell>
                       <TableCell className="text-sm text-right font-medium">{formatCurrency(t.amount)}</TableCell>
@@ -430,9 +430,9 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
         {result && (
           <div className="text-center space-y-4 py-4">
             {result.errors > 0 ? (
-              <AlertTriangle className="w-10 h-10 mx-auto text-amber-500" />
+              <AlertTriangle className="w-10 h-10 mx-auto text-warning" />
             ) : (
-              <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500" />
+              <CheckCircle2 className="w-10 h-10 mx-auto text-profit" />
             )}
             <div className="space-y-1">
               <p className="font-bold text-lg">Import Complete</p>

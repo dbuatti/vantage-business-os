@@ -126,14 +126,14 @@ const TransactionTable = ({
                         {t.category_1 || 'Uncategorized'}
                       </Badge>
                       {t.is_work && (
-                        <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-amber-50 text-amber-700 border-amber-200">Work</Badge>
+                        <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-warning-bg text-warning border-warning-border">Work</Badge>
                       )}
                       {t.business_stream && t.business_stream !== 'Other' && (
                         <Badge
                           variant="outline"
                           className={cn(
                             "rounded-lg text-[9px] font-black uppercase tracking-tighter",
-                            t.business_stream === 'Music' ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            t.business_stream === 'Music' ? "bg-primary/10 text-primary border-primary/20" : "bg-profit-bg text-profit border-profit-border"
                           )}
                         >
                           {t.business_stream}
@@ -177,7 +177,7 @@ const TransactionTable = ({
                           <div className="space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Categorization</p>
                             <div className="flex flex-wrap gap-2">
-                              <Badge className="bg-primary text-white rounded-lg font-bold">{t.category_1 || 'None'}</Badge>
+                              <Badge className="bg-primary text-primary-foreground rounded-lg font-bold">{t.category_1 || 'None'}</Badge>
                               {t.category_2 && <Badge variant="outline" className="rounded-lg font-bold">{t.category_2}</Badge>}
                             </div>
                           </div>
@@ -259,7 +259,7 @@ const TransactionTable = ({
                       {t.category_1 || 'Uncategorized'}
                     </Badge>
                     {t.is_work && (
-                      <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-amber-50 text-amber-700 border-amber-200">
+                      <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tighter bg-warning-bg text-warning border-warning-border">
                         <Briefcase className="w-2 h-2 mr-1" /> Work
                       </Badge>
                     )}
@@ -268,7 +268,7 @@ const TransactionTable = ({
                         variant="outline"
                         className={cn(
                           "rounded-lg text-[9px] font-black uppercase tracking-tighter",
-                          t.business_stream === 'Music' ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          t.business_stream === 'Music' ? "bg-primary/10 text-primary border-primary/20" : "bg-profit-bg text-profit border-profit-border"
                         )}
                       >
                         {t.business_stream}

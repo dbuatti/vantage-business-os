@@ -235,16 +235,16 @@ const ClientDetail = () => {
         {/* Left Column: Info Cards */}
         <div className="space-y-6">
           <Card className="border-0 shadow-xl overflow-hidden">
-            <CardHeader className="bg-primary text-white pb-6">
+            <CardHeader className="bg-primary text-primary-foreground pb-6">
               <CardTitle className="text-sm font-bold uppercase tracking-widest opacity-80">Financial Summary</CardTitle>
               <div className="mt-4 space-y-4">
                 <div>
                   <p className="text-xs opacity-70">Total Invoiced</p>
                   <p className="text-3xl font-black">{formatCurrency(client.total_invoiced || 0)}</p>
                 </div>
-                <div className="pt-4 border-t border-white/20">
+                <div className="pt-4 border-t border-primary-foreground/20">
                   <p className="text-xs opacity-70">Outstanding Balance</p>
-                  <p className="text-3xl font-black text-amber-300">{formatCurrency(client.total_receivable || 0)}</p>
+                  <p className="text-3xl font-black text-warning">{formatCurrency(client.total_receivable || 0)}</p>
                 </div>
               </div>
             </CardHeader>
@@ -291,12 +291,12 @@ const ClientDetail = () => {
                   <div key={asset.id} className="group p-3 rounded-xl bg-muted/50 border border-transparent hover:border-primary/20 transition-all">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        {asset.asset_type === 'Credential' ? <Key className="w-3.5 h-3.5 text-amber-500" /> : 
-                         asset.asset_type === 'Technical' ? <Shield className="w-3.5 h-3.5 text-blue-500" /> : 
+                        {asset.asset_type === 'Credential' ? <Key className="w-3.5 h-3.5 text-warning" /> :
+                         asset.asset_type === 'Technical' ? <Shield className="w-3.5 h-3.5 text-primary" /> :
                          <Info className="w-3.5 h-3.5 text-primary" />}
                         <span className="text-xs font-bold uppercase tracking-wider">{asset.name}</span>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => deleteAsset(asset.id)} className="h-5 w-5 rounded opacity-0 group-hover:opacity-100 text-rose-500">
+                      <Button variant="ghost" size="icon" onClick={() => deleteAsset(asset.id)} className="h-5 w-5 rounded opacity-0 group-hover:opacity-100 text-danger">
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
@@ -353,9 +353,9 @@ const ClientDetail = () => {
                             <TableCell>
                               <Badge className={cn(
                                 "rounded-lg text-[10px] font-bold uppercase",
-                                invoice.status === 'Paid' ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
-                                invoice.status === 'Overdue' ? "bg-rose-100 text-rose-700 border-rose-200" :
-                                "bg-blue-100 text-blue-700 border-blue-200"
+                                invoice.status === 'Paid' ? "bg-profit-bg text-profit border-profit-border" :
+                                invoice.status === 'Overdue' ? "bg-danger-bg text-danger border-danger-border" :
+                                "bg-primary/10 text-primary border-primary/20"
                               )}>
                                 {invoice.status}
                               </Badge>
@@ -411,7 +411,7 @@ const ClientDetail = () => {
                             <TableCell>
                               <Badge className={cn(
                                 "rounded-lg text-[10px] font-bold uppercase",
-                                ticket.priority === 'high' ? "bg-rose-100 text-rose-700" : "bg-muted text-muted-foreground"
+                                ticket.priority === 'high' ? "bg-danger-bg text-danger" : "bg-muted text-muted-foreground"
                               )}>
                                 {ticket.priority}
                               </Badge>

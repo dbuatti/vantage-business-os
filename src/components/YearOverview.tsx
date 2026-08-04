@@ -157,15 +157,15 @@ const YearOverview = ({ transactions, categoryGroups, availableMonths }: YearOve
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-center">
+          <div className="p-3 rounded-xl bg-profit-bg text-center">
             <p className="text-xs text-profit font-medium">Year Income</p>
             <p className="text-xl font-bold text-profit">{formatCurrency(yearIncome)}</p>
           </div>
-          <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950 text-center">
+          <div className="p-3 rounded-xl bg-danger-bg text-center">
             <p className="text-xs text-danger font-medium">Year Expenses</p>
             <p className="text-xl font-bold text-danger">{formatCurrency(-yearExpenses)}</p>
           </div>
-          <div className={cn("p-3 rounded-xl text-center", yearNet >= 0 ? "bg-blue-50 dark:bg-blue-950" : "bg-amber-50 dark:bg-amber-950")}>
+          <div className={cn("p-3 rounded-xl text-center", yearNet >= 0 ? "bg-info-bg" : "bg-warning-bg")}>
             <p className={cn("text-xs font-medium", yearNet >= 0 ? "text-info" : "text-warning")}>Year Net</p>
             <p className={cn("text-xl font-bold", yearNet >= 0 ? "text-info" : "text-warning")}>{formatCurrency(yearNet)}</p>
           </div>

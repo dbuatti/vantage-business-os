@@ -196,10 +196,10 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
                 <Badge className={cn(
                   "rounded-lg text-[10px]",
                   group.frequency === 'Monthly' ? "bg-info-bg text-info" :
-                  group.frequency === 'Weekly' ? "bg-purple-100 text-purple-700" :
-                  group.frequency === 'Bi-weekly' ? "bg-indigo-100 text-indigo-700" :
-                  group.frequency === 'Quarterly' ? "bg-amber-100 text-amber-700" :
-                  "bg-gray-100 text-gray-700"
+                  group.frequency === 'Weekly' ? "bg-ai-bg text-ai" :
+                  group.frequency === 'Bi-weekly' ? "bg-primary/10 text-primary" :
+                  group.frequency === 'Quarterly' ? "bg-warning-bg text-warning" :
+                  "bg-muted text-muted-foreground"
                 )}>
                   <Calendar className="w-2.5 h-2.5 mr-1" />
                   {group.frequency}
@@ -210,7 +210,7 @@ const RecurringTransactions = ({ transactions }: RecurringTransactionsProps) => 
                       key={j}
                       className={cn(
                         "h-4 flex-1 rounded-sm",
-                        amount < 0 ? "bg-rose-200" : "bg-emerald-200"
+                        amount < 0 ? "bg-danger-border" : "bg-profit-border"
                       )}
                       title={formatCurrency(amount)}
                     />

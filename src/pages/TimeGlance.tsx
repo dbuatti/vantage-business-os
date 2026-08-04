@@ -401,8 +401,8 @@ const TimeGlance = () => {
                 <div className="text-center space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="p-4 rounded-3xl bg-rose-50 border border-rose-100 shadow-sm cursor-help hover:scale-105 transition-transform">
-                        <p className="text-2xl font-black text-rose-600">{formatCurrency(stats.breakdown.bigHits.total)}</p>
+                      <div className="p-4 rounded-3xl bg-danger-bg border border-danger-border shadow-sm cursor-help hover:scale-105 transition-transform">
+                        <p className="text-2xl font-black text-danger">{formatCurrency(stats.breakdown.bigHits.total)}</p>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
@@ -417,8 +417,8 @@ const TimeGlance = () => {
                 <div className="text-center space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="p-4 rounded-3xl bg-blue-50 border border-blue-100 shadow-sm cursor-help hover:scale-105 transition-transform">
-                        <p className="text-2xl font-black text-blue-600">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
+                      <div className="p-4 rounded-3xl bg-primary/10 border border-primary/20 shadow-sm cursor-help hover:scale-105 transition-transform">
+                        <p className="text-2xl font-black text-primary">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">
@@ -433,8 +433,8 @@ const TimeGlance = () => {
                 <div className="text-center space-y-2">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="p-4 rounded-3xl bg-amber-50 border border-amber-100 shadow-sm cursor-help hover:scale-105 transition-transform">
-                        <p className="text-2xl font-black text-amber-600">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
+                      <div className="p-4 rounded-3xl bg-warning-bg border border-warning-border shadow-sm cursor-help hover:scale-105 transition-transform">
+                        <p className="text-2xl font-black text-warning">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center" className="p-0 border-0 shadow-2xl rounded-xl overflow-hidden bg-card">

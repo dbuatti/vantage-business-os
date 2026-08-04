@@ -303,7 +303,7 @@ const TicketDetail = () => {
                   className={cn(
                     "p-4 rounded-2xl border transition-all",
                     comment.is_internal 
-                      ? "bg-amber-50/50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900" 
+                      ? "bg-warning-bg/50 border-warning-border" 
                       : "bg-background shadow-sm"
                   )}
                 >
@@ -313,7 +313,7 @@ const TicketDetail = () => {
                         {comment.user_id === session?.user.id ? 'ME' : 'CL'}
                       </div>
                       <span className="text-xs font-bold">{comment.user_id === session?.user.id ? 'You' : 'Client'}</span>
-                      {comment.is_internal && <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[9px] h-4 px-1.5">Internal Note</Badge>}
+                      {comment.is_internal && <Badge className="bg-warning-bg text-warning border-warning-border text-[9px] h-4 px-1.5">Internal Note</Badge>}
                     </div>
                     <span className="text-[10px] text-muted-foreground">{format(new Date(comment.created_at), 'MMM dd, h:mm a')}</span>
                   </div>
@@ -364,9 +364,9 @@ const TicketDetail = () => {
                   <span className="text-xs font-bold text-muted-foreground uppercase">Priority</span>
                   <Badge className={cn(
                     "rounded-lg px-3 py-0.5",
-                    ticket.priority === 'high' ? "bg-rose-100 text-rose-700" :
-                    ticket.priority === 'medium' ? "bg-amber-100 text-amber-700" :
-                    "bg-emerald-100 text-emerald-700"
+                    ticket.priority === 'high' ? "bg-danger-bg text-danger" :
+                    ticket.priority === 'medium' ? "bg-warning-bg text-warning" :
+                    "bg-profit-bg text-profit"
                   )}>{ticket.priority}</Badge>
                 </div>
                 <div className="flex items-center justify-between">

@@ -177,17 +177,17 @@ const ExpenseStory = () => {
         <CardContent className="p-12">
           <div className="flex flex-wrap items-center justify-center gap-8">
             <div className="text-center space-y-3">
-              <div className="p-6 rounded-[2.5rem] bg-rose-50 border-2 border-rose-100 shadow-sm">
-                <p className="text-4xl font-black text-rose-600">{formatCurrency(stats.breakdown.bigHits.total)}</p>
+              <div className="p-6 rounded-[2.5rem] bg-danger-bg border-2 border-danger-border shadow-sm">
+                <p className="text-4xl font-black text-danger">{formatCurrency(stats.breakdown.bigHits.total)}</p>
               </div>
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">The Big Hits</p>
             </div>
-            
+
             <PlusIcon className="w-6 h-6 text-muted-foreground/40" />
 
             <div className="text-center space-y-3">
-              <div className="p-6 rounded-[2.5rem] bg-blue-50 border-2 border-blue-100 shadow-sm">
-                <p className="text-4xl font-black text-blue-600">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
+              <div className="p-6 rounded-[2.5rem] bg-primary/10 border-2 border-primary/20 shadow-sm">
+                <p className="text-4xl font-black text-primary">{formatCurrency(stats.breakdown.subscriptions.total)}</p>
               </div>
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Subscriptions</p>
             </div>
@@ -195,8 +195,8 @@ const ExpenseStory = () => {
             <PlusIcon className="w-6 h-6 text-muted-foreground/40" />
 
             <div className="text-center space-y-3">
-              <div className="p-6 rounded-[2.5rem] bg-amber-50 border-2 border-amber-100 shadow-sm">
-                <p className="text-4xl font-black text-amber-600">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
+              <div className="p-6 rounded-[2.5rem] bg-warning-bg border-2 border-warning-border shadow-sm">
+                <p className="text-4xl font-black text-warning">{formatCurrency(stats.breakdown.dailyLife.total)}</p>
               </div>
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Daily Life</p>
             </div>
@@ -204,7 +204,7 @@ const ExpenseStory = () => {
             <Equal className="w-6 h-6 text-muted-foreground/40" />
 
             <div className="text-center space-y-3">
-              <div className="p-8 rounded-[3rem] bg-primary text-white shadow-2xl shadow-primary/30">
+              <div className="p-8 rounded-[3rem] bg-primary text-primary-foreground shadow-2xl shadow-primary/30">
                 <p className="text-5xl font-black">{formatCurrency(stats.expenses)}</p>
               </div>
               <p className="text-xs font-black uppercase tracking-widest text-primary">Total Spent</p>
@@ -218,7 +218,7 @@ const ExpenseStory = () => {
         {/* Big Hits */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h3 className="text-sm font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
+            <h3 className="text-sm font-black uppercase tracking-widest text-danger flex items-center gap-2">
               <TrendingDown className="w-4 h-4" /> The Big Hits
             </h3>
             <Badge variant="outline" className="rounded-lg">{stats.breakdown.bigHits.items.length}</Badge>
@@ -231,7 +231,7 @@ const ExpenseStory = () => {
                     <p className="text-sm font-bold truncate">{t.description}</p>
                     <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.date), 'MMM dd')}</p>
                   </div>
-                  <p className="text-lg font-black text-rose-600 tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
+                  <p className="text-lg font-black text-danger tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
                 </CardContent>
               </Card>
             ))}
@@ -244,7 +244,7 @@ const ExpenseStory = () => {
         {/* Subscriptions */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h3 className="text-sm font-black uppercase tracking-widest text-blue-600 flex items-center gap-2">
+            <h3 className="text-sm font-black uppercase tracking-widest text-primary flex items-center gap-2">
               <CreditCard className="w-4 h-4" /> Subscriptions
             </h3>
             <Badge variant="outline" className="rounded-lg">{stats.breakdown.subscriptions.items.length}</Badge>
@@ -257,7 +257,7 @@ const ExpenseStory = () => {
                     <p className="text-sm font-bold truncate">{t.description}</p>
                     <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.date), 'MMM dd')}</p>
                   </div>
-                  <p className="text-lg font-black text-blue-600 tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
+                  <p className="text-lg font-black text-primary tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
                 </CardContent>
               </Card>
             ))}
@@ -270,7 +270,7 @@ const ExpenseStory = () => {
         {/* Daily Life */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h3 className="text-sm font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
+            <h3 className="text-sm font-black uppercase tracking-widest text-warning flex items-center gap-2">
               <Zap className="w-4 h-4" /> Daily Life
             </h3>
             <Badge variant="outline" className="rounded-lg">{stats.breakdown.dailyLife.items.length}</Badge>
@@ -283,7 +283,7 @@ const ExpenseStory = () => {
                     <p className="text-sm font-bold truncate">{t.description}</p>
                     <p className="text-[10px] text-muted-foreground font-bold uppercase">{format(parseISO(t.date), 'MMM dd')}</p>
                   </div>
-                  <p className="text-lg font-black text-amber-600 tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
+                  <p className="text-lg font-black text-warning tabular-nums">{formatCurrency(Math.abs(t.amount))}</p>
                 </CardContent>
               </Card>
             ))}

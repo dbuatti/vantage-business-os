@@ -50,7 +50,7 @@ const PortalTaxSummary = ({
         <Card className="border-0 shadow-xl overflow-hidden">
           <button 
             onClick={() => onToggleSection('income')}
-            className="w-full text-left bg-emerald-50 dark:bg-emerald-950/30 border-b p-4 flex items-center justify-between hover:bg-emerald-100/50 transition-colors"
+            className="w-full text-left bg-profit-bg border-b p-4 flex items-center justify-between hover:bg-profit-bg/70 transition-colors"
           >
             <CardTitle className="text-xl text-profit">Business Income</CardTitle>
             {expandedSections.has('income') ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
@@ -71,7 +71,7 @@ const PortalTaxSummary = ({
                     <TableRow key={t.id}>
                       <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                       <TableCell className="text-sm font-bold">{t.description}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-card">{t.category_1}</Badge></TableCell>
                       <TableCell className="text-right font-black text-profit">{formatCurrency(t.amount)}</TableCell>
                     </TableRow>
                   ))}
@@ -95,7 +95,7 @@ const PortalTaxSummary = ({
               className={cn("w-full text-left border-b p-4 flex items-center justify-between transition-colors", bucket.bg, "dark:bg-muted/20 hover:opacity-90")}
             >
               <div className="flex items-center gap-3">
-                <div className={cn("p-2 rounded-xl bg-white dark:bg-card shadow-sm", bucket.color)}>
+                <div className={cn("p-2 rounded-xl bg-card shadow-sm", bucket.color)}>
                   <bucket.icon className="w-6 h-6" />
                 </div>
                 <div>
@@ -124,7 +124,7 @@ const PortalTaxSummary = ({
                       <TableRow key={t.id} className="hover:bg-muted/20 group">
                         <TableCell className="text-xs font-medium">{formatDate(t.transaction_date)}</TableCell>
                         <TableCell className="text-sm font-bold">{t.description}</TableCell>
-                        <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-white dark:bg-card">{t.category_1}</Badge></TableCell>
+                        <TableCell><Badge variant="outline" className="text-[10px] rounded-lg bg-card">{t.category_1}</Badge></TableCell>
                         <TableCell className="text-right font-black text-danger">{formatCurrency(t.amount)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground italic">{t.notes || '—'}</TableCell>
                       </TableRow>

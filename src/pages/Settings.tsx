@@ -265,7 +265,7 @@ const Settings = () => {
           <Card className="border-0 shadow-xl overflow-hidden">
             <div className="bg-gradient-to-br from-primary/10 to-background p-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+                <div className="p-3 bg-primary rounded-2xl text-primary-foreground shadow-lg shadow-primary/20">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
@@ -279,7 +279,7 @@ const Settings = () => {
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Your Secret Access Link</Label>
                     {form.accountant_share_token && (
-                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>
+                      <Badge className="bg-profit-bg text-profit border-profit-border">Active</Badge>
                     )}
                   </div>
                   
@@ -311,13 +311,13 @@ const Settings = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 text-blue-800 text-sm">
+                  <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm">
                     <p className="font-bold flex items-center gap-2 mb-1">
                       <Check className="w-4 h-4" /> Read-Only Access
                     </p>
                     <p className="opacity-80">Your accountant can view and print reports but cannot edit or delete any data.</p>
                   </div>
-                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-100 text-amber-800 text-sm">
+                  <div className="p-4 rounded-xl bg-warning-bg border border-warning-border text-warning text-sm">
                     <p className="font-bold flex items-center gap-2 mb-1">
                       <RefreshCw className="w-4 h-4" /> Revoke Anytime
                     </p>
@@ -327,7 +327,7 @@ const Settings = () => {
 
                 {form.accountant_share_token && (
                   <div className="flex justify-center pt-4">
-                    <Button variant="ghost" onClick={() => setShowTokenConfirm(true)} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl gap-2">
+                    <Button variant="ghost" onClick={() => setShowTokenConfirm(true)} className="text-danger hover:text-danger hover:bg-danger-bg rounded-xl gap-2">
                       <RefreshCw className="w-4 h-4" /> Regenerate Secret Link
                     </Button>
                   </div>

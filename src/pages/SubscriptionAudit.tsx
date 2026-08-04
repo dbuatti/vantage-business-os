@@ -195,7 +195,7 @@ const SubscriptionAuditPage = () => {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
           <div className="space-y-1">
             <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+              <div className="p-2.5 bg-primary rounded-2xl text-primary-foreground shadow-lg shadow-primary/20">
                 <Repeat className="w-7 h-7" />
               </div>
               Subscription Audit
@@ -241,7 +241,7 @@ const SubscriptionAuditPage = () => {
 
       {/* High Level Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up">
-        <Card className="border-0 shadow-xl bg-primary text-white overflow-hidden relative">
+        <Card className="border-0 shadow-xl bg-primary text-primary-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-6 relative">
             <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-1">Monthly Burn Rate</p>
@@ -249,7 +249,7 @@ const SubscriptionAuditPage = () => {
             <p className="text-xs opacity-70 mt-2">Across {audit.services.length} active services</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-violet-600 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-xl bg-ai text-ai-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-6 relative">
             <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-1">AI & Tools Investment</p>
@@ -257,7 +257,7 @@ const SubscriptionAuditPage = () => {
             <p className="text-xs opacity-70 mt-2">{Math.round((audit.aiSpend / audit.totalMonthlyBurn) * 100)}% of total burn</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-emerald-600 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-xl bg-profit text-profit-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-6 relative">
             <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-1">Annual Commitment</p>
@@ -279,13 +279,13 @@ const SubscriptionAuditPage = () => {
             <CardContent className="space-y-3">
               {audit.redundancyAlerts.map((alert, i) => (
                 <div key={i} className="flex items-start gap-3 text-sm text-warning font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 shrink-0" />
                   <p>{alert}</p>
                 </div>
               ))}
               {audit.services.filter(s => s.alerts.includes('Multiple Streams')).map((s, i) => (
                 <div key={i} className="flex items-start gap-3 text-sm text-warning font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-warning mt-1.5 shrink-0" />
                   <p><span className="font-black">{s.name}</span> has multiple active billing streams. Check for duplicate accounts.</p>
                 </div>
               ))}
@@ -300,11 +300,11 @@ const SubscriptionAuditPage = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3 text-sm text-info font-medium">
-                <Zap className="w-4 h-4 text-blue-500 shrink-0" />
+                <Zap className="w-4 h-4 text-info shrink-0" />
                 <p>Switching <span className="font-black">Notion</span> to an annual plan could save you ~20% ($190/year).</p>
               </div>
               <div className="flex items-start gap-3 text-sm text-info font-medium">
-                <Zap className="w-4 h-4 text-blue-500 shrink-0" />
+                <Zap className="w-4 h-4 text-info shrink-0" />
                 <p>You have {audit.services.filter(s => !s.isWork).length} personal entertainment subs. Totaling {formatCurrency(audit.services.filter(s => !s.isWork).reduce((s, v) => s + v.monthlyCost, 0))}/mo.</p>
               </div>
             </CardContent>
@@ -336,7 +336,7 @@ const SubscriptionAuditPage = () => {
                     <div className={cn(
                       "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner border transition-colors",
                       service.isWork ? "bg-primary/5 border-primary/10 text-primary" : "bg-muted border-transparent text-muted-foreground",
-                      service.isAI && "bg-violet-50 border-violet-100 text-violet-600"
+                      service.isAI && "bg-ai-bg border-ai-border text-ai"
                     )}>
                       {service.isAI ? <Brain className="w-7 h-7" /> : 
                        service.normalizedName.includes('DROPBOX') ? <Cloud className="w-7 h-7" /> :
@@ -349,8 +349,8 @@ const SubscriptionAuditPage = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-black text-lg truncate">{service.name}</h3>
-                        {service.isWork && <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[9px] font-black uppercase">Work</Badge>}
-                        {service.isAI && <Badge className="bg-violet-100 text-violet-700 border-violet-200 text-[9px] font-black uppercase">AI</Badge>}
+                        {service.isWork && <Badge className="bg-warning-bg text-warning border-warning-border text-[9px] font-black uppercase">Work</Badge>}
+                        {service.isAI && <Badge className="bg-ai-bg text-ai border-ai-border text-[9px] font-black uppercase">AI</Badge>}
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground font-bold uppercase tracking-tighter">
                         <span className="flex items-center gap-1"><Repeat className="w-3 h-3" /> {service.frequency}</span>

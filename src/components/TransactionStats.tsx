@@ -127,7 +127,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       value: `${stats.savingsRate.toFixed(1)}%`,
       icon: Percent,
       color: stats.savingsRate >= 20 ? 'text-profit' : stats.savingsRate >= 0 ? 'text-warning' : 'text-danger',
-      bg: stats.savingsRate >= 20 ? 'bg-emerald-50' : stats.savingsRate >= 0 ? 'bg-amber-50' : 'bg-rose-50',
+      bg: stats.savingsRate >= 20 ? 'bg-profit-bg' : stats.savingsRate >= 0 ? 'bg-warning-bg' : 'bg-danger-bg',
       subtitle: stats.savingsRate >= 20 ? 'Great job!' : stats.savingsRate >= 0 ? 'Could improve' : 'Spending more than earning'
     },
     {
@@ -135,7 +135,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       value: formatCurrency(stats.monthlyBurnRate),
       icon: Zap,
       color: 'text-ai',
-      bg: 'bg-violet-50',
+      bg: 'bg-ai-bg',
       subtitle: `Over ${stats.months} months`
     },
     {
@@ -143,7 +143,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       value: formatCurrency(stats.dailyAvgSpend),
       icon: Calendar,
       color: 'text-info',
-      bg: 'bg-blue-50',
+      bg: 'bg-info-bg',
       subtitle: 'Per active day'
     },
     {
@@ -151,7 +151,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       value: stats.uniqueMerchants.toString(),
       icon: Target,
       color: 'text-ai',
-      bg: 'bg-indigo-50',
+      bg: 'bg-ai-bg',
       subtitle: `${stats.totalTransactions} total transactions`
     },
   ];
@@ -191,12 +191,12 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Largest Expense */}
             {stats.largestExpense && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-rose-50 to-white dark:from-rose-950 dark:to-card">
+              <div className="p-4 rounded-xl border bg-gradient-to-br from-danger-bg to-card">
                 <div className="flex items-center gap-2 mb-2">
-                  <ArrowDownRight className="w-4 h-4 text-rose-500" />
+                  <ArrowDownRight className="w-4 h-4 text-danger" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Largest Expense</span>
                 </div>
-                <p className="text-2xl font-bold text-rose-600">
+                <p className="text-2xl font-bold text-danger">
                   {formatCurrency(Math.abs(stats.largestExpense.amount))}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1 truncate">
@@ -210,12 +210,12 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
 
             {/* Largest Income */}
             {stats.largestIncome && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950 dark:to-card">
+              <div className="p-4 rounded-xl border bg-gradient-to-br from-profit-bg to-card">
                 <div className="flex items-center gap-2 mb-2">
-                  <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                  <ArrowUpRight className="w-4 h-4 text-profit" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Largest Income</span>
                 </div>
-                <p className="text-2xl font-bold text-emerald-600">
+                <p className="text-2xl font-bold text-profit">
                   {formatCurrency(stats.largestIncome.amount)}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1 truncate">
@@ -229,12 +229,12 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
 
             {/* Most Expensive Month */}
             {stats.mostExpensiveMonth && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-amber-50 to-white dark:from-amber-950 dark:to-card">
+              <div className="p-4 rounded-xl border bg-gradient-to-br from-warning-bg to-card">
                 <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="w-4 h-4 text-amber-500" />
+                  <Calendar className="w-4 h-4 text-warning" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Highest Spending Month</span>
                 </div>
-                <p className="text-2xl font-bold text-amber-600">
+                <p className="text-2xl font-bold text-warning">
                   {formatCurrency(stats.mostExpensiveMonth[1])}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -245,12 +245,12 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
 
             {/* Most Active Day */}
             {stats.mostActiveDay && (
-              <div className="p-4 rounded-xl border bg-gradient-to-br from-blue-50 to-white dark:from-blue-950 dark:to-card">
+              <div className="p-4 rounded-xl border bg-gradient-to-br from-info-bg to-card">
                 <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-4 h-4 text-blue-500" />
+                  <Zap className="w-4 h-4 text-info" />
                   <span className="text-xs font-semibold text-muted-foreground uppercase">Most Active Day</span>
                 </div>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-info">
                   {stats.mostActiveDay[0]}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">

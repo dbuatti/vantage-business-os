@@ -85,8 +85,8 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
   if (!forecast) return null;
 
   return (
-    <Card className="border-0 shadow-xl bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950/20 dark:to-card overflow-hidden">
-      <div className="h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
+    <Card className="border-0 shadow-xl bg-gradient-to-br from-ai-bg to-card overflow-hidden">
+      <div className="h-1 bg-gradient-to-r from-ai to-primary" />
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -107,7 +107,7 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
               <p className="text-[10px] font-bold uppercase text-muted-foreground">{m.month}</p>
               <div className={cn(
                 "p-3 rounded-2xl border transition-all",
-                m.net >= 0 ? "bg-emerald-50/50 border-emerald-100" : "bg-rose-50/50 border-rose-100"
+                m.net >= 0 ? "bg-profit-bg/50 border-profit-border" : "bg-danger-bg/50 border-danger-border"
               )}>
                 <p className={cn(
                   "text-sm font-black",
@@ -120,7 +120,7 @@ const CashFlowForecast = ({ transactions }: CashFlowForecastProps) => {
           ))}
         </div>
 
-        <div className="p-4 rounded-2xl bg-white/50 dark:bg-black/20 border border-indigo-100 dark:border-indigo-900">
+        <div className="p-4 rounded-2xl bg-ai-bg/50 border border-ai-border">
           <div className="flex items-start gap-3">
             <div className={cn(
               "p-2 rounded-xl shrink-0",

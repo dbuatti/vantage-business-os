@@ -73,10 +73,10 @@ export const HistoricalTPIForm: React.FC<HistoricalTPIFormProps> = ({ onUpdate }
   };
 
   return (
-    <Card className="bg-white/50 backdrop-blur-sm border-indigo-100 shadow-sm">
+    <Card className="bg-card/50 backdrop-blur-sm border-border shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
             <History className="h-5 w-5" />
           </div>
           <div>
@@ -90,11 +90,11 @@ export const HistoricalTPIForm: React.FC<HistoricalTPIFormProps> = ({ onUpdate }
           {history.map((h, i) => (
             <div key={h.year} className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">FY {h.year}-{h.year + 1}</Label>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">FY {h.year}-{h.year + 1}</Label>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p className="text-xs">Include income from performing, composing, or other special professional activities, minus related expenses.</p>
@@ -103,25 +103,25 @@ export const HistoricalTPIForm: React.FC<HistoricalTPIFormProps> = ({ onUpdate }
                 </TooltipProvider>
               </div>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                <Input 
-                  type="number" 
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
+                <Input
+                  type="number"
                   value={h.amount}
                   onChange={(e) => {
                     const newHistory = [...history];
                     newHistory[i].amount = e.target.value;
                     setHistory(newHistory);
                   }}
-                  className="pl-7 bg-white border-indigo-50 focus:ring-indigo-500 font-bold"
+                  className="pl-7 font-bold"
                 />
               </div>
             </div>
           ))}
         </div>
-        <Button 
-          onClick={handleSave} 
-          disabled={loading} 
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 font-bold gap-2"
+        <Button
+          onClick={handleSave}
+          disabled={loading}
+          className="w-full rounded-xl h-12 font-bold gap-2"
         >
           <Save className="h-4 w-4" />
           {loading ? 'Saving...' : 'Save Historical Data'}

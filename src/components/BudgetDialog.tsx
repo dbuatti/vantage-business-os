@@ -312,7 +312,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
             {adjustedSuggestions.scaleFactor !== 1 && (
               <Badge variant="outline" className={cn(
                 "text-[10px] font-black uppercase",
-                adjustedSuggestions.scaleFactor < 1 ? "text-rose-600 border-rose-200 bg-rose-50" : "text-emerald-600 border-emerald-200 bg-emerald-50"
+                adjustedSuggestions.scaleFactor < 1 ? "text-danger border-danger-border bg-danger-bg" : "text-profit border-profit-border bg-profit-bg"
               )}>
                 {adjustedSuggestions.scaleFactor < 1 ? 'Spending Cut Required' : 'Spending Increase Possible'}
               </Badge>

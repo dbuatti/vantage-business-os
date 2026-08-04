@@ -37,18 +37,18 @@ interface CategoryGroupManagerProps {
 }
 
 const INCOME_GROUPS = [
-  { name: '💰 Regular Income', color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800' },
-  { name: '🎵 Music Performance', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800' },
-  { name: '🎹 Music Services', color: 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800' },
-  { name: '📋 Other Income', color: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800' },
+  { name: '💰 Regular Income', color: 'bg-profit-bg text-profit border-profit-border' },
+  { name: '🎵 Music Performance', color: 'bg-primary/10 text-primary border-primary/20' },
+  { name: '🎹 Music Services', color: 'bg-ai-bg text-ai border-ai-border' },
+  { name: '📋 Other Income', color: 'bg-warning-bg text-warning border-warning-border' },
 ];
 
 const EXPENSE_GROUPS = [
-  { name: 'Fixed Essentials', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800', icon: '🏠' },
-  { name: 'Flexible Essentials', color: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800', icon: '🛒' },
-  { name: 'Sustenance', color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800', icon: '🍽️' },
-  { name: 'Wellness & Growth', color: 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800', icon: '🌱' },
-  { name: 'Lifestyle & Discretionary', color: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800', icon: '🎭' },
+  { name: 'Fixed Essentials', color: 'bg-primary/10 text-primary border-primary/20', icon: '🏠' },
+  { name: 'Flexible Essentials', color: 'bg-warning-bg text-warning border-warning-border', icon: '🛒' },
+  { name: 'Sustenance', color: 'bg-profit-bg text-profit border-profit-border', icon: '🍽️' },
+  { name: 'Wellness & Growth', color: 'bg-ai-bg text-ai border-ai-border', icon: '🌱' },
+  { name: 'Lifestyle & Discretionary', color: 'bg-danger-bg text-danger border-danger-border', icon: '🎭' },
 ];
 
 const ALL_GROUPS = [...INCOME_GROUPS, ...EXPENSE_GROUPS];
@@ -310,7 +310,7 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
   }, [groups]);
 
   const getGroupStyle = (groupName: string) => {
-    return ALL_GROUPS.find(g => g.name === groupName) || { name: groupName, color: 'bg-gray-100 text-gray-700 border-gray-200' };
+    return ALL_GROUPS.find(g => g.name === groupName) || { name: groupName, color: 'bg-muted text-muted-foreground border-border' };
   };
 
   return (
@@ -385,7 +385,7 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
           {(viewMode === 'all' || viewMode === 'income') && (
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                <ArrowUpRight className="w-3 h-3 text-profit" />
                 Income Groups
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -405,7 +405,7 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
           {(viewMode === 'all' || viewMode === 'expense') && (
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <ArrowDownRight className="w-3 h-3 text-rose-500" />
+                <ArrowDownRight className="w-3 h-3 text-danger" />
                 Expense Groups
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
@@ -462,7 +462,7 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
                           <Button variant="ghost" size="icon" className="h-5 w-5 rounded" onClick={() => handleEdit(item)}>
                             <Pencil className="h-2.5 w-2.5" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-5 w-5 rounded hover:text-rose-600" onClick={() => handleDelete(item.id)}>
+                          <Button variant="ghost" size="icon" className="h-5 w-5 rounded hover:text-danger" onClick={() => handleDelete(item.id)}>
                             <Trash2 className="h-2.5 w-2.5" />
                           </Button>
                         </div>
@@ -488,9 +488,9 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
                   variant="outline"
                   className={cn(
                     "rounded-lg text-xs cursor-pointer hover:bg-primary/5 hover:text-primary hover:border-primary/20",
-                    categoryType[cat] === 'income' 
-                      ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
-                      : "bg-gray-50 text-gray-500 border-gray-200"
+                    categoryType[cat] === 'income'
+                      ? "bg-profit-bg text-profit border-profit-border"
+                      : "bg-muted text-muted-foreground border-border"
                   )}
                   onClick={() => {
                     setFormCategory(cat);
@@ -526,7 +526,7 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
                     {unmappedCategories.map(cat => (
                       <SelectItem key={cat} value={cat}>
                         <span className="flex items-center gap-1.5">
-                          {categoryType[cat] === 'income' && <ArrowUpRight className="w-3 h-3 text-emerald-500" />}
+                          {categoryType[cat] === 'income' && <ArrowUpRight className="w-3 h-3 text-profit" />}
                           {cat}
                         </span>
                       </SelectItem>

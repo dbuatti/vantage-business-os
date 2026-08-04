@@ -110,7 +110,7 @@ const Productivity = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-lg bg-primary text-white">
+        <Card className="border-0 shadow-lg bg-primary text-primary-foreground">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium opacity-80">Total Logged Hours</p>
@@ -120,7 +120,7 @@ const Productivity = () => {
             <p className="text-xs opacity-70 mt-1">Across {tickets.length} tickets</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-emerald-600 text-white">
+        <Card className="border-0 shadow-lg bg-profit text-profit-foreground">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium opacity-80">Resolution Rate</p>
@@ -130,7 +130,7 @@ const Productivity = () => {
             <p className="text-xs opacity-70 mt-1">{stats.resolvedCount} tickets completed</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-amber-500 text-white">
+        <Card className="border-0 shadow-lg bg-warning text-warning-foreground">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium opacity-80">Avg. Hourly Yield</p>
@@ -142,7 +142,7 @@ const Productivity = () => {
             <p className="text-xs opacity-70 mt-1">Revenue per logged hour</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-lg bg-indigo-600 text-white">
+        <Card className="border-0 shadow-lg bg-ai text-ai-foreground">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-medium opacity-80">Estimation Accuracy</p>
@@ -185,7 +185,7 @@ const Productivity = () => {
                         <p className="text-xl font-black text-primary">${yield_.toFixed(0)}<span className="text-xs font-bold text-muted-foreground">/h</span></p>
                         <Badge variant="outline" className={cn(
                           "text-[10px] rounded-lg uppercase font-bold",
-                          yield_ > 150 ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-muted text-muted-foreground"
+                          yield_ > 150 ? "bg-profit-bg text-profit border-profit-border" : "bg-muted text-muted-foreground"
                         )}>
                           {yield_ > 150 ? 'High Yield' : 'Standard'}
                         </Badge>
@@ -219,7 +219,7 @@ const Productivity = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-indigo-700 text-white overflow-hidden relative">
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground overflow-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative space-y-4">
               <div className="flex items-center gap-2">
