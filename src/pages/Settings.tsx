@@ -37,6 +37,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
+import { applyBrandColor } from '@/utils/theme';
 import AccountantSettings from '@/components/AccountantSettings';
 
 const Settings = () => {
@@ -226,15 +227,21 @@ const Settings = () => {
                   <div className="space-y-2">
                     <Label>Brand Color</Label>
                     <div className="flex gap-3">
-                      <Input 
-                        type="color" 
-                        value={form.primary_brand_color} 
-                        onChange={(e) => setForm(prev => ({ ...prev, primary_brand_color: e.target.value }))}
+                      <Input
+                        type="color"
+                        value={form.primary_brand_color}
+                        onChange={(e) => {
+                          setForm(prev => ({ ...prev, primary_brand_color: e.target.value }));
+                          applyBrandColor(e.target.value);
+                        }}
                         className="w-12 h-10 p-1 rounded-lg cursor-pointer"
                       />
-                      <Input 
-                        value={form.primary_brand_color} 
-                        onChange={(e) => setForm(prev => ({ ...prev, primary_brand_color: e.target.value }))}
+                      <Input
+                        value={form.primary_brand_color}
+                        onChange={(e) => {
+                          setForm(prev => ({ ...prev, primary_brand_color: e.target.value }));
+                          applyBrandColor(e.target.value);
+                        }}
                         className="rounded-xl font-mono"
                       />
                     </div>

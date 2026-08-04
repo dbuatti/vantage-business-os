@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { showError } from '@/utils/toast';
+import { applyBrandColor } from '@/utils/theme';
 
 interface SettingsContextType {
   selectedYear: string;
@@ -25,14 +26,15 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       const { data, error } = await supabase
         .from('settings')
-        .select('selected_transaction_year')
+        .select('selected_transaction_year, primary_brand_color')
         .eq('owner_user_id', session?.user.id)
         .single();
-      
+
       if (error && error.code !== 'PGRST116') throw error;
       if (data?.selected_transaction_year) {
         setSelectedYearState(data.selected_transaction_year);
       }
+      applyBrandColor(data?.primary_brand_color);
     } catch (error) {
       console.error("Error fetching settings:", error);
       showError(error instanceof Error ? error.message : 'Failed to load settings');
