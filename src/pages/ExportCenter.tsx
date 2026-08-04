@@ -29,6 +29,7 @@ import { format, startOfYear, endOfYear, parseISO, isWithinInterval } from 'date
 import { showError, showSuccess } from '@/utils/toast';
 import { generateExcel, prepareAccountantData } from '@/utils/excelExport';
 import { cn } from '@/lib/utils';
+import PageLoading from '@/components/PageLoading';
 import { Link } from 'react-router-dom';
 
 const ExportCenter = () => {
@@ -160,7 +161,7 @@ const ExportCenter = () => {
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <PageLoading label="Loading Export Center" />;
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">

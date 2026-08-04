@@ -28,11 +28,11 @@ import {
   Video,
   Mail,
   Globe,
-  Loader2,
   ChevronRight
 } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import PageLoading from '@/components/PageLoading';
 import { formatCurrency } from '@/utils/format';
 import { stripReferenceTokens } from '@/utils/subscriptions';
 import { Transaction } from '@/types/finance';
@@ -187,7 +187,7 @@ const SubscriptionAuditPage = () => {
     s.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <PageLoading label="Loading Subscription Audit" />;
 
   if (!loading && transactions.length === 0) {
     return (

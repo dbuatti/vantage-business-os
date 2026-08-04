@@ -40,7 +40,6 @@ import {
   CheckCircle2,
   TrendingUp,
   TrendingDown,
-  Loader2,
   Settings as SettingsIcon,
   Bug,
   LayoutGrid,
@@ -61,6 +60,7 @@ import {
   Minimize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import PageLoading from '@/components/PageLoading';
 import { showError, showSuccess } from '@/utils/toast';
 import { formatCurrency, formatDate } from '@/utils/format';
 import PortalFixedCosts from '@/components/portal/PortalFixedCosts';
@@ -399,7 +399,7 @@ const AccountantPortal = () => {
 
   const years = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i + 1).toString());
 
-  if (isLoading || authLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (isLoading || authLoading) return <PageLoading label="Loading Accountant Portal" />;
   if (error) return <div className="min-h-screen flex items-center justify-center text-danger font-bold">Error loading portal data. Please check your link.</div>;
 
   return (

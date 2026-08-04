@@ -18,7 +18,6 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   ArrowUpRight,
   ArrowDownRight,
   History,
@@ -47,6 +46,7 @@ import {
   differenceInDays
 } from 'date-fns';
 import { cn } from '@/lib/utils';
+import PageLoading from '@/components/PageLoading';
 import { formatCurrency } from '@/utils/format';
 import { computeExpenseBreakdown } from '@/utils/expenses';
 import { showError } from '@/utils/toast';
@@ -125,7 +125,7 @@ const ExpenseStory = () => {
     return format(currentDate, 'MMMM yyyy');
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <PageLoading label="Loading Expense Story" />;
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-8 pb-24">
