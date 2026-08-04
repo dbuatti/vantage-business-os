@@ -35,7 +35,9 @@ import {
   CalendarCheck,
   Repeat,
   Table as TableIcon,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Ticket,
+  Activity
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
@@ -45,12 +47,21 @@ const AppSidebar = () => {
   const location = useLocation();
   const { session } = useAuth();
 
+  const isActive = (url: string) => {
+    if (url.includes('?')) {
+      const [path, query] = url.split('?');
+      return location.pathname === path && location.search === `?${query}`;
+    }
+    return location.pathname === url || (url !== '/' && location.pathname.startsWith(`${url}/`));
+  };
+
   const mainItems = [
     { title: "Dashboard", icon: LayoutDashboard, url: "/" },
     { title: "Master Tracker", icon: TableIcon, url: "/master-tracker" },
     { title: "Weekly Routine", icon: CalendarCheck, url: "/weekly-routine" },
     { title: "Time Glance", icon: CalendarRange, url: "/time-glance" },
     { title: "AI Insights", icon: Brain, url: "/insights" },
+    { title: "Productivity", icon: Activity, url: "/productivity" },
   ];
 
   const businessItems = [
@@ -58,6 +69,7 @@ const AppSidebar = () => {
     { title: "Invoices", icon: FileText, url: "/invoices" },
     { title: "Project ROI", icon: TrendingUp, url: "/project-roi" },
     { title: "Catalog", icon: Package, url: "/products" },
+    { title: "Support Tickets", icon: Ticket, url: "/tickets" },
   ];
 
   const taxItems = [
@@ -102,7 +114,7 @@ const AppSidebar = () => {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === item.url}
+                    isActive={isActive(item.url)}
                     tooltip={item.title}
                     className="h-11 rounded-xl px-4"
                   >
@@ -125,7 +137,7 @@ const AppSidebar = () => {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === item.url}
+                    isActive={isActive(item.url)}
                     tooltip={item.title}
                     className="h-11 rounded-xl px-4"
                   >
@@ -148,7 +160,7 @@ const AppSidebar = () => {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname === item.url}
+                    isActive={isActive(item.url)}
                     tooltip={item.title}
                     className="h-11 rounded-xl px-4"
                   >
@@ -171,7 +183,7 @@ const AppSidebar = () => {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === item.url}
+                    isActive={isActive(item.url)}
                     tooltip={item.title}
                     className="h-11 rounded-xl px-4"
                   >

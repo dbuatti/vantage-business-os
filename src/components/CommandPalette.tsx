@@ -32,7 +32,8 @@ import {
   FileSpreadsheet,
   ShieldCheck,
   Target,
-  ArrowRight
+  Activity,
+  Ticket
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -83,6 +84,10 @@ const CommandPalette = () => {
             <Brain className="mr-2 h-4 w-4" />
             <span>AI Insights</span>
           </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/productivity'))}>
+            <Activity className="mr-2 h-4 w-4" />
+            <span>Productivity</span>
+          </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/transactions'))}>
             <ListFilter className="mr-2 h-4 w-4" />
             <span>Transactions</span>
@@ -106,6 +111,10 @@ const CommandPalette = () => {
           <CommandItem onSelect={() => runCommand(() => navigate('/subscriptions'))}>
             <Repeat className="mr-2 h-4 w-4" />
             <span>Subscriptions</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/tickets'))}>
+            <Ticket className="mr-2 h-4 w-4" />
+            <span>Support Tickets</span>
           </CommandItem>
         </CommandGroup>
         <CommandSeparator />
