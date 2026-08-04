@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -26,7 +27,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Zap,
-  Thermometer,
   Clock,
   Brain,
   Search,
@@ -84,8 +84,7 @@ const MasterTracker = () => {
   const [budgets, setBudgets] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
-  const [matrixView, setMatrixView] = useState<TrackerView>('monthly');
-  const [thermostatView, setThermostatView] = useState<TrackerView>('monthly');
+  const [trackerView, setTrackerView] = useState<TrackerView>('yearly');
   const [selectedMonth, setSelectedMonth] = useState<Date>(() => startOfMonth(new Date()));
   const [searchQuery, setSearchQuery] = useState('');
   const [showOverBudgetOnly, setShowOverBudgetOnly] = useState(false);
@@ -147,9 +146,9 @@ const MasterTracker = () => {
         const isGroup = catToGroup[t.category_1] === group.name;
         if (!isGroup) return false;
 
-        if (thermostatView === 'daily') return isSameDay(tDate, today);
-        if (thermostatView === 'weekly') return isSameWeek(tDate, today, { weekStartsOn: 1 });
-        if (thermostatView === 'monthly') return isSameMonth(tDate, today);
+        if (trackerView === 'daily') return isSameDay(tDate, today);
+        if (trackerView === 'weekly') return isSameWeek(tDate, today, { weekStartsOn: 1 });
+        if (trackerView === 'monthly') return isSameMonth(tDate, today);
         return true; // Yearly
       });
 
@@ -161,13 +160,13 @@ const MasterTracker = () => {
       let periodBudget = yearlyBudget;
       let daysRemaining = 1;
 
-      if (thermostatView === 'monthly') {
+      if (trackerView === 'monthly') {
         periodBudget = yearlyBudget / 12;
         daysRemaining = Math.max(1, differenceInDays(endOfMonth(today), today));
-      } else if (thermostatView === 'weekly') {
+      } else if (trackerView === 'weekly') {
         periodBudget = yearlyBudget / 52;
         daysRemaining = Math.max(1, differenceInDays(endOfWeek(today, { weekStartsOn: 1 }), today));
-      } else if (thermostatView === 'daily') {
+      } else if (trackerView === 'daily') {
         periodBudget = yearlyBudget / 365;
         daysRemaining = 1;
       } else {
@@ -180,7 +179,7 @@ const MasterTracker = () => {
 
       return { ...group, spent, budget: periodBudget, remaining, percent, dailyBurn };
     });
-  }, [transactions, budgets, categoryGroups, thermostatView, selectedMonth]);
+  }, [transactions, budgets, categoryGroups, trackerView, selectedMonth]);
 
   const matrixStats = useMemo(() => {
     const totalSpent = transactions.reduce((s, t) => s + Math.abs(t.amount), 0);
@@ -206,18 +205,18 @@ const MasterTracker = () => {
     const container = matrixContainerRef.current.querySelector('.overflow-x-auto, .overflow-auto');
     if (!container) return;
 
-    if (matrixView === 'monthly') {
+    if (trackerView === 'monthly') {
       const monthIndex = target.getMonth();
       const totalWidth = container.scrollWidth;
       const visibleWidth = container.clientWidth;
       const scrollPos = (totalWidth / 12) * monthIndex - (visibleWidth / 2);
       container.scrollTo({ left: Math.max(0, scrollPos), behavior: 'smooth' });
     }
-  }, [matrixView]);
+  }, [trackerView]);
 
   useEffect(() => {
     scrollMatrixToMonth(selectedMonth);
-  }, [selectedMonth, matrixView, scrollMatrixToMonth]);
+  }, [selectedMonth, trackerView, scrollMatrixToMonth]);
 
   useEffect(() => {
     if (!matrixFullscreen) return;
@@ -251,7 +250,7 @@ const MasterTracker = () => {
       t.amount.toString(),
       t.notes || ''
     ]);
-    downloadCSV(headers, rows, `Master_Tracker_${year}_${matrixView}.csv`);
+    downloadCSV(headers, rows, `Master_Tracker_${year}_${trackerView}.csv`);
     showSuccess('Matrix data exported to CSV');
   };
 
@@ -334,6 +333,28 @@ const MasterTracker = () => {
         </Card>
       </div>
 
+      {/* Shared period toggle */}
+      <div className="flex justify-center">
+        <div className="inline-flex items-center bg-muted/50 p-1 rounded-xl gap-1 shadow-sm">
+          {([
+            { value: 'daily', label: 'Daily', icon: CalendarDays },
+            { value: 'weekly', label: 'Weekly', icon: CalendarRange },
+            { value: 'monthly', label: 'Monthly', icon: Calendar },
+            { value: 'yearly', label: 'Yearly', icon: Zap },
+          ] as const).map(({ value, label, icon: Icon }) => (
+            <Button
+              key={value}
+              variant={trackerView === value ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setTrackerView(value as TrackerView)}
+              className="rounded-lg h-9 px-5 text-xs font-bold gap-2"
+            >
+              <Icon className="w-3.5 h-3.5" /> {label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <Tabs defaultValue="matrix" className="space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <TabsList className="bg-muted/50 p-1 rounded-xl h-auto gap-1">
@@ -371,20 +392,6 @@ const MasterTracker = () => {
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-            </div>
-
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-xl border">
-              <Thermometer className="w-4 h-4 text-primary" />
-              <select 
-                value={thermostatView} 
-                onChange={(e) => setThermostatView(e.target.value as TrackerView)}
-                className="bg-transparent text-xs font-bold uppercase tracking-tighter outline-none"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
             </div>
           </div>
         </div>
@@ -427,7 +434,7 @@ const MasterTracker = () => {
                         {formatCurrency(group.remaining)}
                       </span>
                     </div>
-                    {group.remaining > 0 && thermostatView !== 'daily' && (
+                    {group.remaining > 0 && trackerView !== 'daily' && (
                       <div className="pt-2 border-t border-dashed flex justify-between items-center">
                         <span className="text-[9px] font-semibold text-muted-foreground uppercase">Daily Allowance:</span>
                         <span className="text-[10px] font-bold text-primary">{formatCurrency(group.dailyBurn)}/day</span>
@@ -440,8 +447,8 @@ const MasterTracker = () => {
           </div>
 
           {/* Matrix Section */}
-          {matrixFullscreen ? (
-            <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
+          {matrixFullscreen ? createPortal(
+            <div className="fixed inset-0 z-[100] bg-background flex flex-col animate-fade-in overscroll-contain">
               {/* Pinned toolbar */}
               <div className="shrink-0 flex flex-col gap-3 lg:flex-row lg:items-center justify-between border-b bg-muted/30 px-4 md:px-6 py-3">
                 <div className="flex items-center gap-3">
@@ -457,6 +464,11 @@ const MasterTracker = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2.5 px-3 py-1.5 bg-muted/50 rounded-xl border text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-profit" /> On Track</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-warning" /> Tight</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-danger" /> Over</span>
+                  </div>
                   <Button variant="outline" size="sm" onClick={jumpToCurrent} className="rounded-xl gap-2 h-9 text-xs font-bold">
                     <Navigation className="w-3.5 h-3.5" /> Jump to Current
                   </Button>
@@ -482,40 +494,6 @@ const MasterTracker = () => {
                       className="pl-9 h-9 rounded-xl w-48 bg-muted/50 border-0 text-xs font-bold"
                     />
                   </div>
-                  <div className="flex items-center bg-muted rounded-xl p-1">
-                    <Button 
-                      variant={matrixView === 'daily' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('daily')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <CalendarDays className="w-3.5 h-3.5" /> Daily
-                    </Button>
-                    <Button 
-                      variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('weekly')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <CalendarRange className="w-3.5 h-3.5" /> Weekly
-                    </Button>
-                    <Button 
-                      variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('monthly')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <Calendar className="w-3.5 h-3.5" /> Monthly
-                    </Button>
-                    <Button 
-                      variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('yearly')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <Zap className="w-3.5 h-3.5" /> Yearly
-                    </Button>
-                  </div>
                   <Button size="sm" onClick={() => setMatrixFullscreen(false)} className="rounded-xl gap-2 h-9 text-xs font-bold">
                     <Minimize2 className="w-3.5 h-3.5" /> Exit Fullscreen
                   </Button>
@@ -523,13 +501,13 @@ const MasterTracker = () => {
               </div>
 
               {/* Matrix fills remaining height, scrolls internally */}
-              <div className="flex-1 min-h-0 overflow-hidden p-4 md:p-6" ref={matrixContainerRef}>
+              <div className="flex-1 min-h-0 overflow-hidden p-4 md:p-6 overscroll-contain" ref={matrixContainerRef}>
                 <MasterTrackerMatrix 
                   transactions={transactions} 
                   budgets={budgets} 
                   categoryGroups={categoryGroups}
                   year={year}
-                  view={matrixView}
+                  view={trackerView}
                   searchQuery={searchQuery}
                   showOverBudgetOnly={showOverBudgetOnly}
                   fullscreen
@@ -537,7 +515,8 @@ const MasterTracker = () => {
                   onCellClick={handleCellClick}
                 />
               </div>
-            </div>
+            </div>,
+            document.body
           ) : (
             <div className="space-y-6" ref={matrixContainerRef}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
@@ -552,8 +531,13 @@ const MasterTracker = () => {
                     </CardDescription>
                   </div>
                 </div>
-                
+                 
                 <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2.5 px-3 py-1.5 bg-muted/50 rounded-xl border text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-profit" /> On Track</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-warning" /> Tight</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-danger" /> Over</span>
+                  </div>
                   <Button variant="outline" size="sm" onClick={jumpToCurrent} className="rounded-xl gap-2 h-9 text-xs font-bold">
                     <Navigation className="w-3.5 h-3.5" /> Jump to Current
                   </Button>
@@ -579,40 +563,6 @@ const MasterTracker = () => {
                       className="pl-9 h-9 rounded-xl w-48 bg-muted/50 border-0 text-xs font-bold"
                     />
                   </div>
-                  <div className="flex items-center bg-muted rounded-xl p-1">
-                    <Button 
-                      variant={matrixView === 'daily' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('daily')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <CalendarDays className="w-3.5 h-3.5" /> Daily
-                    </Button>
-                    <Button 
-                      variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('weekly')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <CalendarRange className="w-3.5 h-3.5" /> Weekly
-                    </Button>
-                    <Button 
-                      variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('monthly')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <Calendar className="w-3.5 h-3.5" /> Monthly
-                    </Button>
-                    <Button 
-                      variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
-                      size="sm" 
-                      onClick={() => setMatrixView('yearly')}
-                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                    >
-                      <Zap className="w-3.5 h-3.5" /> Yearly
-                    </Button>
-                  </div>
                   <Button variant="outline" size="sm" onClick={() => setMatrixFullscreen(true)} className="rounded-xl gap-2 h-9 text-xs font-bold">
                     <Maximize2 className="w-3.5 h-3.5" /> Fullscreen
                   </Button>
@@ -626,7 +576,7 @@ const MasterTracker = () => {
                     budgets={budgets} 
                     categoryGroups={categoryGroups}
                     year={year}
-                    view={matrixView}
+                    view={trackerView}
                     searchQuery={searchQuery}
                     showOverBudgetOnly={showOverBudgetOnly}
                     highlightMonth={selectedMonth}

@@ -70,6 +70,20 @@ const EXPENSE_GROUPS = [
   { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-danger' },
 ];
 
+const healthTint = (percent: number, spent: number) => {
+  if (spent <= 0 || percent <= 0) return '';
+  if (percent > 100) return 'bg-danger/10';
+  if (percent >= 70) return 'bg-warning/10';
+  return 'bg-profit/10';
+};
+
+const healthBadge = (percent: number, spent: number, overText = 'Over') => {
+  if (spent <= 0 || percent <= 0) return { label: '', className: '' };
+  if (percent > 100) return { label: overText, className: 'text-danger bg-danger-bg' };
+  if (percent >= 70) return { label: 'Tight', className: 'text-warning bg-warning-bg' };
+  return { label: 'On Track', className: 'text-profit bg-profit-bg' };
+};
+
 const MasterTrackerMatrix = ({ 
   transactions, 
   budgets, 
@@ -121,6 +135,19 @@ const MasterTrackerMatrix = ({
     const today = new Date();
     const groupNames = new Set(EXPENSE_GROUPS.map(g => g.name));
 
+    const groupBudgetFor = (name: string, month: number | null) =>
+      budgets.find(b => b.category_name === name && b.month === month);
+
+    const categoryAnnualShare: Record<string, number> = {};
+    EXPENSE_GROUPS.forEach(group => {
+      const groupCats = categories.filter(cat => catToGroup[cat] === group.name);
+      if (groupCats.length === 0) return;
+      const groupAnnual = groupBudgetFor(group.name, 0)?.amount ?? groupBudgetFor(group.name, null)?.amount ?? 0;
+      if (groupAnnual <= 0) return;
+      const share = groupAnnual / groupCats.length;
+      groupCats.forEach(cat => { categoryAnnualShare[cat] = (categoryAnnualShare[cat] || 0) + share; });
+    });
+
     const buildRow = (cat: string) => {
       const intervalStats = intervals.map(interval => {
         const intervalTxns = transactions.filter(t => {
@@ -135,24 +162,25 @@ const MasterTrackerMatrix = ({
         
         const specificBudget = budgets.find(b => b.category_name === cat && b.month === interval.getMonth() + 1);
         const yearlyBudget = budgets.find(b => b.category_name === cat && (b.month === 0 || b.month === null));
+        const groupShare = categoryAnnualShare[cat] || 0;
         
         let budget = 0;
         let daysRemaining = 1;
 
         if (view === 'monthly') {
-          budget = specificBudget ? specificBudget.amount : (yearlyBudget ? yearlyBudget.amount / 12 : 0);
+          budget = specificBudget ? specificBudget.amount : (yearlyBudget ? yearlyBudget.amount / 12 : groupShare / 12);
           daysRemaining = isSameMonth(today, interval) 
             ? Math.max(1, differenceInDays(endOfMonth(interval), today))
             : 1;
         } else if (view === 'weekly') {
-          budget = yearlyBudget ? yearlyBudget.amount / 52 : 0;
+          budget = yearlyBudget ? yearlyBudget.amount / 52 : groupShare / 52;
           daysRemaining = isSameWeek(today, interval, { weekStartsOn: 1 })
             ? Math.max(1, differenceInDays(endOfWeek(interval, { weekStartsOn: 1 }), today))
             : 1;
         } else if (view === 'daily') {
-          budget = yearlyBudget ? yearlyBudget.amount / 365 : 0;
+          budget = yearlyBudget ? yearlyBudget.amount / 365 : groupShare / 365;
         } else {
-          budget = yearlyBudget ? yearlyBudget.amount : 0;
+          budget = yearlyBudget ? yearlyBudget.amount : groupShare;
         }
 
         const buffer = budget - spent;
@@ -272,7 +300,7 @@ const MasterTrackerMatrix = ({
         ref={scrollRef}
         onScroll={handleScroll}
         className={cn(
-          "hidden md:block overflow-auto border rounded-2xl",
+          "hidden md:block overflow-auto border rounded-2xl overscroll-contain",
           fullscreen ? "h-full max-h-none" : "max-h-[700px]"
         )}
       >
@@ -323,7 +351,7 @@ const MasterTrackerMatrix = ({
                       {col.budget > 0 && (
                         <Badge variant="outline" className={cn(
                           "text-xs font-semibold opacity-70 px-1.5 py-0",
-                          pct > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
+                          healthBadge(pct, col.total).className
                         )}>
                           {Math.round(pct)}%
                         </Badge>
@@ -370,7 +398,7 @@ const MasterTrackerMatrix = ({
                             {groupBudget > 0 && (
                               <Badge variant="outline" className={cn(
                                 "text-xs font-semibold opacity-70 px-1.5 py-0",
-                                groupPct > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
+                                healthBadge(groupPct, groupSpent).className
                               )}>
                                 {Math.round(groupPct)}%
                               </Badge>
@@ -389,7 +417,7 @@ const MasterTrackerMatrix = ({
                         {groupBudgetTotal > 0 && (
                           <Badge variant="outline" className={cn(
                             "text-xs font-semibold opacity-70 px-1.5 py-0",
-                            groupPercent > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
+                            healthBadge(groupPercent, groupTotal).className
                           )}>
                             {Math.round(groupPercent)}%
                           </Badge>
@@ -415,7 +443,8 @@ const MasterTrackerMatrix = ({
                             className={cn(
                               "p-4 border-r last:border-r-0 cursor-pointer hover:bg-primary/[0.05] transition-colors",
                               rowIndex % 2 === 1 && "bg-muted/[0.02]",
-                              isHighlightedMonth && "bg-primary/[0.03]"
+                              isHighlightedMonth && "bg-primary/[0.03]",
+                              healthTint(stat.percent, stat.spent)
                             )}
                             onClick={() => onCellClick(row.category, stat.label, stat.txns, stat.budget)}
                           >
@@ -427,9 +456,9 @@ const MasterTrackerMatrix = ({
                                 {stat.budget > 0 && (
                                   <span className={cn(
                                     "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
-                                    stat.buffer >= 0 ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
+                                    healthBadge(stat.percent, stat.spent).className
                                   )}>
-                                    {stat.buffer >= 0 ? 'Safe' : 'Over'}
+                                    {healthBadge(stat.percent, stat.spent).label}
                                   </span>
                                 )}
                               </div>
@@ -438,13 +467,14 @@ const MasterTrackerMatrix = ({
                                 <div className="space-y-1">
                                   <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                                     <div 
-                                      className={cn("h-full rounded-full transition-all duration-500", stat.percent > 100 ? "bg-danger" : "bg-primary")}
+                                      className={cn("h-full rounded-full transition-all duration-500", 
+                                        stat.percent > 100 ? "bg-danger" : stat.percent >= 70 ? "bg-warning" : "bg-profit")}
                                       style={{ width: `${Math.min(100, stat.percent)}%` }} 
                                     />
                                   </div>
                                   <div className="flex justify-between text-xs font-semibold text-muted-foreground/60">
                                     <span>Buffer:</span>
-                                    <span className={cn(stat.buffer >= 0 ? "text-profit" : "text-danger")}>
+                                    <span className={cn(stat.percent > 100 ? "text-danger" : stat.percent >= 70 ? "text-warning" : "text-profit")}>
                                       {formatCurrency(stat.buffer)}
                                     </span>
                                   </div>
@@ -460,9 +490,9 @@ const MasterTrackerMatrix = ({
                           {row.rowBudgetTotal > 0 && (
                             <span className={cn(
                               "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
-                              row.rowTotal <= row.rowBudgetTotal ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
+                              healthBadge(row.rowBudgetTotal > 0 ? (row.rowTotal / row.rowBudgetTotal) * 100 : 0, row.rowTotal).className
                             )}>
-                              {row.rowTotal <= row.rowBudgetTotal ? 'Safe' : 'Over'}
+                              {healthBadge(row.rowBudgetTotal > 0 ? (row.rowTotal / row.rowBudgetTotal) * 100 : 0, row.rowTotal).label}
                             </span>
                           )}
                         </div>
@@ -529,7 +559,7 @@ const MasterTrackerMatrix = ({
                           {latestStat.budget > 0 && (
                             <Badge variant="outline" className={cn(
                               "text-xs font-semibold opacity-70",
-                              latestStat.percent > 100 ? "bg-danger-bg text-danger" : "bg-profit-bg text-profit"
+                              healthBadge(latestStat.percent, latestStat.spent).className
                             )}>
                               {Math.round(latestStat.percent)}% of budget
                             </Badge>
@@ -539,10 +569,10 @@ const MasterTrackerMatrix = ({
                       
                       {latestStat.budget > 0 && (
                         <div className="space-y-1.5">
-                          <Progress value={latestStat.percent} className={cn("h-1.5", latestStat.percent > 100 ? "[&>div]:bg-danger" : "[&>div]:bg-primary")} />
+                          <Progress value={latestStat.percent} className={cn("h-1.5", latestStat.percent > 100 ? "[&>div]:bg-danger" : latestStat.percent >= 70 ? "[&>div]:bg-warning" : "[&>div]:bg-profit")} />
                           <div className="flex justify-between text-xs font-semibold text-muted-foreground">
                             <span>Remaining Buffer</span>
-                            <span className={cn(latestStat.buffer >= 0 ? "text-profit" : "text-danger")}>
+                            <span className={cn(latestStat.percent > 100 ? "text-danger" : latestStat.percent >= 70 ? "text-warning" : "text-profit")}>
                               {formatCurrency(latestStat.buffer)}
                             </span>
                           </div>
