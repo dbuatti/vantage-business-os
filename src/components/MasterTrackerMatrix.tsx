@@ -244,11 +244,11 @@ const MasterTrackerMatrix = ({
   );
 
   return (
-    <div className="relative">
+    <div className={cn("relative", fullscreen && "h-full")}>
       {/* Desktop Matrix View */}
       <div className={cn(
-        "hidden md:block overflow-x-auto border rounded-2xl",
-        fullscreen ? "max-h-[calc(100vh-260px)]" : "max-h-[700px]"
+        "hidden md:block overflow-auto border rounded-2xl",
+        fullscreen ? "h-full max-h-none" : "max-h-[700px]"
       )}>
         <Table className="border-collapse">
           <TableHeader className="sticky top-0 z-40 bg-background shadow-sm">

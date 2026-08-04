@@ -203,7 +203,7 @@ const MasterTracker = () => {
 
   const scrollMatrixToMonth = useCallback((target: Date) => {
     if (!matrixContainerRef.current) return;
-    const container = matrixContainerRef.current.querySelector('.overflow-x-auto');
+    const container = matrixContainerRef.current.querySelector('.overflow-x-auto, .overflow-auto');
     if (!container) return;
 
     if (matrixView === 'monthly') {
@@ -218,6 +218,20 @@ const MasterTracker = () => {
   useEffect(() => {
     scrollMatrixToMonth(selectedMonth);
   }, [selectedMonth, matrixView, scrollMatrixToMonth]);
+
+  useEffect(() => {
+    if (!matrixFullscreen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMatrixFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [matrixFullscreen]);
 
   const jumpToCurrent = () => {
     scrollMatrixToMonth(new Date());
@@ -427,103 +441,101 @@ const MasterTracker = () => {
 
           {/* Matrix Section */}
           {matrixFullscreen ? (
-            <div className="fixed inset-0 z-50 bg-background p-4 md:p-6 overflow-y-auto animate-fade-in">
-              <div className="max-w-[1600px] mx-auto space-y-6" ref={matrixContainerRef}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
-                      <TableIcon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl font-bold tracking-tight">The Matrix</CardTitle>
-                      <CardDescription className="text-xs font-medium text-muted-foreground">
-                        Fullscreen — historical breakdown by category
-                      </CardDescription>
-                    </div>
+            <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
+              {/* Pinned toolbar */}
+              <div className="shrink-0 flex flex-col gap-3 lg:flex-row lg:items-center justify-between border-b bg-muted/30 px-4 md:px-6 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                    <TableIcon className="w-5 h-5" />
                   </div>
-                  
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="outline" size="sm" onClick={jumpToCurrent} className="rounded-xl gap-2 h-9 text-xs font-bold">
-                      <Navigation className="w-3.5 h-3.5" /> Jump to Current
-                    </Button>
-
-                    <div className="flex items-center space-x-2 bg-muted/50 px-3 py-1.5 rounded-xl border">
-                      <Switch 
-                        id="over-budget-fullscreen" 
-                        checked={showOverBudgetOnly} 
-                        onCheckedChange={setShowOverBudgetOnly} 
-                      />
-                      <Label htmlFor="over-budget-fullscreen" className="text-xs font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1.5">
-                        <AlertCircle className="w-3 h-3 text-danger" />
-                        Over Budget Only
-                      </Label>
-                    </div>
-
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input 
-                        placeholder="Search categories..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 h-9 rounded-xl w-48 bg-muted/50 border-0 text-xs font-bold"
-                      />
-                    </div>
-                    <div className="flex items-center bg-muted rounded-xl p-1">
-                      <Button 
-                        variant={matrixView === 'daily' ? 'default' : 'ghost'} 
-                        size="sm" 
-                        onClick={() => setMatrixView('daily')}
-                        className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                      >
-                        <CalendarDays className="w-3.5 h-3.5" /> Daily
-                      </Button>
-                      <Button 
-                        variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
-                        size="sm" 
-                        onClick={() => setMatrixView('weekly')}
-                        className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                      >
-                        <CalendarRange className="w-3.5 h-3.5" /> Weekly
-                      </Button>
-                      <Button 
-                        variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
-                        size="sm" 
-                        onClick={() => setMatrixView('monthly')}
-                        className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                      >
-                        <Calendar className="w-3.5 h-3.5" /> Monthly
-                      </Button>
-                      <Button 
-                        variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
-                        size="sm" 
-                        onClick={() => setMatrixView('yearly')}
-                        className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
-                      >
-                        <Zap className="w-3.5 h-3.5" /> Yearly
-                      </Button>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setMatrixFullscreen(false)} className="rounded-xl gap-2 h-9 text-xs font-bold">
-                      <Minimize2 className="w-3.5 h-3.5" /> Exit Fullscreen
-                    </Button>
+                  <div>
+                    <CardTitle className="text-lg font-bold tracking-tight">The Matrix</CardTitle>
+                    <CardDescription className="text-xs font-medium text-muted-foreground">
+                      Historical breakdown by category
+                    </CardDescription>
                   </div>
                 </div>
 
-                <Card className="border-0 shadow-sm bg-card overflow-hidden">
-                  <CardContent className="p-0">
-                    <MasterTrackerMatrix 
-                      transactions={transactions} 
-                      budgets={budgets} 
-                      categoryGroups={categoryGroups}
-                      year={year}
-                      view={matrixView}
-                      searchQuery={searchQuery}
-                      showOverBudgetOnly={showOverBudgetOnly}
-                      fullscreen
-                      highlightMonth={selectedMonth}
-                      onCellClick={handleCellClick}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button variant="outline" size="sm" onClick={jumpToCurrent} className="rounded-xl gap-2 h-9 text-xs font-bold">
+                    <Navigation className="w-3.5 h-3.5" /> Jump to Current
+                  </Button>
+
+                  <div className="flex items-center space-x-2 bg-muted/50 px-3 py-1.5 rounded-xl border">
+                    <Switch 
+                      id="over-budget-fullscreen" 
+                      checked={showOverBudgetOnly} 
+                      onCheckedChange={setShowOverBudgetOnly} 
                     />
-                  </CardContent>
-                </Card>
+                    <Label htmlFor="over-budget-fullscreen" className="text-xs font-bold uppercase tracking-tighter cursor-pointer flex items-center gap-1.5">
+                      <AlertCircle className="w-3 h-3 text-danger" />
+                      Over Budget Only
+                    </Label>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Input 
+                      placeholder="Search categories..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 h-9 rounded-xl w-48 bg-muted/50 border-0 text-xs font-bold"
+                    />
+                  </div>
+                  <div className="flex items-center bg-muted rounded-xl p-1">
+                    <Button 
+                      variant={matrixView === 'daily' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setMatrixView('daily')}
+                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                    >
+                      <CalendarDays className="w-3.5 h-3.5" /> Daily
+                    </Button>
+                    <Button 
+                      variant={matrixView === 'weekly' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setMatrixView('weekly')}
+                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                    >
+                      <CalendarRange className="w-3.5 h-3.5" /> Weekly
+                    </Button>
+                    <Button 
+                      variant={matrixView === 'monthly' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setMatrixView('monthly')}
+                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                    >
+                      <Calendar className="w-3.5 h-3.5" /> Monthly
+                    </Button>
+                    <Button 
+                      variant={matrixView === 'yearly' ? 'default' : 'ghost'} 
+                      size="sm" 
+                      onClick={() => setMatrixView('yearly')}
+                      className="rounded-lg h-8 px-4 text-xs font-bold gap-2"
+                    >
+                      <Zap className="w-3.5 h-3.5" /> Yearly
+                    </Button>
+                  </div>
+                  <Button size="sm" onClick={() => setMatrixFullscreen(false)} className="rounded-xl gap-2 h-9 text-xs font-bold">
+                    <Minimize2 className="w-3.5 h-3.5" /> Exit Fullscreen
+                  </Button>
+                </div>
+              </div>
+
+              {/* Matrix fills remaining height, scrolls internally */}
+              <div className="flex-1 min-h-0 overflow-hidden p-4 md:p-6" ref={matrixContainerRef}>
+                <MasterTrackerMatrix 
+                  transactions={transactions} 
+                  budgets={budgets} 
+                  categoryGroups={categoryGroups}
+                  year={year}
+                  view={matrixView}
+                  searchQuery={searchQuery}
+                  showOverBudgetOnly={showOverBudgetOnly}
+                  fullscreen
+                  highlightMonth={selectedMonth}
+                  onCellClick={handleCellClick}
+                />
               </div>
             </div>
           ) : (
