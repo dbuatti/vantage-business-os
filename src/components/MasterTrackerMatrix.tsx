@@ -256,8 +256,15 @@ const MasterTrackerMatrix = ({
     return allGroups;
   }, [categories, intervals, transactions, budgets, view, catToGroup, searchQuery, year]);
 
-  const [sortMode, setSortMode] = useState<SortMode>('alpha');
+  const [sortMode, setSortMode] = useState<SortMode>(() => {
+    const saved = window.localStorage.getItem('master-tracker-sort');
+    return SORT_OPTIONS.some(o => o.value === saved) ? (saved as SortMode) : 'alpha';
+  });
   const isGlobalSort = sortMode === 'spent-desc-global' || sortMode === 'spent-asc-global';
+
+  useEffect(() => {
+    window.localStorage.setItem('master-tracker-sort', sortMode);
+  }, [sortMode]);
 
   const displayGroups = useMemo(() => {
     const filtered = allGroups

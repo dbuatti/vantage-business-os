@@ -238,8 +238,10 @@ const MasterTracker = () => {
       daysRemaining = 1;
       periodLabel = 'Today';
     } else {
-      daysInPeriod = Math.max(1, differenceInDays(endOfYear(today), startOfYear(today)) + 1);
-      daysRemaining = Math.max(1, differenceInDays(endOfYear(today), today));
+      const yearStartDate = startOfYear(new Date(year, 0, 1));
+      const yearEndDate = endOfYear(new Date(year, 0, 1));
+      daysInPeriod = Math.max(1, differenceInDays(yearEndDate, yearStartDate) + 1);
+      daysRemaining = Math.max(1, differenceInDays(yearEndDate, today));
     }
 
     const remaining = totalBudget - totalSpent;
@@ -344,26 +346,36 @@ const MasterTracker = () => {
           </Button>
           <Badge variant="outline" className={cn(
             "px-4 py-1.5 rounded-full font-bold text-sm",
-            matrixStats.percentUtilized > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
+            matrixStats.percentUtilized > 100 ? "bg-danger-bg text-danger border-danger-border" :
+            matrixStats.percentUtilized >= 70 ? "bg-warning-bg text-warning border-warning-border" :
+            "bg-profit-bg text-profit border-profit-border"
           )}>
-            {matrixStats.percentUtilized > 100 ? 'OVER BUDGET' : `${Math.round(100 - matrixStats.percentUtilized)}% UNDER BUDGET`}
+            {matrixStats.percentUtilized > 100
+              ? 'OVER BUDGET'
+              : matrixStats.percentUtilized >= 70
+                ? 'BUDGET TIGHT'
+                : `${Math.round(100 - matrixStats.percentUtilized)}% UNDER BUDGET`}
           </Badge>
         </div>
       </header>
 
-      {/* YTD Summary Cards */}
+      {/* Period Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
         <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
-            <p className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">YTD Total Spent</p>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">
+              {matrixStats.periodLabel === 'Year to date' ? 'YTD Total Spent' : `${matrixStats.periodLabel} Spent`}
+            </p>
             <p className="text-2xl font-bold">{formatCurrency(matrixStats.totalSpent)}</p>
             <p className="text-[10px] opacity-60 mt-1">Across all categories</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5">
-            <p className="text-xs font-semibold text-muted-foreground mb-1">YTD Budget Target</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-1">
+              {matrixStats.periodLabel === 'Year to date' ? 'YTD Budget Target' : `${matrixStats.periodLabel} Budget`}
+            </p>
             <p className="text-2xl font-bold">{formatCurrency(matrixStats.totalBudget)}</p>
             <p className="text-[10px] text-muted-foreground mt-1">Annual strategy total</p>
           </CardContent>
@@ -374,14 +386,18 @@ const MasterTracker = () => {
             <p className={cn("text-2xl font-bold", matrixStats.remaining >= 0 ? "text-profit" : "text-danger")}>
               {formatCurrency(matrixStats.remaining)}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-1">For the rest of {year}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {trackerView === 'yearly' ? `For the rest of ${year}` : `For the rest of ${trackerView === 'daily' ? 'today' : matrixStats.periodLabel.toLowerCase()}`}
+            </p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5">
             <p className="text-xs font-semibold text-muted-foreground mb-1">Avg Daily Burn</p>
             <p className="text-2xl font-bold text-primary">{formatCurrency(matrixStats.avgSpend)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Actual spending velocity</p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {trackerView === 'daily' ? 'Spending today' : `Per day this ${trackerView === 'monthly' ? 'month' : 'period'}`}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -462,7 +478,7 @@ const MasterTracker = () => {
                     <div className="text-right">
                       <p className={cn(
                         "text-lg font-bold",
-                        group.percent > 100 ? "text-danger" : "text-profit"
+                        group.percent > 100 ? "text-danger" : group.percent >= 70 ? "text-warning" : "text-profit"
                       )}>
                         {Math.round(group.percent)}%
                       </p>
@@ -479,7 +495,7 @@ const MasterTracker = () => {
                   <div className="space-y-2">
                     <Progress 
                       value={group.percent} 
-                      className={cn("h-2", group.percent > 100 ? "[&>div]:bg-danger" : "[&>div]:bg-profit")}
+                      className={cn("h-2", group.percent > 100 ? "[&>div]:bg-danger" : group.percent >= 70 ? "[&>div]:bg-warning" : "[&>div]:bg-profit")}
                     />
                     <div className="flex items-center justify-between text-[10px] font-semibold">
                       <span className="text-muted-foreground">Left:</span>
