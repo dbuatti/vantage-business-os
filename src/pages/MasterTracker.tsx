@@ -245,8 +245,8 @@ const MasterTracker = () => {
     <div className="max-w-7xl mx-auto p-4 sm:p-8 space-y-10 pb-24">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <div className="p-2.5 bg-primary rounded-2xl text-primary-foreground shadow-lg shadow-primary/20">
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <div className="p-2.5 bg-primary rounded-xl text-primary-foreground shadow-lg shadow-primary/20">
               <Target className="w-7 h-7" />
             </div>
             Master Tracker {year}
@@ -275,32 +275,32 @@ const MasterTracker = () => {
         <Card className="border-0 shadow-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">YTD Total Spent</p>
-            <p className="text-2xl font-black">{formatCurrency(matrixStats.totalSpent)}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">YTD Total Spent</p>
+            <p className="text-2xl font-bold">{formatCurrency(matrixStats.totalSpent)}</p>
             <p className="text-[10px] opacity-60 mt-1">Across all categories</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-card overflow-hidden">
+        <Card className="border-0 shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">YTD Budget Target</p>
-            <p className="text-2xl font-black">{formatCurrency(matrixStats.totalBudget)}</p>
-            <p className="text-[10px] text-muted-foreground font-bold mt-1">Annual strategy total</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-1">YTD Budget Target</p>
+            <p className="text-2xl font-bold">{formatCurrency(matrixStats.totalBudget)}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Annual strategy total</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-card overflow-hidden">
+        <Card className="border-0 shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Remaining Buffer</p>
-            <p className={cn("text-2xl font-black", matrixStats.remaining >= 0 ? "text-profit" : "text-danger")}>
+            <p className="text-xs font-semibold text-muted-foreground mb-1">Remaining Buffer</p>
+            <p className={cn("text-2xl font-bold", matrixStats.remaining >= 0 ? "text-profit" : "text-danger")}>
               {formatCurrency(matrixStats.remaining)}
             </p>
-            <p className="text-[10px] text-muted-foreground font-bold mt-1">For the rest of {year}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">For the rest of {year}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-xl bg-card overflow-hidden">
+        <Card className="border-0 shadow-sm bg-card overflow-hidden">
           <CardContent className="p-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Avg Daily Burn</p>
-            <p className="text-2xl font-black text-primary">{formatCurrency(matrixStats.avgSpend)}</p>
-            <p className="text-[10px] text-muted-foreground font-bold mt-1">Actual spending velocity</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-1">Avg Daily Burn</p>
+            <p className="text-2xl font-bold text-primary">{formatCurrency(matrixStats.avgSpend)}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Actual spending velocity</p>
           </CardContent>
         </Card>
       </div>
@@ -340,27 +340,27 @@ const MasterTracker = () => {
           {/* Financial Thermostat Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {thermostatData.map((group) => (
-              <Card key={group.name} className="border-0 shadow-xl hover:shadow-2xl transition-all group overflow-hidden">
+              <Card key={group.name} className="border-0 shadow-sm hover:shadow-md transition-all group overflow-hidden">
                 <CardContent className="p-6 space-y-5">
                   <div className="flex items-center justify-between">
-                    <div className={cn("p-3 rounded-2xl shadow-sm", group.bg, group.color)}>
+                    <div className={cn("p-3 rounded-xl shadow-sm", group.bg, group.color)}>
                       <span className="text-2xl">{group.icon}</span>
                     </div>
                     <div className="text-right">
                       <p className={cn(
-                        "text-lg font-black",
+                        "text-lg font-bold",
                         group.percent > 100 ? "text-danger" : "text-profit"
                       )}>
                         {Math.round(group.percent)}%
                       </p>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Utilized</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">Utilized</p>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{group.name}</p>
-                    <p className="text-2xl font-black tracking-tight">{formatCurrency(group.spent)}</p>
-                    <p className="text-[10px] text-muted-foreground font-bold">of {formatCurrency(group.budget)} target</p>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">{group.name}</p>
+                    <p className="text-2xl font-bold tracking-tight">{formatCurrency(group.spent)}</p>
+                    <p className="text-[10px] text-muted-foreground">of {formatCurrency(group.budget)} target</p>
                   </div>
 
                   <div className="space-y-2">
@@ -368,7 +368,7 @@ const MasterTracker = () => {
                       value={group.percent} 
                       className={cn("h-2", group.percent > 100 ? "[&>div]:bg-danger" : "[&>div]:bg-profit")}
                     />
-                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tighter">
+                    <div className="flex items-center justify-between text-[10px] font-semibold">
                       <span className="text-muted-foreground">Left:</span>
                       <span className={cn(group.remaining >= 0 ? "text-profit" : "text-danger")}>
                         {formatCurrency(group.remaining)}
@@ -376,8 +376,8 @@ const MasterTracker = () => {
                     </div>
                     {group.remaining > 0 && thermostatView !== 'daily' && (
                       <div className="pt-2 border-t border-dashed flex justify-between items-center">
-                        <span className="text-[9px] font-bold text-muted-foreground uppercase">Daily Allowance:</span>
-                        <span className="text-[10px] font-black text-primary">{formatCurrency(group.dailyBurn)}/day</span>
+                        <span className="text-[9px] font-semibold text-muted-foreground uppercase">Daily Allowance:</span>
+                        <span className="text-[10px] font-bold text-primary">{formatCurrency(group.dailyBurn)}/day</span>
                       </div>
                     )}
                   </div>
@@ -390,12 +390,12 @@ const MasterTracker = () => {
           <div className="space-y-6" ref={matrixContainerRef}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                   <TableIcon className="w-6 h-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-black tracking-tight">The Matrix</CardTitle>
-                  <CardDescription className="text-xs font-bold uppercase tracking-wider">
+                  <CardTitle className="text-xl font-bold tracking-tight">The Matrix</CardTitle>
+                  <CardDescription className="text-xs font-medium text-muted-foreground">
                     Historical breakdown by category
                   </CardDescription>
                 </div>
@@ -464,7 +464,7 @@ const MasterTracker = () => {
               </div>
             </div>
 
-            <Card className="border-0 shadow-2xl bg-card overflow-hidden">
+            <Card className="border-0 shadow-sm bg-card overflow-hidden">
               <CardContent className="p-0">
                 <MasterTrackerMatrix 
                   transactions={transactions} 

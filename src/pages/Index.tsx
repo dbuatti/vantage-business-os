@@ -221,9 +221,9 @@ const Index = () => {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <greeting.icon className={cn("w-5 h-5", greeting.color)} />
-            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">{greeting.text}</span>
+            <span className="text-xs font-semibold text-muted-foreground">{greeting.text}</span>
           </div>
-          <h1 className="text-4xl font-black tracking-tight">Command Center</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Command Center</h1>
           <p className="text-muted-foreground text-lg">Your business intelligence at a glance.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -253,7 +253,7 @@ const Index = () => {
               <CardContent className="p-8 relative">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <p className="text-xs font-black uppercase tracking-widest opacity-70">Business Health</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Business Health</p>
                     <p className="text-5xl font-black tracking-tighter">
                       <AnimatedNumber
                         value={businessStats.outstandingAmount}
@@ -262,7 +262,7 @@ const Index = () => {
                     </p>
                     <p className="text-sm font-medium opacity-80">Outstanding Receivables ({selectedYear})</p>
                   </div>
-                  <div className="p-4 bg-primary-foreground/20 rounded-3xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
+                  <div className="p-4 bg-primary-foreground/20 rounded-2xl backdrop-blur-md group-hover:scale-110 transition-transform duration-500">
                     <Briefcase className="w-10 h-10" />
                   </div>
                 </div>
@@ -278,16 +278,16 @@ const Index = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
-                        <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Burn Rate</p>
-                        <p className="text-lg font-black">
+                      <div className="p-3 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
+                        <p className="text-[10px] font-semibold uppercase opacity-60 mb-1">Burn Rate</p>
+                        <p className="text-lg font-bold">
                           {formatCurrency(businessStats.burnRate)}
                           <span className="text-[10px] font-medium opacity-60">/mo</span>
                         </p>
                       </div>
-                      <div className="p-3 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
-                        <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Runway</p>
-                        <p className="text-lg font-black">
+                      <div className="p-3 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
+                        <p className="text-[10px] font-semibold uppercase opacity-60 mb-1">Runway</p>
+                        <p className="text-lg font-bold">
                           {businessStats.runway.toFixed(1)}
                           <span className="text-[10px] font-medium opacity-60"> months</span>
                         </p>
@@ -295,10 +295,10 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex gap-3 justify-end">
-                    <Button variant="secondary" asChild className="rounded-2xl font-bold px-6 h-12 shadow-xl">
+                    <Button variant="secondary" asChild className="rounded-xl font-bold px-6 h-12 shadow-xl">
                       <Link to="/invoices">Invoices</Link>
                     </Button>
-                    <Button variant="outline" asChild className="rounded-2xl bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20 text-primary-foreground font-bold px-6 h-12">
+                    <Button variant="outline" asChild className="rounded-xl bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20 text-primary-foreground font-bold px-6 h-12">
                       <Link to="/clients">Clients</Link>
                     </Button>
                   </div>
@@ -310,16 +310,16 @@ const Index = () => {
           {/* Business Streams Summary */}
           {transactionSummary && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up stagger-1">
-              <Card className="border-0 shadow-xl overflow-hidden group">
+              <Card className="border-0 shadow-sm overflow-hidden group">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="p-2.5 rounded-2xl bg-ai-bg text-ai">
+                    <div className="p-2.5 rounded-xl bg-ai-bg text-ai">
                       <Music className="w-6 h-6" />
                     </div>
                     <Badge variant="outline" className="bg-ai-bg text-ai border-ai-border font-bold">Music Stream</Badge>
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Net Professional Income</p>
-                  <p className="text-3xl font-black text-ai">{formatCurrency(transactionSummary.musicNet)}</p>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Net Professional Income</p>
+                  <p className="text-3xl font-bold text-ai">{formatCurrency(transactionSummary.musicNet)}</p>
                   <div className="mt-4 pt-4 border-t flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Averagable Income</span>
                     <Button variant="ghost" size="sm" asChild className="h-8 text-ai hover:text-ai hover:bg-ai-bg font-bold gap-1">
@@ -331,16 +331,16 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-xl overflow-hidden group">
+              <Card className="border-0 shadow-sm overflow-hidden group">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="p-2.5 rounded-2xl bg-profit-bg text-profit">
+                    <div className="p-2.5 rounded-xl bg-profit-bg text-profit">
                       <Sparkles className="w-6 h-6" />
                     </div>
                     <Badge variant="outline" className="bg-profit-bg text-profit border-profit-border font-bold">Kinesiology</Badge>
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Net Business Income</p>
-                  <p className="text-3xl font-black text-profit">{formatCurrency(transactionSummary.kineNet)}</p>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Net Business Income</p>
+                  <p className="text-3xl font-bold text-profit">{formatCurrency(transactionSummary.kineNet)}</p>
                   <div className="mt-4 pt-4 border-t flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">New Business Stream</span>
                     <Button variant="ghost" size="sm" asChild className="h-8 text-profit hover:text-profit hover:bg-profit-bg font-bold gap-1">
@@ -356,15 +356,15 @@ const Index = () => {
 
           {/* Transaction Pulse */}
           {transactionSummary && (
-            <Card className="border-0 shadow-2xl bg-card overflow-hidden animate-slide-up stagger-1">
+            <Card className="border-0 shadow-sm bg-card overflow-hidden animate-slide-up stagger-1">
               <CardHeader className="pb-4 border-b bg-muted/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-2xl bg-primary/10 text-primary">
+                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
                       <CreditCard className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-black text-xl tracking-tight">Transaction Pulse</h3>
+                      <h3 className="font-bold text-xl tracking-tight">Transaction Pulse</h3>
                       <p className="text-xs text-muted-foreground">Activity for {selectedYear}</p>
                     </div>
                   </div>
@@ -375,26 +375,26 @@ const Index = () => {
               </CardHeader>
               <CardContent className="p-8 space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 rounded-3xl bg-profit-bg border border-profit-border group hover:shadow-lg transition-all">
+                  <div className="p-6 rounded-2xl bg-profit-bg border border-profit-border group hover:shadow-lg transition-all">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="p-1.5 rounded-lg bg-profit text-profit-foreground"><ArrowUpRight className="w-4 h-4" /></div>
-                      <span className="text-xs text-profit font-black uppercase tracking-widest">Income</span>
+                      <span className="text-xs text-profit font-semibold">Income</span>
                     </div>
-                    <p className="text-3xl font-black text-profit">
+                    <p className="text-3xl font-bold text-profit">
                       {formatCurrency(transactionSummary.totalIncome)}
                     </p>
                   </div>
-                  <div className="p-6 rounded-3xl bg-danger-bg border border-danger-border group hover:shadow-lg transition-all">
+                  <div className="p-6 rounded-2xl bg-danger-bg border border-danger-border group hover:shadow-lg transition-all">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="p-1.5 rounded-lg bg-danger text-danger-foreground"><ArrowDownRight className="w-4 h-4" /></div>
-                      <span className="text-xs text-danger font-black uppercase tracking-widest">Expenses</span>
+                      <span className="text-xs text-danger font-semibold">Expenses</span>
                     </div>
-                    <p className="text-3xl font-black text-danger">
+                    <p className="text-3xl font-bold text-danger">
                       {formatCurrency(-transactionSummary.totalExpenses)}
                     </p>
                   </div>
                   <div className={cn(
-                    "p-6 rounded-3xl border group hover:shadow-lg transition-all",
+                    "p-6 rounded-2xl border group hover:shadow-lg transition-all",
                     transactionSummary.net >= 0 
                       ? "bg-info-bg border-info-border" 
                       : "bg-warning-bg border-warning-border"
@@ -405,12 +405,12 @@ const Index = () => {
                         transactionSummary.net >= 0 ? "bg-info text-info-foreground" : "bg-warning text-warning-foreground"
                       )}><TrendingUp className="w-4 h-4" /></div>
                       <span className={cn(
-                        "text-xs font-black uppercase tracking-widest",
+                        "text-xs font-semibold",
                         transactionSummary.net >= 0 ? "text-info" : "text-warning"
                       )}>Net Position</span>
                     </div>
                     <p className={cn(
-                      "text-3xl font-black",
+                      "text-3xl font-bold",
                       transactionSummary.net >= 0 ? "text-info" : "text-warning"
                     )}>
                       {formatCurrency(transactionSummary.net)}
@@ -420,12 +420,12 @@ const Index = () => {
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Recent Activity</p>
+                    <p className="text-xs font-semibold text-muted-foreground">Recent Activity</p>
                     <div className="h-[1px] flex-1 bg-muted mx-4" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {transactionSummary.recentTransactions.map((t) => (
-                      <div key={t.id} className="flex items-center justify-between py-4 px-5 rounded-2xl bg-background border hover:border-primary/30 hover:shadow-md transition-all group">
+                      <div key={t.id} className="flex items-center justify-between py-4 px-5 rounded-xl bg-background border hover:border-primary/30 hover:shadow-md transition-all group">
                         <div className="flex items-center gap-4 min-w-0">
                           <div className={cn(
                             "w-3 h-3 rounded-full shrink-0 shadow-sm",
@@ -433,12 +433,12 @@ const Index = () => {
                           )} />
                           <div className="min-w-0">
                             <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{t.description}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">{t.category_1}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-tighter">{t.category_1}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
                           <span className={cn(
-                            "text-base font-black tabular-nums",
+                            "text-base font-bold tabular-nums",
                             t.amount > 0 ? "text-profit" : "text-danger"
                           )}>
                             {formatCurrency(t.amount)}
@@ -457,17 +457,17 @@ const Index = () => {
         {/* Sidebar Column */}
         <div className="space-y-8">
           {/* Project ROI Reminder */}
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-profit to-info text-profit-foreground overflow-hidden relative group animate-slide-up">
+          <Card className="border-0 shadow-lg bg-profit text-profit-foreground overflow-hidden relative group animate-slide-up">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative space-y-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-profit-foreground/20 rounded-xl">
                   <TrendingUp className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest opacity-80">Profitability</span>
+                <span className="text-xs font-semibold uppercase tracking-wide opacity-80">Profitability</span>
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-black">Project ROI Engine</h3>
+                <h3 className="text-lg font-bold">Project ROI Engine</h3>
                 <p className="text-sm font-medium opacity-80 leading-relaxed">
                   See your real hourly rate per project. Identify your most profitable work.
                 </p>
@@ -481,17 +481,17 @@ const Index = () => {
           </Card>
 
           {/* Weekly Routine Reminder */}
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-warning to-warning/70 text-warning-foreground overflow-hidden relative group animate-slide-up">
+          <Card className="border-0 shadow-lg bg-warning text-warning-foreground overflow-hidden relative group animate-slide-up">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
             <CardContent className="p-6 relative space-y-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-warning-foreground/20 rounded-xl">
                   <CalendarCheck className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest opacity-80">Weekly Routine</span>
+                <span className="text-xs font-semibold uppercase tracking-wide opacity-80">Weekly Routine</span>
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-black">Thursday Snapshot</h3>
+                <h3 className="text-lg font-bold">Thursday Snapshot</h3>
                 <p className="text-sm font-medium opacity-80 leading-relaxed">
                   It's time to log your weekly savings and debt snapshot. Keep your progress chart accurate.
                 </p>
@@ -510,9 +510,9 @@ const Index = () => {
           )}
 
           {/* Quick Actions */}
-          <Card className="border-0 shadow-xl bg-card overflow-hidden animate-slide-up stagger-2">
+          <Card className="border-0 shadow-sm bg-card overflow-hidden animate-slide-up stagger-2">
             <CardHeader className="pb-3 border-b bg-muted/30">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Quick Navigation</CardTitle>
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick Navigation</CardTitle>
             </CardHeader>
             <CardContent className="p-2 grid grid-cols-1 gap-1">
               <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">

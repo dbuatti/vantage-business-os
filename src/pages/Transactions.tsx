@@ -471,7 +471,7 @@ const Transactions = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-black tracking-tight">Transaction History</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Transaction History</h1>
               <p className="text-sm text-muted-foreground">
                 {transactions.length > 0 ? `${transactions.length} transactions in ${selectedYear}` : 'Import your bank transactions to get started'}
               </p>
@@ -520,42 +520,42 @@ const Transactions = () => {
         {/* Summary Cards */}
         {analyticsTransactions.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-profit to-profit/80 text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
                   <div><p className="text-sm font-medium text-white/80">Income</p><p className="text-2xl font-bold">{formatCurrency(summaryStats.income)}</p></div>
-                  <div className="p-2 bg-white/20 rounded-xl"><ArrowUpRight className="w-5 h-5" /></div>
+                  <div className="p-2 bg-white/20 rounded-lg"><ArrowUpRight className="w-5 h-5" /></div>
                 </div>
                 {summaryStats.workIncome > 0 && <p className="text-xs text-white/70 mt-2">{formatCurrency(summaryStats.workIncome)} from work</p>}
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-rose-500 to-rose-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-sm bg-danger text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
                   <div><p className="text-sm font-medium text-white/80">Expenses</p><p className="text-2xl font-bold">{formatCurrency(-summaryStats.expenses)}</p></div>
-                  <div className="p-2 bg-white/20 rounded-xl"><TrendingDown className="w-5 h-5" /></div>
+                  <div className="p-2 bg-white/20 rounded-lg"><TrendingDown className="w-5 h-5" /></div>
                 </div>
                 {summaryStats.workExpenses > 0 && <p className="text-xs text-white/70 mt-2">{formatCurrency(-summaryStats.workExpenses)} work expenses</p>}
               </CardContent>
             </Card>
-            <Card className={cn("border-0 shadow-lg text-white overflow-hidden relative", summaryStats.net >= 0 ? "bg-gradient-to-br from-blue-500 to-blue-600" : "bg-gradient-to-br from-amber-500 to-amber-600")}>
+            <Card className={cn("border-0 shadow-sm text-white overflow-hidden relative", summaryStats.net >= 0 ? "bg-info" : "bg-warning")}>
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
                   <div><p className="text-sm font-medium text-white/80">Net</p><p className="text-2xl font-bold">{formatCurrency(summaryStats.net)}</p></div>
-                  <div className="p-2 bg-white/20 rounded-xl"><DollarSign className="w-5 h-5" /></div>
+                  <div className="p-2 bg-white/20 rounded-lg"><DollarSign className="w-5 h-5" /></div>
                 </div>
                 <p className="text-xs text-white/70 mt-2">Work net: {formatCurrency(summaryStats.workNet)}</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-violet-500 to-violet-600 text-white overflow-hidden relative">
+            <Card className="border-0 shadow-sm bg-ai text-white overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
               <CardContent className="p-4 relative">
                 <div className="flex items-center justify-between">
                   <div><p className="text-sm font-medium text-white/80">Transactions</p><p className="text-2xl font-bold">{summaryStats.totalCount}</p></div>
-                  <div className="p-2 bg-white/20 rounded-xl"><FileText className="w-5 h-5" /></div>
+                  <div className="p-2 bg-white/20 rounded-lg"><FileText className="w-5 h-5" /></div>
                 </div>
                 <p className="text-xs text-white/70 mt-2">{analyticsTransactions.filter(t => t.is_work).length} work-related</p>
               </CardContent>
@@ -599,7 +599,7 @@ const Transactions = () => {
 
                 <TabsContent value="list" className="space-y-4">
                   {/* Search & Filter Bar */}
-                  <Card className="border-0 shadow-lg">
+                  <Card className="border-0 shadow-sm">
                     <CardContent className="p-4">
                       <TransactionFiltersComponent 
                         filters={filters}
@@ -622,7 +622,7 @@ const Transactions = () => {
                   />
 
                   {/* Transactions Table */}
-                  <Card className="border-0 shadow-xl overflow-hidden">
+                  <Card className="border-0 shadow-sm overflow-hidden">
                     <TransactionTable 
                       transactions={paginatedTransactions}
                       loading={loading}
