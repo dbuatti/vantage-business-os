@@ -27,7 +27,7 @@ import {
   differenceInDays,
   endOfWeek
 } from 'date-fns';
-import { TrackerView } from '@/pages/MasterTracker';
+import type { TrackerView } from '@/pages/MasterTracker';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
