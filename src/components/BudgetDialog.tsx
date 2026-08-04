@@ -31,7 +31,8 @@ import {
   Calculator,
   TrendingDown,
   History,
-  Calendar
+  Calendar,
+  ChevronDown
 } from 'lucide-react';
 import { format, subYears, differenceInMonths, parseISO } from 'date-fns';
 
@@ -56,24 +57,29 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [formBudgets, setFormBudgets] = useState<Array<{ category_name: string; amount: number | string }>>([]);
+  const [formCategoryBudgets, setFormCategoryBudgets] = useState<Array<{ category_name: string; amount: number | string }>>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [catToGroup, setCatToGroup] = useState<Record<string, string>>({});
   
   const [savingsType, setSavingsType] = useState<'percent' | 'dollar'>('percent');
   const [savingsValue, setSavingsValue] = useState<string>('20');
   
   const [historicalData, setHistoricalData] = useState<{
     groupTotals: Record<string, number>;
+    categoryTotals: Record<string, number>;
     totalIncome: number;
     totalExpenses: number;
     monthsOfData: number;
-  }>({ groupTotals: {}, totalIncome: 0, totalExpenses: 0, monthsOfData: 0 });
+  }>({ groupTotals: {}, categoryTotals: {}, totalIncome: 0, totalExpenses: 0, monthsOfData: 0 });
 
   const [baseYear, setBaseYear] = useState<number>(year - 1);
   const [priorYearData, setPriorYearData] = useState<{
     groupMonthly: Record<string, number>;
+    categoryMonthly: Record<string, number>;
     totalIncome: number;
     totalExpenses: number;
     hasData: boolean;
-  }>({ groupMonthly: {}, totalIncome: 0, totalExpenses: 0, hasData: false });
+  }>({ groupMonthly: {}, categoryMonthly: {}, totalIncome: 0, totalExpenses: 0, hasData: false });
 
   const fetchPriorYearData = useCallback(async (targetYear: number) => {
     if (!session) return;
@@ -94,29 +100,40 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
 
       if (txnsRes.error) throw txnsRes.error;
 
-      const catToGroup: Record<string, string> = {};
-      groupsRes.data?.forEach(cg => { catToGroup[cg.category_name] = cg.group_name; });
+      const catToGroupLocal: Record<string, string> = {};
+      groupsRes.data?.forEach(cg => { catToGroupLocal[cg.category_name] = cg.group_name; });
 
       const groupTotals: Record<string, number> = {};
+      const categoryTotals: Record<string, number> = {};
       GROUPS.forEach(g => groupTotals[g] = 0);
 
       let totalExpenses = 0;
       txnsRes.data?.forEach(t => {
         const absAmount = Math.abs(t.amount);
         totalExpenses += absAmount;
-        const group = catToGroup[t.category_1];
-        if (group && groupTotals[group] !== undefined) groupTotals[group] += absAmount;
+        const group = catToGroupLocal[t.category_1];
+        if (group && groupTotals[group] !== undefined) {
+          groupTotals[group] += absAmount;
+          categoryTotals[t.category_1] = (categoryTotals[t.category_1] || 0) + absAmount;
+        }
       });
 
       const groupMonthly: Record<string, number> = {};
       GROUPS.forEach(g => groupMonthly[g] = Math.round((groupTotals[g] || 0) / 12));
 
+      const categoryMonthly: Record<string, number> = {};
+      Object.entries(categoryTotals).forEach(([cat, total]) => {
+        categoryMonthly[cat] = Math.round(total / 12);
+      });
+
       setPriorYearData({
         groupMonthly,
+        categoryMonthly,
         totalIncome: 0,
         totalExpenses,
         hasData: txnsRes.data !== null && txnsRes.data.length > 0,
       });
+      setCatToGroup(catToGroupLocal);
     } catch (error) {
       console.error("Error fetching prior year data:", error);
       setPriorYearData({ groupMonthly: {}, totalIncome: 0, totalExpenses: 0, hasData: false });
@@ -140,12 +157,13 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
 
       if (txnsRes.error) throw txnsRes.error;
 
-      const catToGroup: Record<string, string> = {};
-      groupsRes.data?.forEach(cg => { catToGroup[cg.category_name] = cg.group_name; });
+      const catToGroupLocal: Record<string, string> = {};
+      groupsRes.data?.forEach(cg => { catToGroupLocal[cg.category_name] = cg.group_name; });
 
       let totalIncome = 0;
       let totalExpenses = 0;
       const groupTotals: Record<string, number> = {};
+      const categoryTotals: Record<string, number> = {};
       GROUPS.forEach(g => groupTotals[g] = 0);
 
       const dates = txnsRes.data?.map(t => parseISO(t.transaction_date)) || [];
@@ -158,14 +176,16 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         } else {
           const absAmount = Math.abs(t.amount);
           totalExpenses += absAmount;
-          const group = catToGroup[t.category_1];
+          const group = catToGroupLocal[t.category_1];
           if (group && groupTotals[group] !== undefined) {
             groupTotals[group] += absAmount;
+            categoryTotals[t.category_1] = (categoryTotals[t.category_1] || 0) + absAmount;
           }
         }
       });
 
-      setHistoricalData({ groupTotals, totalIncome, totalExpenses, monthsOfData });
+      setHistoricalData({ groupTotals, categoryTotals, totalIncome, totalExpenses, monthsOfData });
+      setCatToGroup(catToGroupLocal);
     } catch (error) {
       console.error("Error fetching historical data:", error);
       showError(error instanceof Error ? error.message : 'Failed to load historical data');
@@ -184,6 +204,12 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         };
       });
       setFormBudgets(initial);
+
+      const existingCategoryNames = new Set(GROUPS.map(g => g));
+      const initialCategories = existingBudgets
+        .filter(b => (b.month === 0 || b.month === null) && !existingCategoryNames.has(b.category_name))
+        .map(b => ({ category_name: b.category_name, amount: b.amount }));
+      setFormCategoryBudgets(initialCategories);
       fetchHistoricalData();
     }
   }, [open, existingBudgets, fetchHistoricalData]);
@@ -191,6 +217,38 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   useEffect(() => {
     if (open) fetchPriorYearData(baseYear);
   }, [open, baseYear, fetchPriorYearData]);
+
+  const categoriesByGroup = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    const addCat = (cat: string) => {
+      const group = catToGroup[cat];
+      if (!group || !GROUPS.includes(group)) return;
+      (map[group] = map[group] || []).push(cat);
+    };
+    Object.keys(catToGroup).forEach(addCat);
+    existingBudgets
+      .filter(b => b.month === 0 || b.month === null)
+      .forEach(b => addCat(b.category_name));
+    Object.values(map).forEach(arr => arr.sort());
+    return map;
+  }, [catToGroup, existingBudgets]);
+
+  useEffect(() => {
+    if (!open) return;
+    const existingNames = new Set(formCategoryBudgets.map(b => b.category_name));
+    const missing: Array<{ category_name: string; amount: number }> = [];
+    Object.values(categoriesByGroup).forEach(cats => {
+      cats.forEach(cat => {
+        if (existingNames.has(cat)) return;
+        const existing = existingBudgets.find(b => b.category_name === cat && (b.month === 0 || b.month === null));
+        missing.push({ category_name: cat, amount: existing?.amount || 0 });
+      });
+    });
+    if (missing.length > 0) {
+      setFormCategoryBudgets(prev => [...prev, ...missing]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, categoriesByGroup]);
 
   const adjustedSuggestions = useMemo(() => {
     const { totalIncome, groupTotals, totalExpenses, monthsOfData } = historicalData;
@@ -232,18 +290,42 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
     };
   }, [historicalData, savingsType, savingsValue]);
 
+  const groupCategoryShare = useCallback((group: string, cat: string) => {
+    const groupTotal = historicalData.groupTotals[group] || 0;
+    const catTotal = historicalData.categoryTotals[cat] || 0;
+    const cats = (categoriesByGroup[group] || []).filter(c => (historicalData.categoryTotals[c] || 0) > 0);
+    if (cats.length === 0) return 1;
+    if (groupTotal > 0 && catTotal > 0) return catTotal / groupTotal;
+    return 1 / cats.length;
+  }, [historicalData, categoriesByGroup]);
+
+  const suggestCategory = useCallback((group: string, cat: string) => {
+    const groupAdjusted = adjustedSuggestions.adjusted[group] || 0;
+    return Math.round(groupAdjusted * groupCategoryShare(group, cat));
+  }, [adjustedSuggestions, groupCategoryShare]);
+
   const handleSave = async () => {
     if (!session) return;
     setLoading(true);
     try {
-      const toUpsert = formBudgets.map(b => ({
-        user_id: session.user.id,
-        category_name: b.category_name,
-        amount: parseFloat(b.amount) || 0,
-        year,
-        month: 0,
-        updated_at: new Date().toISOString()
-      }));
+      const toUpsert = [
+        ...formBudgets.map(b => ({
+          user_id: session.user.id,
+          category_name: b.category_name,
+          amount: parseFloat(b.amount) || 0,
+          year,
+          month: 0,
+          updated_at: new Date().toISOString()
+        })),
+        ...formCategoryBudgets.map(b => ({
+          user_id: session.user.id,
+          category_name: b.category_name,
+          amount: parseFloat(b.amount) || 0,
+          year,
+          month: 0,
+          updated_at: new Date().toISOString()
+        }))
+      ];
 
       const { error } = await supabase
         .from('budgets')
@@ -260,14 +342,24 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
     }
   };
 
-  const applySuggestion = (groupName: string) => {
+  const setGroupAmount = (groupName: string, val: string) => {
+    setFormBudgets(prev => prev.map(b => b.category_name === groupName ? { ...b, amount: val } : b));
+  };
+
+  const setCategoryAmount = (cat: string, val: string) => {
+    setFormCategoryBudgets(prev => prev.map(b => b.category_name === cat ? { ...b, amount: val } : b));
+  };
+
+  const applyGroupSuggestion = (groupName: string) => {
     const val = adjustedSuggestions.adjusted[groupName];
-    const next = [...formBudgets];
-    const idx = next.findIndex(b => b.category_name === groupName);
-    if (idx !== -1) {
-      next[idx].amount = val.toString();
-      setFormBudgets(next);
-    }
+    setGroupAmount(groupName, val.toString());
+    (categoriesByGroup[groupName] || []).forEach(cat => {
+      setCategoryAmount(cat, suggestCategory(groupName, cat).toString());
+    });
+  };
+
+  const applyCategorySuggestion = (groupName: string, cat: string) => {
+    setCategoryAmount(cat, suggestCategory(groupName, cat).toString());
   };
 
   const applyAllSuggestions = () => {
@@ -276,18 +368,28 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       amount: (adjustedSuggestions.adjusted[b.category_name] || 0).toString()
     }));
     setFormBudgets(next);
+    setFormCategoryBudgets(prev => prev.map(b => {
+      const group = catToGroup[b.category_name];
+      if (!group) return b;
+      return { ...b, amount: suggestCategory(group, b.category_name).toString() };
+    }));
     showSuccess('Applied savings-adjusted suggestions');
   };
 
-  const applyPriorYear = (groupName: string) => {
+  const applyGroupPriorYear = (groupName: string) => {
     const val = priorYearData.groupMonthly[groupName];
     if (!val) return;
-    const next = [...formBudgets];
-    const idx = next.findIndex(b => b.category_name === groupName);
-    if (idx !== -1) {
-      next[idx].amount = val.toString();
-      setFormBudgets(next);
-    }
+    setGroupAmount(groupName, val.toString());
+    (categoriesByGroup[groupName] || []).forEach(cat => {
+      const catVal = priorYearData.categoryMonthly[cat];
+      if (catVal) setCategoryAmount(cat, catVal.toString());
+    });
+  };
+
+  const applyCategoryPriorYear = (cat: string) => {
+    const val = priorYearData.categoryMonthly[cat];
+    if (!val) return;
+    setCategoryAmount(cat, val.toString());
   };
 
   const applyAllPriorYear = () => {
@@ -300,6 +402,10 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       amount: (priorYearData.groupMonthly[b.category_name] || 0).toString()
     }));
     setFormBudgets(next);
+    setFormCategoryBudgets(prev => prev.map(b => {
+      const val = priorYearData.categoryMonthly[b.category_name];
+      return val ? { ...b, amount: val.toString() } : b;
+    }));
     showSuccess(`Applied ${baseYear} spending as budgets`);
   };
 
@@ -441,25 +547,44 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
           {formBudgets.map((budget, i) => {
-            const suggestion = adjustedSuggestions.adjusted[budget.category_name] || 0;
-            const historicalAnnual = (historicalData.groupTotals[budget.category_name] || 0) * (12 / historicalData.monthsOfData);
+            const groupName = budget.category_name;
+            const suggestion = adjustedSuggestions.adjusted[groupName] || 0;
+            const historicalAnnual = (historicalData.groupTotals[groupName] || 0) * (12 / historicalData.monthsOfData);
             const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
-            const priorYearMonthly = priorYearData.groupMonthly[budget.category_name] || 0;
+            const priorYearMonthly = priorYearData.groupMonthly[groupName] || 0;
             const isPriorYear = Math.abs(parseFloat(budget.amount) - priorYearMonthly) <= 1;
+            const subCategories = categoriesByGroup[groupName] || [];
+            const expanded = expandedGroups[groupName];
+            const catBudgetAmount = (cat: string) => {
+              const row = formCategoryBudgets.find(b => b.category_name === cat);
+              return row ? row.amount : 0;
+            };
 
             return (
-              <div key={budget.category_name} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
+              <div key={groupName} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
                 <div className="flex items-center justify-between mb-3">
-                  <Label className="text-xs font-semibold text-muted-foreground">
-                    {budget.category_name}
-                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs font-semibold text-muted-foreground">
+                      {groupName}
+                    </Label>
+                    {subCategories.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-muted/50 text-[10px] font-bold uppercase text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors"
+                      >
+                        {subCategories.length} sub-categories
+                        <ChevronDown className={cn("w-3 h-3 transition-transform", expanded && "rotate-180")} />
+                      </button>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="text-xs font-semibold text-muted-foreground">Current Annualized</p>
                       <p className="text-xs font-bold">{formatCurrency(historicalAnnual)}</p>
                     </div>
                     <button 
-                      onClick={() => applySuggestion(budget.category_name)}
+                      onClick={() => applyGroupSuggestion(groupName)}
                       className={cn(
                         "flex flex-col items-end p-1.5 rounded-lg border transition-all",
                         isDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
@@ -490,7 +615,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => applyPriorYear(budget.category_name)}
+                    onClick={() => applyGroupPriorYear(groupName)}
                     disabled={!priorYearData.hasData || priorYearMonthly === 0}
                     className={cn(
                       "h-7 rounded-lg px-2 text-[10px] font-bold gap-1.5",
@@ -501,6 +626,68 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                     Use {baseYear}
                   </Button>
                 </div>
+
+                {subCategories.length > 0 && (
+                  <div className={cn(
+                    "mt-3 space-y-2 pl-3 border-l-2 border-muted/60 overflow-hidden transition-all",
+                    expanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+                  )}>
+                    {subCategories.map(cat => {
+                      const catSuggestion = suggestCategory(groupName, cat);
+                      const catHistoricalAnnual = (historicalData.categoryTotals[cat] || 0) * (12 / historicalData.monthsOfData);
+                      const catPriorYear = priorYearData.categoryMonthly[cat] || 0;
+                      const catIsDifferent = Math.abs(parseFloat(catBudgetAmount(cat)) - catSuggestion) > 1;
+                      const catIsPriorYear = catPriorYear > 0 && Math.abs(parseFloat(catBudgetAmount(cat)) - catPriorYear) <= 1;
+                      return (
+                        <div key={cat} className="flex flex-col gap-2 p-3 rounded-xl bg-muted/20 border border-transparent hover:border-primary/20 transition-all">
+                          <div className="flex items-center justify-between gap-2">
+                            <Label className="text-xs font-semibold text-foreground">{cat}</Label>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-semibold text-muted-foreground">
+                                YTD: <span className="font-bold text-foreground">{formatCurrency(catHistoricalAnnual)}</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => applyCategorySuggestion(groupName, cat)}
+                                className={cn(
+                                  "flex flex-col items-end px-2 py-1 rounded-lg border transition-all",
+                                  catIsDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
+                                )}
+                              >
+                                <span className="text-[9px] font-semibold opacity-70">Suggested</span>
+                                <span className="text-[10px] font-bold">{formatCurrency(catSuggestion)}</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground text-xs">$</span>
+                              <Input
+                                type="number"
+                                value={catBudgetAmount(cat)}
+                                onChange={(e) => setCategoryAmount(cat, e.target.value)}
+                                className="h-9 pl-7 rounded-lg font-bold text-sm bg-background/60 border-transparent focus:bg-background focus:border-primary/30 transition-all"
+                              />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => applyCategoryPriorYear(cat)}
+                              disabled={!priorYearData.hasData || catPriorYear === 0}
+                              className={cn(
+                                "h-8 rounded-lg px-2 text-[10px] font-bold gap-1",
+                                catIsPriorYear ? "text-primary" : "text-muted-foreground hover:text-primary"
+                              )}
+                            >
+                              <History className="w-3 h-3" />
+                              {baseYear}
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
