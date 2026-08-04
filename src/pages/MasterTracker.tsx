@@ -84,13 +84,33 @@ const MasterTracker = () => {
   const [budgets, setBudgets] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
-  const [trackerView, setTrackerView] = useState<TrackerView>('yearly');
-  const [selectedMonth, setSelectedMonth] = useState<Date>(() => startOfMonth(new Date()));
+  const [trackerView, setTrackerView] = useState<TrackerView>(() => {
+    const saved = window.localStorage.getItem('master-tracker-view');
+    return saved === 'daily' || saved === 'weekly' || saved === 'monthly' || saved === 'yearly'
+      ? saved
+      : 'yearly';
+  });
+  const [selectedMonth, setSelectedMonth] = useState<Date>(() => {
+    const saved = window.localStorage.getItem('master-tracker-month');
+    if (saved) {
+      const d = new Date(saved);
+      if (!isNaN(d.getTime())) return startOfMonth(d);
+    }
+    return startOfMonth(new Date());
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showOverBudgetOnly, setShowOverBudgetOnly] = useState(false);
   const [matrixFullscreen, setMatrixFullscreen] = useState(false);
   
   const matrixContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    window.localStorage.setItem('master-tracker-view', trackerView);
+  }, [trackerView]);
+
+  useEffect(() => {
+    window.localStorage.setItem('master-tracker-month', selectedMonth.toISOString());
+  }, [selectedMonth]);
 
   // Drilldown state
   const [drilldown, setDrilldown] = useState<{
@@ -182,19 +202,52 @@ const MasterTracker = () => {
   }, [transactions, budgets, categoryGroups, trackerView, selectedMonth]);
 
   const matrixStats = useMemo(() => {
-    const totalSpent = transactions.reduce((s, t) => s + Math.abs(t.amount), 0);
-    const totalBudget = budgets.reduce((s, b) => s + b.amount, 0);
+    const today = new Date();
+
+    const inPeriod = (tDate: Date) => {
+      if (trackerView === 'daily') return isSameDay(tDate, today);
+      if (trackerView === 'weekly') return isSameWeek(tDate, today, { weekStartsOn: 1 });
+      if (trackerView === 'monthly') return isSameMonth(tDate, today);
+      return true; // Yearly
+    };
+
+    const totalSpent = transactions.reduce(
+      (s, t) => inPeriod(parseISO(t.transaction_date)) ? s + Math.abs(t.amount) : s,
+      0
+    );
+    const yearlyBudget = budgets.reduce((s, b) => s + b.amount, 0);
+
+    let totalBudget = yearlyBudget;
+    let daysInPeriod = 1;
+    let daysRemaining = 1;
+    let periodLabel = 'Year to date';
+
+    if (trackerView === 'monthly') {
+      totalBudget = yearlyBudget / 12;
+      daysInPeriod = differenceInDays(endOfMonth(today), startOfMonth(today)) + 1;
+      daysRemaining = Math.max(1, differenceInDays(endOfMonth(today), today));
+      periodLabel = `This month`;
+    } else if (trackerView === 'weekly') {
+      totalBudget = yearlyBudget / 52;
+      daysInPeriod = 7;
+      daysRemaining = Math.max(1, differenceInDays(endOfWeek(today, { weekStartsOn: 1 }), today));
+      periodLabel = 'This week';
+    } else if (trackerView === 'daily') {
+      totalBudget = yearlyBudget / 365;
+      daysInPeriod = 1;
+      daysRemaining = 1;
+      periodLabel = 'Today';
+    } else {
+      daysInPeriod = Math.max(1, differenceInDays(endOfYear(today), startOfYear(today)) + 1);
+      daysRemaining = Math.max(1, differenceInDays(endOfYear(today), today));
+    }
+
     const remaining = totalBudget - totalSpent;
     const percentUtilized = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+    const avgSpend = totalSpent / daysInPeriod;
 
-    const today = new Date();
-    const daysPassed = selectedYear === 'All' || parseInt(selectedYear) === today.getFullYear()
-      ? Math.max(1, Math.floor((today.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)))
-      : 365;
-    const avgSpend = totalSpent / daysPassed;
-
-    return { totalSpent, totalBudget, remaining, percentUtilized, avgSpend };
-  }, [transactions, budgets, selectedYear, yearStart]);
+    return { totalSpent, totalBudget, remaining, percentUtilized, avgSpend, daysRemaining, periodLabel };
+  }, [transactions, budgets, trackerView, year]);
 
   const handleCellClick = (category: string, periodLabel: string, txns: Record<string, unknown>[], budget: number) => {
     setDrilldown({ open: true, category, periodLabel, txns, budget });

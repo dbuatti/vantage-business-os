@@ -31,7 +31,8 @@ import { TrackerView } from '@/pages/MasterTracker';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
-import { Search } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { ArrowUpDown, Search } from 'lucide-react';
 
 interface TransactionLike {
   id?: string;
@@ -61,6 +62,16 @@ interface MasterTrackerMatrixProps {
   highlightMonth?: Date;
   onCellClick: (category: string, periodLabel: string, txns: TransactionLike[], budget: number) => void;
 }
+
+type SortMode = 'alpha' | 'spent-desc-grouped' | 'spent-asc-grouped' | 'spent-desc-global' | 'spent-asc-global';
+
+const SORT_OPTIONS: Array<{ value: SortMode; label: string }> = [
+  { value: 'alpha', label: 'Name (A–Z)' },
+  { value: 'spent-desc-grouped', label: 'Most spent · per group' },
+  { value: 'spent-asc-grouped', label: 'Least spent · per group' },
+  { value: 'spent-desc-global', label: 'Most spent · all categories' },
+  { value: 'spent-asc-global', label: 'Least spent · all categories' },
+];
 
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠', color: 'text-primary' },
@@ -131,7 +142,7 @@ const MasterTrackerMatrix = ({
     return Array.from(cats).sort();
   }, [transactions]);
 
-  const { allGroups, displayGroups } = useMemo(() => {
+  const allGroups = useMemo(() => {
     const today = new Date();
     const groupNames = new Set(EXPENSE_GROUPS.map(g => g.name));
 
@@ -206,7 +217,8 @@ const MasterTrackerMatrix = ({
         category: cat,
         intervalStats,
         rowTotal,
-        rowBudgetTotal
+        rowBudgetTotal,
+        groupName: undefined as string | undefined
       };
     };
 
@@ -241,7 +253,11 @@ const MasterTrackerMatrix = ({
 
     const allGroups = mappedGroups.filter(g => g.categoryRows.length > 0);
 
-    const displayGroups = allGroups
+    return allGroups;
+  }, [categories, intervals, transactions, budgets, view, catToGroup, searchQuery, year]);
+
+  const displayGroups = useMemo(() => {
+    const filtered = allGroups
       .map(g => ({
         ...g,
         categoryRows: g.categoryRows.filter(
@@ -250,8 +266,30 @@ const MasterTrackerMatrix = ({
       }))
       .filter(g => g.categoryRows.length > 0);
 
-    return { allGroups, displayGroups };
-  }, [categories, intervals, transactions, budgets, view, catToGroup, searchQuery, year, showOverBudgetOnly]);
+    if (sortMode === 'alpha') return filtered;
+
+    const desc = sortMode === 'spent-desc-grouped' || sortMode === 'spent-desc-global';
+
+    if (isGlobalSort) {
+      const flat = filtered.flatMap(g =>
+        g.categoryRows.map(row => ({ ...row, groupName: g.groupName }))
+      );
+      flat.sort((a, b) => (desc ? b.rowTotal - a.rowTotal : a.rowTotal - b.rowTotal));
+      return [{
+        groupName: 'All Categories',
+        icon: '📊',
+        color: 'text-primary',
+        categoryRows: flat
+      }];
+    }
+
+    return filtered.map(g => ({
+      ...g,
+      categoryRows: [...g.categoryRows].sort((a, b) =>
+        desc ? b.rowTotal - a.rowTotal : a.rowTotal - b.rowTotal
+      )
+    }));
+  }, [allGroups, sortMode, showOverBudgetOnly, isGlobalSort]);
 
   const totalsByColumn = useMemo(() => {
     return intervals.map((_, i) => {
@@ -274,6 +312,8 @@ const MasterTrackerMatrix = ({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState({ left: false, right: false });
+  const [sortMode, setSortMode] = useState<SortMode>('alpha');
+  const isGlobalSort = sortMode === 'spent-desc-global' || sortMode === 'spent-asc-global';
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -295,6 +335,32 @@ const MasterTrackerMatrix = ({
 
   return (
     <div className={cn("relative", fullscreen && "h-full")}>
+      {/* Sort control */}
+      <div className="flex items-center justify-between gap-3 px-3 py-2 border-b bg-muted/20">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-tighter text-muted-foreground">
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            Sort
+          </span>
+          <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
+            <SelectTrigger className="h-8 w-[190px] rounded-xl text-xs font-semibold bg-background border-muted-foreground/20">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map(opt => (
+                <SelectItem key={opt.value} value={opt.value} className="text-xs font-semibold">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <span className="hidden sm:block text-[10px] font-semibold text-muted-foreground/70 tabular-nums">
+          {displayGroups.reduce((n, g) => n + g.categoryRows.length, 0)} categories
+          {isGlobalSort ? ' · grouped view' : ' · per group'}
+        </span>
+      </div>
+
       {/* Desktop Matrix View */}
       <div
         ref={scrollRef}
@@ -433,7 +499,12 @@ const MasterTrackerMatrix = ({
                       rowIndex % 2 === 1 && "bg-muted/[0.02]"
                     )}>
                       <TableCell className={cn("sticky left-0 bg-background z-30 font-bold text-sm border-r pl-8 group-hover:bg-muted/30 transition-colors", leftStickyShadow)}>
-                        {row.category}
+                        <span className="flex flex-col leading-tight">
+                          <span>{row.category}</span>
+                          {isGlobalSort && row.groupName && (
+                            <span className="text-[10px] font-semibold text-muted-foreground/70">{row.groupName}</span>
+                          )}
+                        </span>
                       </TableCell>
                       {row.intervalStats.map((stat, i) => {
                         const isHighlightedMonth = view === 'monthly' && highlightMonth && isSameMonth(intervals[i], highlightMonth);
@@ -551,7 +622,12 @@ const MasterTrackerMatrix = ({
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="font-bold text-sm">{row.category}</p>
+                          <p className="font-bold text-sm">
+                            {row.category}
+                            {isGlobalSort && row.groupName && (
+                              <span className="text-xs font-semibold text-muted-foreground/70"> · {row.groupName}</span>
+                            )}
+                          </p>
                           <p className="text-xs font-semibold text-muted-foreground">{latestStat.label}</p>
                         </div>
                         <div className="text-right">

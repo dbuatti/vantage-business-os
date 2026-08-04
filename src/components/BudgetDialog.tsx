@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,8 @@ import {
   TrendingDown,
   History,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { format, subYears, differenceInMonths, parseISO } from 'date-fns';
 
@@ -73,6 +74,15 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   }>({ groupTotals: {}, categoryTotals: {}, totalIncome: 0, totalExpenses: 0, monthsOfData: 0 });
 
   const [baseYear, setBaseYear] = useState<number>(year - 1);
+  const [appliedFlag, setAppliedFlag] = useState<'' | 'savings' | 'prior'>('');
+  const appliedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashApplied = useCallback((which: 'savings' | 'prior') => {
+    setAppliedFlag(which);
+    if (appliedTimer.current) clearTimeout(appliedTimer.current);
+    appliedTimer.current = setTimeout(() => setAppliedFlag(''), 1600);
+  }, []);
+
+  useEffect(() => () => { if (appliedTimer.current) clearTimeout(appliedTimer.current); }, []);
   const [priorYearData, setPriorYearData] = useState<{
     groupMonthly: Record<string, number>;
     categoryMonthly: Record<string, number>;
@@ -210,9 +220,11 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         .filter(b => (b.month === 0 || b.month === null) && !existingCategoryNames.has(b.category_name))
         .map(b => ({ category_name: b.category_name, amount: b.amount }));
       setFormCategoryBudgets(initialCategories);
-      fetchHistoricalData();
+      if (historicalData.monthsOfData === 0) {
+        fetchHistoricalData();
+      }
     }
-  }, [open, existingBudgets, fetchHistoricalData]);
+  }, [open, existingBudgets, fetchHistoricalData, historicalData.monthsOfData]);
 
   useEffect(() => {
     if (open) fetchPriorYearData(baseYear);
@@ -253,19 +265,24 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   const adjustedSuggestions = useMemo(() => {
     const { totalIncome, groupTotals, totalExpenses, monthsOfData } = historicalData;
     
+    if (monthsOfData <= 0) {
+      return {
+        adjusted: {} as Record<string, number>,
+        targetSavings: 0,
+        availableForExpenses: 0,
+        isScaling: false,
+        scaleFactor: 1,
+        annualizedIncome: 0,
+        annualizedExpenses: 0,
+        cutAmount: 0,
+        cutPercent: 0,
+        ready: false
+      };
+    }
+
     const annualFactor = 12 / monthsOfData;
     const annualizedIncome = totalIncome * annualFactor;
     const annualizedExpenses = totalExpenses * annualFactor;
-    
-    if (annualizedIncome === 0) return {
-      adjusted: groupTotals,
-      targetSavings: 0,
-      availableForExpenses: 0,
-      isScaling: false,
-      scaleFactor: 1,
-      annualizedIncome: 0,
-      annualizedExpenses: 0
-    };
 
     const targetSavings = savingsType === 'percent' 
       ? (annualizedIncome * (parseFloat(savingsValue) || 0) / 100)
@@ -279,6 +296,9 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       adjusted[g] = Math.round((groupTotals[g] || 0) * annualFactor * scaleFactor);
     });
 
+    const cutAmount = Math.max(0, annualizedExpenses - availableForExpenses);
+    const cutPercent = annualizedExpenses > 0 ? (cutAmount / annualizedExpenses) * 100 : 0;
+
     return {
       adjusted,
       targetSavings,
@@ -286,7 +306,10 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       isScaling: scaleFactor < 1,
       scaleFactor,
       annualizedIncome,
-      annualizedExpenses
+      annualizedExpenses,
+      cutAmount,
+      cutPercent,
+      ready: true
     };
   }, [historicalData, savingsType, savingsValue]);
 
@@ -351,6 +374,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   };
 
   const applyGroupSuggestion = (groupName: string) => {
+    if (!adjustedSuggestions.ready) return;
     const val = adjustedSuggestions.adjusted[groupName];
     setGroupAmount(groupName, val.toString());
     (categoriesByGroup[groupName] || []).forEach(cat => {
@@ -359,10 +383,12 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
   };
 
   const applyCategorySuggestion = (groupName: string, cat: string) => {
+    if (!adjustedSuggestions.ready) return;
     setCategoryAmount(cat, suggestCategory(groupName, cat).toString());
   };
 
   const applyAllSuggestions = () => {
+    if (!adjustedSuggestions.ready) return;
     const next = formBudgets.map(b => ({
       ...b,
       amount: (adjustedSuggestions.adjusted[b.category_name] || 0).toString()
@@ -373,7 +399,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       if (!group) return b;
       return { ...b, amount: suggestCategory(group, b.category_name).toString() };
     }));
-    showSuccess('Applied savings-adjusted suggestions');
+    flashApplied('savings');
   };
 
   const applyGroupPriorYear = (groupName: string) => {
@@ -406,7 +432,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       const val = priorYearData.categoryMonthly[b.category_name];
       return val ? { ...b, amount: val.toString() } : b;
     }));
-    showSuccess(`Applied ${baseYear} spending as budgets`);
+    flashApplied('prior');
   };
 
   return (
@@ -422,10 +448,16 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                   Savings Strategy ({year})
                 </DialogTitle>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  Set a savings goal to see how your budgets should be adjusted.
-                  <Badge variant="secondary" className="text-[10px] font-bold">
-                    Based on {historicalData.monthsOfData.toFixed(1)} months
-                  </Badge>
+                  Pick a savings goal — we'll shrink your category budgets to match.
+                  {historicalData.monthsOfData > 0 ? (
+                    <Badge variant="secondary" className="text-[10px] font-bold">
+                      Based on {historicalData.monthsOfData.toFixed(1)} months
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px] font-bold animate-pulse">
+                      Analyzing spending…
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
@@ -472,6 +504,9 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                       </Button>
                     </div>
                   </div>
+                  <p className="text-xs font-semibold text-white/60">
+                    {savingsType === 'percent' ? '% of your annual income' : 'per year'}
+                  </p>
                 </div>
 
                 <div className="space-y-3 p-4 rounded-2xl bg-black/10 backdrop-blur-sm border border-white/10">
@@ -483,6 +518,12 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                     <span>Available for Spend</span>
                     <span>{formatCurrency(adjustedSuggestions.availableForExpenses)}</span>
                   </div>
+                  {adjustedSuggestions.ready && adjustedSuggestions.scaleFactor < 1 && (
+                    <div className="flex justify-between items-center rounded-xl bg-red-500/25 border border-white/20 px-3 py-2 text-xs font-bold uppercase">
+                      <span className="opacity-90">Spending Cut Needed</span>
+                      <span className="tabular-nums">−{formatCurrency(adjustedSuggestions.cutAmount)} (−{Math.round(adjustedSuggestions.cutPercent)}%)</span>
+                    </div>
+                  )}
                   <div className="pt-2 border-t border-white/10 flex justify-between items-center">
                     <span className="text-xs font-semibold opacity-70">Projected Annual Income</span>
                     <span className="font-bold">{formatCurrency(adjustedSuggestions.annualizedIncome)}</span>
@@ -499,12 +540,14 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
             <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
             </h3>
-            {adjustedSuggestions.scaleFactor !== 1 && (
+            {adjustedSuggestions.ready && adjustedSuggestions.scaleFactor !== 1 && (
               <Badge variant="outline" className={cn(
                 "text-xs font-semibold opacity-70",
                 adjustedSuggestions.scaleFactor < 1 ? "text-danger border-danger-border bg-danger-bg" : "text-profit border-profit-border bg-profit-bg"
               )}>
-                {adjustedSuggestions.scaleFactor < 1 ? 'Spending Cut Required' : 'Spending Increase Possible'}
+                {adjustedSuggestions.scaleFactor < 1
+                  ? `Cut ${Math.round(adjustedSuggestions.cutPercent)}% from every budget`
+                  : 'Room to spend more'}
               </Badge>
             )}
             <div className="flex items-center gap-2 px-2 py-1 rounded-xl bg-muted/50 border">
@@ -528,29 +571,34 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
               disabled={!priorYearData.hasData}
               className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-bold uppercase"
             >
-              <History className="w-3 h-3" />
-              Use {baseYear} Actuals
+              {appliedFlag === 'prior' ? <Check className="w-3 h-3" /> : <History className="w-3 h-3" />}
+              {appliedFlag === 'prior' ? 'Applied' : `Use ${baseYear} Actuals`}
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={applyAllSuggestions}
-              disabled={analyzing}
+              disabled={analyzing || !adjustedSuggestions.ready}
               className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-bold uppercase"
             >
-              {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              Apply Savings Plan
+              {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : appliedFlag === 'savings' ? <Check className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+              {analyzing ? 'Analyzing' : appliedFlag === 'savings' ? 'Applied' : 'Apply Savings Plan'}
             </Button>
           </div>
         </div>
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
+          <div className="px-3 py-2 rounded-xl bg-muted/40 border text-xs font-semibold text-muted-foreground">
+            Suggested = your recent annual spend, scaled down so it fits your savings goal. Tap{' '}
+            <span className="text-primary">Apply Savings Plan</span> to fill every budget at once, or edit each
+            group and category below.
+          </div>
           {formBudgets.map((budget, i) => {
             const groupName = budget.category_name;
-            const suggestion = adjustedSuggestions.adjusted[groupName] || 0;
-            const historicalAnnual = (historicalData.groupTotals[groupName] || 0) * (12 / historicalData.monthsOfData);
-            const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
+            const suggestion = adjustedSuggestions.ready ? (adjustedSuggestions.adjusted[groupName] || 0) : 0;
+            const historicalAnnual = (historicalData.groupTotals[groupName] || 0) * (12 / Math.max(1, historicalData.monthsOfData));
+            const isDifferent = adjustedSuggestions.ready && Math.abs(parseFloat(budget.amount) - suggestion) > 1;
             const priorYearMonthly = priorYearData.groupMonthly[groupName] || 0;
             const isPriorYear = Math.abs(parseFloat(budget.amount) - priorYearMonthly) <= 1;
             const subCategories = categoriesByGroup[groupName] || [];
@@ -585,13 +633,14 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                     </div>
                     <button 
                       onClick={() => applyGroupSuggestion(groupName)}
+                      disabled={!adjustedSuggestions.ready}
                       className={cn(
                         "flex flex-col items-end p-1.5 rounded-lg border transition-all",
                         isDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
                       )}
                     >
                       <span className="text-xs font-semibold opacity-70">Suggested</span>
-                      <span className="text-xs font-bold">{formatCurrency(suggestion)}</span>
+                      <span className="text-xs font-bold">{adjustedSuggestions.ready ? formatCurrency(suggestion) : '—'}</span>
                     </button>
                   </div>
                 </div>
@@ -634,9 +683,9 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                   )}>
                     {subCategories.map(cat => {
                       const catSuggestion = suggestCategory(groupName, cat);
-                      const catHistoricalAnnual = (historicalData.categoryTotals[cat] || 0) * (12 / historicalData.monthsOfData);
+                      const catHistoricalAnnual = (historicalData.categoryTotals[cat] || 0) * (12 / Math.max(1, historicalData.monthsOfData));
                       const catPriorYear = priorYearData.categoryMonthly[cat] || 0;
-                      const catIsDifferent = Math.abs(parseFloat(catBudgetAmount(cat)) - catSuggestion) > 1;
+                      const catIsDifferent = adjustedSuggestions.ready && Math.abs(parseFloat(catBudgetAmount(cat)) - catSuggestion) > 1;
                       const catIsPriorYear = catPriorYear > 0 && Math.abs(parseFloat(catBudgetAmount(cat)) - catPriorYear) <= 1;
                       return (
                         <div key={cat} className="flex flex-col gap-2 p-3 rounded-xl bg-muted/20 border border-transparent hover:border-primary/20 transition-all">
@@ -649,13 +698,14 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                               <button
                                 type="button"
                                 onClick={() => applyCategorySuggestion(groupName, cat)}
+                                disabled={!adjustedSuggestions.ready}
                                 className={cn(
                                   "flex flex-col items-end px-2 py-1 rounded-lg border transition-all",
                                   catIsDifferent ? "bg-primary/5 border-primary/20 text-primary hover:bg-primary/10" : "bg-muted/50 border-transparent opacity-50"
                                 )}
                               >
                                 <span className="text-[9px] font-semibold opacity-70">Suggested</span>
-                                <span className="text-[10px] font-bold">{formatCurrency(catSuggestion)}</span>
+                                <span className="text-[10px] font-bold">{adjustedSuggestions.ready ? formatCurrency(catSuggestion) : '—'}</span>
                               </button>
                             </div>
                           </div>
