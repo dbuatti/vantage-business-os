@@ -256,6 +256,9 @@ const MasterTrackerMatrix = ({
     return allGroups;
   }, [categories, intervals, transactions, budgets, view, catToGroup, searchQuery, year]);
 
+  const [sortMode, setSortMode] = useState<SortMode>('alpha');
+  const isGlobalSort = sortMode === 'spent-desc-global' || sortMode === 'spent-asc-global';
+
   const displayGroups = useMemo(() => {
     const filtered = allGroups
       .map(g => ({
@@ -312,8 +315,6 @@ const MasterTrackerMatrix = ({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState({ left: false, right: false });
-  const [sortMode, setSortMode] = useState<SortMode>('alpha');
-  const isGlobalSort = sortMode === 'spent-desc-global' || sortMode === 'spent-asc-global';
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
