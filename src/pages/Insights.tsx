@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 import { formatCurrency } from '@/utils/format';
 import SubscriptionAudit from '@/components/SubscriptionAudit';
+import PageLoading from '@/components/PageLoading';
 
 interface Insight {
   title: string;
@@ -258,7 +259,7 @@ const Insights = () => {
     return { color: 'text-danger', ring: 'stroke-danger', badge: 'bg-danger-bg text-danger' };
   };
 
-  if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (authLoading || loading) return <PageLoading label="Loading AI Insights" />;
 
   const displayScore = insights?.score || 0;
   const displayHeadline = insights?.headline || insights?.summary || "Financial Analysis Ready";

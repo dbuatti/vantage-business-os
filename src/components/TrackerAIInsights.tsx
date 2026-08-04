@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { showError } from '@/utils/toast';
+import { formatCurrency } from '@/utils/format';
 import { isSameMonth, parseISO } from 'date-fns';
 
 interface Prediction {
@@ -63,6 +64,89 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year, focusM
     ? `${focusMonth.toLocaleString('en-US', { month: 'long' })} ${focusMonth.getFullYear()}`
     : year.toString();
 
+  const buildLocalInsights = (): InsightsData => {
+    const spentByCat: Record<string, number> = {};
+    let totalSpent = 0;
+    monthTransactions.forEach(t => {
+      const abs = Math.abs(t.amount);
+      spentByCat[t.category_1] = (spentByCat[t.category_1] || 0) + abs;
+      totalSpent += abs;
+    });
+
+    const catToGroup: Record<string, string> = {};
+    categoryGroups.forEach(cg => { catToGroup[cg.category_name] = cg.group_name; });
+
+    const isYearly = !focusMonth;
+    const budgetFor = (cat: string) => {
+      const b = budgets.find(x => x.category_name === cat && (x.month === 0 || x.month === null));
+      if (!b) return 0;
+      return isYearly ? b.amount : b.amount / 12;
+    };
+
+    const groupSpent: Record<string, number> = {};
+    const groupBudget: Record<string, number> = {};
+    Object.entries(spentByCat).forEach(([cat, spent]) => {
+      const g = catToGroup[cat] || 'Other';
+      groupSpent[g] = (groupSpent[g] || 0) + spent;
+      groupBudget[g] = (groupBudget[g] || 0) + budgetFor(cat);
+    });
+
+    const totalBudget = Object.values(groupBudget).reduce((s, x) => s + x, 0);
+    const percent = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+    const status = totalBudget > 0
+      ? percent > 100 ? 'critical' : percent >= 90 ? 'at_risk' : 'on_track'
+      : 'on_track';
+
+    const summary = totalBudget > 0
+      ? `In ${periodLabel} you've spent ${formatCurrency(totalSpent)} against a budget of ${formatCurrency(totalBudget)} — that's ${Math.round(percent)}% utilized.`
+      : `In ${periodLabel} you've spent ${formatCurrency(totalSpent)} across ${Object.keys(spentByCat).length} categories. Add budgets to get utilization insights.`;
+
+    const offenders = Object.entries(spentByCat)
+      .map(([cat, spent]) => {
+        const budget = budgetFor(cat);
+        return { cat, spent, budget, percent: budget > 0 ? (spent / budget) * 100 : 0 };
+      })
+      .filter(o => o.budget > 0 && o.percent > 100)
+      .sort((a, b) => b.percent - a.percent)
+      .slice(0, 3);
+
+    const overGroups = Object.entries(groupBudget)
+      .map(([g, budget]) => {
+        const spent = groupSpent[g] || 0;
+        return { g, budget, spent, percent: budget > 0 ? (spent / budget) * 100 : 0 };
+      })
+      .filter(o => o.budget > 0 && o.percent > 100)
+      .sort((a, b) => b.percent - a.percent);
+
+    const predictions = offenders.map(o => ({
+      severity: o.percent > 150 ? 'high' : 'medium',
+      category: o.cat,
+      prediction: `${o.cat} is at ${Math.round(o.percent)}% of budget (${formatCurrency(o.spent)} vs ${formatCurrency(o.budget)}).`
+    }));
+
+    const tacticalAdvice: TacticalAdvice[] = [];
+    overGroups.forEach(g => {
+      tacticalAdvice.push({
+        title: `Slow ${g.g} spending`,
+        advice: `You're ${Math.round(g.percent)}% through the ${g.g} budget. Trim discretionary purchases to get back on track.`,
+        impact: `${formatCurrency(g.spent - g.budget)} over budget`
+      });
+    });
+    if (overGroups.length === 0 && totalBudget > 0) {
+      tacticalAdvice.push({
+        title: 'On track',
+        advice: 'Your spending is within budget. Keep the current pace.',
+        impact: `${Math.max(0, Math.round(100 - percent))}% budget remaining`
+      });
+    }
+
+    const coachingNote = overGroups.length > 0
+      ? `Focus on ${overGroups[0].g} first — it's your biggest overrun this ${isYearly ? 'year' : 'month'}.`
+      : 'No groups are over budget. Consider raising your savings target.';
+
+    return { status, summary, predictions, tacticalAdvice, coachingNote };
+  };
+
   const getInsights = async () => {
     setLoading(true);
     try {
@@ -78,7 +162,8 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year, focusM
       if (error) throw error;
       setInsights(data);
     } catch (error: unknown) {
-      showError('Failed to get AI advice. Please try again in a minute.');
+      setInsights(buildLocalInsights());
+      showError('Live AI is unavailable — showing a local analysis instead.');
     } finally {
       setLoading(false);
     }

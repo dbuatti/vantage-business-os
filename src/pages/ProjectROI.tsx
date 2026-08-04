@@ -22,11 +22,11 @@ import {
   AlertCircle,
   AlertTriangle,
   CheckCircle2,
-  Loader2,
   ChevronRight,
   Brain
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import PageLoading from '@/components/PageLoading';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
 import { showError } from '@/utils/toast';
@@ -117,7 +117,7 @@ const ProjectROI = () => {
     return { totalRevenue, totalHours, avgRate, avgEfficiency };
   }, [metrics]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <PageLoading label="Loading Project ROI" />;
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">

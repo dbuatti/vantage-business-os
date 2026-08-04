@@ -1,15 +1,15 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { SettingsProvider } from "./components/SettingsProvider";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import DashboardLayout from "./components/DashboardLayout";
-import { Loader2 } from "lucide-react";
+import PageLoading from "./components/PageLoading";
 
 const Transactions = lazy(() => import("./pages/Transactions"));
 const AccountantReport = lazy(() => import("./pages/AccountantReport"));
@@ -44,11 +44,45 @@ const queryClient = new QueryClient({
   },
 });
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-  </div>
-);
+const ROUTE_TITLES: Array<[RegExp, string]> = [
+  [/^\/login$/, "Login"],
+  [/^\/portal\//, "Accountant Portal"],
+  [/^\/$/, "Command Center"],
+  [/^\/master-tracker$/, "Master Tracker"],
+  [/^\/tax-averaging$/, "Tax Averaging"],
+  [/^\/weekly-routine$/, "Weekly Routine"],
+  [/^\/transactions$/, "Transactions"],
+  [/^\/insights$/, "AI Insights"],
+  [/^\/subscriptions$/, "Subscriptions"],
+  [/^\/expense-story$/, "Expense Story"],
+  [/^\/productivity$/, "Productivity"],
+  [/^\/project-roi$/, "Project ROI"],
+  [/^\/time-glance$/, "Time Glance"],
+  [/^\/export$/, "Export Center"],
+  [/^\/accountant-report$/, "Accountant Report"],
+  [/^\/accountant-portal$/, "Accountant Portal"],
+  [/^\/clients\/.+/, "Client Details"],
+  [/^\/clients$/, "Clients"],
+  [/^\/invoices\/.+/, "Invoice Details"],
+  [/^\/invoices$/, "Invoices"],
+  [/^\/products$/, "Catalog"],
+  [/^\/tickets\/.+/, "Ticket Details"],
+  [/^\/tickets$/, "Tickets"],
+  [/^\/settings$/, "Settings"],
+];
+
+const PageTitle = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const match = ROUTE_TITLES.find(([re]) => re.test(pathname));
+    document.title = match
+      ? `${match[1]} | Vantage`
+      : "Vantage | The Intelligent Business OS";
+  }, [pathname]);
+  return null;
+};
+
+const LoadingFallback = () => <PageLoading label="Loading Vantage" />;
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
@@ -71,6 +105,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <ErrorBoundary>
+              <PageTitle />
               <Routes>
                 <Route path="/login" element={<Suspense fallback={<LoadingFallback />}><FadeIn><Login /></FadeIn></Suspense>} />
                 

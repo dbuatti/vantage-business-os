@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import CashFlowForecast from '@/components/CashFlowForecast';
 import AnimatedNumber from '@/components/AnimatedNumber';
 import SmartAlerts from '@/components/SmartAlerts';
+import PageLoading from '@/components/PageLoading';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { 
   TrendingUp, 
@@ -23,7 +24,6 @@ import {
   CreditCard,
   CalendarCheck,
   ChevronRight,
-  Loader2,
   Target
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -213,7 +213,7 @@ const Index = () => {
 
   const greeting = getGreeting();
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) return <PageLoading label="Loading Command Center" />;
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
