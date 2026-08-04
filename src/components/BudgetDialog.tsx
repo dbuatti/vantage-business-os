@@ -67,6 +67,62 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
     monthsOfData: number;
   }>({ groupTotals: {}, totalIncome: 0, totalExpenses: 0, monthsOfData: 0 });
 
+  const [baseYear, setBaseYear] = useState<number>(year - 1);
+  const [priorYearData, setPriorYearData] = useState<{
+    groupMonthly: Record<string, number>;
+    totalIncome: number;
+    totalExpenses: number;
+    hasData: boolean;
+  }>({ groupMonthly: {}, totalIncome: 0, totalExpenses: 0, hasData: false });
+
+  const fetchPriorYearData = useCallback(async (targetYear: number) => {
+    if (!session) return;
+    try {
+      const start = `${targetYear}-01-01`;
+      const end = `${targetYear}-12-31`;
+
+      const [txnsRes, groupsRes] = await Promise.all([
+        supabase
+          .from('finance_transactions')
+          .select('amount, category_1')
+          .neq('category_1', 'Account')
+          .lt('amount', 0)
+          .gte('transaction_date', start)
+          .lte('transaction_date', end),
+        supabase.from('category_groups').select('*')
+      ]);
+
+      if (txnsRes.error) throw txnsRes.error;
+
+      const catToGroup: Record<string, string> = {};
+      groupsRes.data?.forEach(cg => { catToGroup[cg.category_name] = cg.group_name; });
+
+      const groupTotals: Record<string, number> = {};
+      GROUPS.forEach(g => groupTotals[g] = 0);
+
+      let totalExpenses = 0;
+      txnsRes.data?.forEach(t => {
+        const absAmount = Math.abs(t.amount);
+        totalExpenses += absAmount;
+        const group = catToGroup[t.category_1];
+        if (group && groupTotals[group] !== undefined) groupTotals[group] += absAmount;
+      });
+
+      const groupMonthly: Record<string, number> = {};
+      GROUPS.forEach(g => groupMonthly[g] = Math.round((groupTotals[g] || 0) / 12));
+
+      setPriorYearData({
+        groupMonthly,
+        totalIncome: 0,
+        totalExpenses,
+        hasData: txnsRes.data !== null && txnsRes.data.length > 0,
+      });
+    } catch (error) {
+      console.error("Error fetching prior year data:", error);
+      setPriorYearData({ groupMonthly: {}, totalIncome: 0, totalExpenses: 0, hasData: false });
+    }
+  }, [session]);
+
   const fetchHistoricalData = useCallback(async () => {
     if (!session) return;
     setAnalyzing(true);
@@ -131,6 +187,10 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       fetchHistoricalData();
     }
   }, [open, existingBudgets, fetchHistoricalData]);
+
+  useEffect(() => {
+    if (open) fetchPriorYearData(baseYear);
+  }, [open, baseYear, fetchPriorYearData]);
 
   const adjustedSuggestions = useMemo(() => {
     const { totalIncome, groupTotals, totalExpenses, monthsOfData } = historicalData;
@@ -219,6 +279,30 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
     showSuccess('Applied savings-adjusted suggestions');
   };
 
+  const applyPriorYear = (groupName: string) => {
+    const val = priorYearData.groupMonthly[groupName];
+    if (!val) return;
+    const next = [...formBudgets];
+    const idx = next.findIndex(b => b.category_name === groupName);
+    if (idx !== -1) {
+      next[idx].amount = val.toString();
+      setFormBudgets(next);
+    }
+  };
+
+  const applyAllPriorYear = () => {
+    if (!priorYearData.hasData) {
+      showError(`No spending data found for ${baseYear}`);
+      return;
+    }
+    const next = formBudgets.map(b => ({
+      ...b,
+      amount: (priorYearData.groupMonthly[b.category_name] || 0).toString()
+    }));
+    setFormBudgets(next);
+    showSuccess(`Applied ${baseYear} spending as budgets`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl rounded-2xl p-0 overflow-hidden border-0 shadow-sm max-h-[90vh] flex flex-col">
@@ -304,8 +388,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         </div>
         
         {/* Sub-header - Fixed */}
-        <div className="px-6 py-4 flex items-center justify-between shrink-0 border-b bg-background">
-          <div className="flex items-center gap-4">
+        <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 border-b bg-background">
+          <div className="flex flex-wrap items-center gap-4">
             <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <ArrowDown className="w-3 h-3" /> Adjusted Budget Targets
             </h3>
@@ -317,17 +401,41 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                 {adjustedSuggestions.scaleFactor < 1 ? 'Spending Cut Required' : 'Spending Increase Possible'}
               </Badge>
             )}
+            <div className="flex items-center gap-2 px-2 py-1 rounded-xl bg-muted/50 border">
+              <History className="w-3.5 h-3.5 text-muted-foreground" />
+              <select
+                value={baseYear}
+                onChange={(e) => setBaseYear(parseInt(e.target.value))}
+                className="bg-transparent text-xs font-semibold text-muted-foreground outline-none"
+                aria-label="Base budget on year"
+              >
+                <option value={year - 1}>Base on {year - 1}</option>
+                <option value={year - 2}>Base on {year - 2}</option>
+              </select>
+            </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={applyAllSuggestions}
-            disabled={analyzing}
-            className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-bold uppercase"
-          >
-            {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-            Apply All Suggestions
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={applyAllPriorYear}
+              disabled={!priorYearData.hasData}
+              className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-bold uppercase"
+            >
+              <History className="w-3 h-3" />
+              Use {baseYear} Actuals
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={applyAllSuggestions}
+              disabled={analyzing}
+              className="rounded-xl gap-2 border-primary/20 text-primary hover:bg-primary/5 h-8 text-[10px] font-bold uppercase"
+            >
+              {analyzing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              Apply Savings Plan
+            </Button>
+          </div>
         </div>
 
         {/* Scrollable Content Area */}
@@ -336,6 +444,8 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
             const suggestion = adjustedSuggestions.adjusted[budget.category_name] || 0;
             const historicalAnnual = (historicalData.groupTotals[budget.category_name] || 0) * (12 / historicalData.monthsOfData);
             const isDifferent = Math.abs(parseFloat(budget.amount) - suggestion) > 1;
+            const priorYearMonthly = priorYearData.groupMonthly[budget.category_name] || 0;
+            const isPriorYear = Math.abs(parseFloat(budget.amount) - priorYearMonthly) <= 1;
 
             return (
               <div key={budget.category_name} className="group p-4 rounded-2xl bg-card border shadow-sm hover:border-primary/30 transition-all">
@@ -372,6 +482,24 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
                     }}
                     className="h-12 pl-8 rounded-xl font-black text-lg bg-muted/30 border-transparent focus:bg-background focus:border-primary/30 transition-all"
                   />
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-muted-foreground">
+                    {baseYear} actual: <span className="font-semibold text-foreground">{formatCurrency(priorYearMonthly)}</span>/mo
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => applyPriorYear(budget.category_name)}
+                    disabled={!priorYearData.hasData || priorYearMonthly === 0}
+                    className={cn(
+                      "h-7 rounded-lg px-2 text-[10px] font-bold gap-1.5",
+                      isPriorYear ? "text-primary" : "text-muted-foreground hover:text-primary"
+                    )}
+                  >
+                    <History className="w-3 h-3" />
+                    Use {baseYear}
+                  </Button>
                 </div>
               </div>
             );
