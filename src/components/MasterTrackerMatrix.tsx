@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -31,6 +31,7 @@ import { TrackerView } from '@/pages/MasterTracker';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
 import { Progress } from './ui/progress';
+import { Search } from 'lucide-react';
 
 interface TransactionLike {
   id?: string;
@@ -243,17 +244,46 @@ const MasterTrackerMatrix = ({
     [totalsByColumn]
   );
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState({ left: false, right: false });
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setScrolled({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4
+    });
+  }, []);
+
+  useEffect(() => {
+    handleScroll();
+    window.addEventListener('resize', handleScroll);
+    return () => window.removeEventListener('resize', handleScroll);
+  }, [handleScroll]);
+
+  const leftStickyShadow = scrolled.left ? 'shadow-[6px_0_8px_-4px_rgba(0,0,0,0.12)]' : '';
+  const rightStickyShadow = scrolled.right ? 'shadow-[-6px_0_8px_-4px_rgba(0,0,0,0.12)]' : '';
+
   return (
     <div className={cn("relative", fullscreen && "h-full")}>
       {/* Desktop Matrix View */}
-      <div className={cn(
-        "hidden md:block overflow-auto border rounded-2xl",
-        fullscreen ? "h-full max-h-none" : "max-h-[700px]"
-      )}>
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className={cn(
+          "hidden md:block overflow-auto border rounded-2xl",
+          fullscreen ? "h-full max-h-none" : "max-h-[700px]"
+        )}
+      >
         <Table className="border-collapse">
           <TableHeader className="sticky top-0 z-40 bg-background shadow-sm">
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="sticky left-0 bg-muted/50 z-50 min-w-[220px] text-xs font-semibold text-muted-foreground border-r">Category</TableHead>
+              <TableHead className={cn(
+                "sticky left-0 z-50 min-w-[220px] text-xs font-semibold text-muted-foreground border-r",
+                "bg-[color-mix(in_srgb,hsl(var(--background)),hsl(var(--muted))_50%)]",
+                leftStickyShadow
+              )}>Category</TableHead>
               {intervals.map((interval, i) => {
                 const isHighlighted = highlightMonth && view === 'monthly' && isSameMonth(interval, highlightMonth);
                 return (
@@ -268,12 +298,20 @@ const MasterTrackerMatrix = ({
                   </TableHead>
                 );
               })}
-              <TableHead className="sticky right-0 bg-muted/50 z-50 min-w-[130px] text-center text-xs font-semibold text-muted-foreground border-l">Total</TableHead>
+              <TableHead className={cn(
+                "sticky right-0 z-50 min-w-[130px] text-center text-xs font-semibold text-muted-foreground border-l",
+                "bg-[color-mix(in_srgb,hsl(var(--background)),hsl(var(--muted))_50%)]",
+                rightStickyShadow
+              )}>Total</TableHead>
             </TableRow>
 
             {/* Column totals row */}
             <TableRow className="bg-muted/30 hover:bg-muted/30">
-              <TableCell className="sticky left-0 bg-muted/30 z-50 min-w-[220px] text-xs font-black uppercase tracking-widest text-foreground border-r">
+              <TableCell className={cn(
+                "sticky left-0 z-50 min-w-[220px] text-xs font-black uppercase tracking-widest text-foreground border-r",
+                "bg-[color-mix(in_srgb,hsl(var(--background)),hsl(var(--muted))_30%)]",
+                leftStickyShadow
+              )}>
                 All Categories
               </TableCell>
               {totalsByColumn.map((col, i) => {
@@ -294,7 +332,11 @@ const MasterTrackerMatrix = ({
                   </TableCell>
                 );
               })}
-              <TableCell className="sticky right-0 bg-muted/30 z-50 text-center border-l">
+              <TableCell className={cn(
+                "sticky right-0 z-50 text-center border-l",
+                "bg-[color-mix(in_srgb,hsl(var(--background)),hsl(var(--muted))_30%)]",
+                rightStickyShadow
+              )}>
                 <span className="font-black text-sm tabular-nums">{formatCurrency(grandTotal)}</span>
               </TableCell>
             </TableRow>
@@ -309,7 +351,11 @@ const MasterTrackerMatrix = ({
                 <React.Fragment key={group.groupName}>
                   {/* Group Header Row */}
                   <TableRow className="bg-primary/5 hover:bg-primary/10 border-y-2 border-primary/10 transition-colors">
-                    <TableCell className="sticky left-0 bg-primary/5 z-30 text-xs font-semibold uppercase tracking-widest text-primary flex items-center gap-2 border-r">
+                    <TableCell className={cn(
+                      "sticky left-0 z-30 text-xs font-semibold uppercase tracking-widest text-primary flex items-center gap-2 border-r",
+                      "bg-[color-mix(in_srgb,hsl(var(--background)),hsl(var(--primary))_5%)]",
+                      leftStickyShadow
+                    )}>
                       <span className="text-lg">{group.icon}</span>
                       {group.groupName}
                     </TableCell>
@@ -333,7 +379,11 @@ const MasterTrackerMatrix = ({
                         </TableCell>
                       );
                     })}
-                    <TableCell className="sticky right-0 bg-primary/5 z-30 text-center border-l">
+                    <TableCell className={cn(
+                      "sticky right-0 z-30 text-center border-l",
+                      "bg-[color-mix(in_srgb,hsl(var(--background)),hsl(var(--primary))_5%)]",
+                      rightStickyShadow
+                    )}>
                       <div className="flex flex-col items-center gap-1">
                         <span className="font-bold text-sm tabular-nums">{formatCurrency(groupTotal)}</span>
                         {groupBudgetTotal > 0 && (
@@ -349,52 +399,62 @@ const MasterTrackerMatrix = ({
                   </TableRow>
 
                   {/* Category Rows */}
-                  {group.categoryRows.map((row) => (
-                    <TableRow key={row.category} className="hover:bg-muted/30 transition-colors group border-b">
-                      <TableCell className="sticky left-0 bg-background z-30 font-bold text-sm border-r pl-8 group-hover:bg-muted/30 transition-colors">
+                  {group.categoryRows.map((row, rowIndex) => (
+                    <TableRow key={row.category} className={cn(
+                      "hover:bg-muted/30 transition-colors group border-b",
+                      rowIndex % 2 === 1 && "bg-muted/[0.02]"
+                    )}>
+                      <TableCell className={cn("sticky left-0 bg-background z-30 font-bold text-sm border-r pl-8 group-hover:bg-muted/30 transition-colors", leftStickyShadow)}>
                         {row.category}
                       </TableCell>
-                      {row.intervalStats.map((stat, i) => (
-                        <TableCell 
-                          key={i} 
-                          className="p-4 border-r last:border-r-0 cursor-pointer hover:bg-primary/[0.05] transition-colors"
-                          onClick={() => onCellClick(row.category, stat.label, stat.txns, stat.budget)}
-                        >
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className={cn("font-bold tabular-nums text-sm", stat.spent > 0 ? "text-foreground" : "text-muted-foreground/20")}>
-                                {stat.spent > 0 ? formatCurrency(stat.spent) : '—'}
-                              </span>
-                              {stat.budget > 0 && (
-                                <span className={cn(
-                                  "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
-                                  stat.buffer >= 0 ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
-                                )}>
-                                  {stat.buffer >= 0 ? 'Safe' : 'Over'}
+                      {row.intervalStats.map((stat, i) => {
+                        const isHighlightedMonth = view === 'monthly' && highlightMonth && isSameMonth(intervals[i], highlightMonth);
+                        return (
+                          <TableCell 
+                            key={i} 
+                            className={cn(
+                              "p-4 border-r last:border-r-0 cursor-pointer hover:bg-primary/[0.05] transition-colors",
+                              rowIndex % 2 === 1 && "bg-muted/[0.02]",
+                              isHighlightedMonth && "bg-primary/[0.03]"
+                            )}
+                            onClick={() => onCellClick(row.category, stat.label, stat.txns, stat.budget)}
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className={cn("font-bold tabular-nums text-sm", stat.spent > 0 ? "text-foreground" : "text-muted-foreground/20")}>
+                                  {stat.spent > 0 ? formatCurrency(stat.spent) : '—'}
                                 </span>
+                                {stat.budget > 0 && (
+                                  <span className={cn(
+                                    "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
+                                    stat.buffer >= 0 ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
+                                  )}>
+                                    {stat.buffer >= 0 ? 'Safe' : 'Over'}
+                                  </span>
+                                )}
+                              </div>
+
+                              {stat.budget > 0 && (
+                                <div className="space-y-1">
+                                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className={cn("h-full rounded-full transition-all duration-500", stat.percent > 100 ? "bg-danger" : "bg-primary")}
+                                      style={{ width: `${Math.min(100, stat.percent)}%` }} 
+                                    />
+                                  </div>
+                                  <div className="flex justify-between text-xs font-semibold text-muted-foreground/60">
+                                    <span>Buffer:</span>
+                                    <span className={cn(stat.buffer >= 0 ? "text-profit" : "text-danger")}>
+                                      {formatCurrency(stat.buffer)}
+                                    </span>
+                                  </div>
+                                </div>
                               )}
                             </div>
-
-                            {stat.budget > 0 && (
-                              <div className="space-y-1">
-                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className={cn("h-full rounded-full transition-all duration-500", stat.percent > 100 ? "bg-danger" : "bg-primary")}
-                                    style={{ width: `${Math.min(100, stat.percent)}%` }} 
-                                  />
-                                </div>
-                                <div className="flex justify-between text-xs font-semibold text-muted-foreground/60">
-                                  <span>Buffer:</span>
-                                  <span className={cn(stat.buffer >= 0 ? "text-profit" : "text-danger")}>
-                                    {formatCurrency(stat.buffer)}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      ))}
-                      <TableCell className="sticky right-0 bg-background z-30 text-center border-l group-hover:bg-muted/30 transition-colors">
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className={cn("sticky right-0 bg-background z-30 text-center border-l group-hover:bg-muted/30 transition-colors", rightStickyShadow)}>
                         <div className="flex items-center justify-center gap-2">
                           <span className="font-bold tabular-nums text-sm">{formatCurrency(row.rowTotal)}</span>
                           {row.rowBudgetTotal > 0 && (
@@ -414,10 +474,36 @@ const MasterTrackerMatrix = ({
             })}
           </TableBody>
         </Table>
+        {displayGroups.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="p-3 rounded-xl bg-muted/50 mb-3">
+              <Search className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-bold text-foreground">No categories found</p>
+            <p className="text-xs font-medium text-muted-foreground mt-1">
+              {showOverBudgetOnly
+                ? 'No categories are over budget in this view.'
+                : 'Try adjusting your search or filters.'}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-8">
+        {displayGroups.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="p-3 rounded-xl bg-muted/50 mb-3">
+              <Search className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <p className="text-sm font-bold text-foreground">No categories found</p>
+            <p className="text-xs font-medium text-muted-foreground mt-1">
+              {showOverBudgetOnly
+                ? 'No categories are over budget in this view.'
+                : 'Try adjusting your search or filters.'}
+            </p>
+          </div>
+        )}
         {displayGroups.map((group) => (
           <div key={group.groupName} className="space-y-4">
             <div className="flex items-center gap-2 px-2">
