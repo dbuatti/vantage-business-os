@@ -39,6 +39,7 @@ import {
 import { showError, showSuccess } from '@/utils/toast';
 import { applyBrandColor } from '@/utils/theme';
 import AccountantSettings from '@/components/AccountantSettings';
+import PageLoading from '@/components/PageLoading';
 
 const Settings = () => {
   const { session } = useAuth();
@@ -119,7 +120,7 @@ const Settings = () => {
     showSuccess('Link copied to clipboard');
   };
 
-  if (loading) return null;
+  if (loading) return <PageLoading label="Loading Settings" />;
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">

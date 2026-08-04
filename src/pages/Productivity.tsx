@@ -27,6 +27,7 @@ import {
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
 import TimeLogChart from '@/components/TimeLogChart';
+import PageLoading from '@/components/PageLoading';
 import { showError } from '@/utils/toast';
 
 const Productivity = () => {
@@ -100,7 +101,7 @@ const Productivity = () => {
     return { totalHours, totalEstimated, resolvedCount, topClients, categoryHours, weeklyData };
   }, [tickets, invoices]);
 
-  if (loading) return null;
+  if (loading) return <PageLoading label="Loading Productivity" />;
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">

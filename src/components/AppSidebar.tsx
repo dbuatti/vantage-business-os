@@ -205,7 +205,7 @@ const AppSidebar = () => {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-xs font-semibold text-muted-foreground">System Status</span>
           </div>
-          <p className="text-[11px] font-medium leading-tight">All systems operational. Data synced 1m ago.</p>
+          <p className="text-[11px] font-medium leading-tight">All systems operational. Real-time sync enabled.</p>
         </div>
 
         <SidebarMenu>
