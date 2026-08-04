@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { showError } from '@/utils/toast';
+import { isSameMonth, parseISO } from 'date-fns';
 
 interface Prediction {
   severity: string;
@@ -47,21 +48,30 @@ interface TrackerAIInsightsProps {
   categoryGroups: Array<{ category_name: string; group_name: string }>;
   budgets: Array<{ category_name: string; amount: number; month: number | null }>;
   year: number;
+  focusMonth?: Date | null;
 }
 
-const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: TrackerAIInsightsProps) => {
+const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year, focusMonth }: TrackerAIInsightsProps) => {
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<InsightsData | null>(null);
+
+  const monthTransactions = focusMonth
+    ? transactions.filter(t => isSameMonth(parseISO(t.transaction_date), focusMonth))
+    : transactions;
+
+  const periodLabel = focusMonth
+    ? `${focusMonth.toLocaleString('en-US', { month: 'long' })} ${focusMonth.getFullYear()}`
+    : year.toString();
 
   const getInsights = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('financial-insights', {
         body: {
-          transactions: transactions.slice(0, 300),
+          transactions: monthTransactions.slice(0, 300),
           categoryGroups,
           budgets,
-          period: year.toString()
+          period: periodLabel
         }
       });
 
@@ -86,7 +96,7 @@ const TrackerAIInsights = ({ transactions, categoryGroups, budgets, year }: Trac
           <div className="space-y-2">
             <h3 className="text-2xl font-bold tracking-tight">AI Financial Coach</h3>
             <p className="text-white/70 max-w-md mx-auto">
-              I'll analyze your {transactions.length} transactions against your {budgets.length} budget targets to help you stay on track.
+              I'll analyze your {monthTransactions.length} transactions in {periodLabel} against your {budgets.length} budget targets to help you stay on track.
             </p>
           </div>
           <Button 

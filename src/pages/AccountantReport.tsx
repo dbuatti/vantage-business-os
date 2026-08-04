@@ -31,6 +31,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { 
@@ -403,7 +404,10 @@ const AccountantReport = () => {
 
         <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
           <DialogContent className="sm:max-w-md rounded-2xl">
-            <DialogHeader><DialogTitle>Edit Transaction</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Edit Transaction</DialogTitle>
+              <DialogDescription>Update the details of this transaction.</DialogDescription>
+            </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-xl">
                 📅 {editingTransaction && format(parseISO(editingTransaction.transaction_date), 'MMMM dd, yyyy')}

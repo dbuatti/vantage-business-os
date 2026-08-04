@@ -55,6 +55,7 @@ interface MasterTrackerMatrixProps {
   year: number;
   view: TrackerView;
   searchQuery: string;
+  highlightMonth?: Date;
   onCellClick: (category: string, periodLabel: string, txns: TransactionLike[], budget: number) => void;
 }
 
@@ -73,6 +74,7 @@ const MasterTrackerMatrix = ({
   year, 
   view, 
   searchQuery,
+  highlightMonth,
   onCellClick 
 }: MasterTrackerMatrixProps) => {
   const intervals = useMemo(() => {
@@ -82,11 +84,12 @@ const MasterTrackerMatrix = ({
         end: endOfYear(new Date(year, 0, 1))
       });
     } else if (view === 'daily') {
-      const now = new Date();
-      const targetMonth = now.getFullYear() === year ? now : new Date(year, 0, 1);
+      const anchor = highlightMonth && highlightMonth.getFullYear() === year
+        ? highlightMonth
+        : new Date(year, 0, 1);
       return eachDayOfInterval({
-        start: startOfMonth(targetMonth),
-        end: endOfMonth(targetMonth)
+        start: startOfMonth(anchor),
+        end: endOfMonth(anchor)
       });
     } else if (view === 'weekly') {
       return eachWeekOfInterval({
@@ -96,7 +99,7 @@ const MasterTrackerMatrix = ({
     } else {
       return [startOfYear(new Date(year, 0, 1))];
     }
-  }, [year, view]);
+  }, [year, view, highlightMonth]);
 
   const catToGroup = useMemo(() => {
     const map: Record<string, string> = {};
@@ -192,14 +195,20 @@ const MasterTrackerMatrix = ({
           <TableHeader className="sticky top-0 z-40 bg-background shadow-sm">
             <TableRow className="bg-muted/50 hover:bg-muted/50">
               <TableHead className="sticky left-0 bg-muted/50 z-50 min-w-[220px] text-xs font-semibold text-muted-foreground border-r">Category</TableHead>
-              {intervals.map((interval, i) => (
-                <TableHead key={i} className="text-center min-w-[180px] text-xs font-semibold text-muted-foreground border-r last:border-r-0">
-                  {view === 'monthly' ? format(interval, 'MMMM') : 
-                   view === 'daily' ? format(interval, 'MMM dd') : 
-                   view === 'weekly' ? `Week of ${format(interval, 'MMM dd')}` :
-                   `Year ${year}`}
-                </TableHead>
-              ))}
+              {intervals.map((interval, i) => {
+                const isHighlighted = highlightMonth && view === 'monthly' && isSameMonth(interval, highlightMonth);
+                return (
+                  <TableHead key={i} className={cn(
+                    "text-center min-w-[180px] text-xs font-semibold text-muted-foreground border-r last:border-r-0",
+                    isHighlighted && "bg-primary/10 text-primary"
+                  )}>
+                    {view === 'monthly' ? format(interval, 'MMMM') : 
+                     view === 'daily' ? format(interval, 'MMM dd') : 
+                     view === 'weekly' ? `Week of ${format(interval, 'MMM dd')}` :
+                     `Year ${year}`}
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>

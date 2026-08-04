@@ -27,6 +27,7 @@ interface MasterTrackerGraphsProps {
   budgets: Array<{ category_name: string; amount: number; month: number | null }>;
   categoryGroups: Array<{ category_name: string; group_name: string }>;
   year: number;
+  focusMonth?: Date;
 }
 
 const EXPENSE_GROUPS = [
@@ -37,7 +38,7 @@ const EXPENSE_GROUPS = [
   { name: 'Lifestyle & Discretionary', color: '#ef4444' },
 ];
 
-const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: MasterTrackerGraphsProps) => {
+const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year, focusMonth }: MasterTrackerGraphsProps) => {
   const catToGroup = useMemo(() => {
     const map: Record<string, string> = {};
     categoryGroups.forEach(cg => { map[cg.category_name] = cg.group_name; });
@@ -68,14 +69,22 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
   }, [transactions, months, catToGroup]);
 
   const budgetComparisonData = useMemo(() => {
+    const monthScoped = !!focusMonth;
     return EXPENSE_GROUPS.map(group => {
-      const actual = transactions
-        .filter(t => catToGroup[t.category_1] === group.name)
-        .reduce((s, t) => s + Math.abs(t.amount), 0);
+      const groupTxns = transactions.filter(t => {
+        const inGroup = catToGroup[t.category_1] === group.name;
+        if (!inGroup) return false;
+        if (monthScoped && focusMonth) return isSameMonth(parseISO(t.transaction_date), focusMonth);
+        return true;
+      });
+
+      const actual = groupTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
       
-      const budget = budgets
+      const annualBudget = budgets
         .filter(b => b.category_name === group.name && (b.month === 0 || b.month === null))
         .reduce((s, b) => s + b.amount, 0);
+
+      const budget = monthScoped ? annualBudget / 12 : annualBudget;
 
       return {
         name: group.name,
@@ -85,7 +94,7 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
         percent: budget > 0 ? (actual / budget) * 100 : 0
       };
     });
-  }, [transactions, budgets, catToGroup]);
+  }, [transactions, budgets, catToGroup, focusMonth]);
 
   const cumulativeData = useMemo(() => {
     let runningTotal = 0;
@@ -205,7 +214,9 @@ const MasterTrackerGraphs = ({ transactions, budgets, categoryGroups, year }: Ma
               </div>
               <div>
                 <CardTitle className="text-lg font-bold">Budget Adherence</CardTitle>
-                <CardDescription>Actual spending vs. annual targets</CardDescription>
+                <CardDescription>
+                  {focusMonth ? `Actual spend vs. monthly target — ${format(focusMonth, 'MMMM yyyy')}` : 'Actual spending vs. annual targets'}
+                </CardDescription>
               </div>
             </div>
           </CardHeader>

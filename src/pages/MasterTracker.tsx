@@ -36,7 +36,9 @@ import {
   Download,
   AlertCircle,
   Navigation,
-  PieChart
+  PieChart,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { 
   format, 
@@ -50,7 +52,8 @@ import {
   isSameWeek, 
   isSameMonth, 
   parseISO,
-  differenceInDays
+  differenceInDays,
+  subMonths
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency, downloadCSV } from '@/utils/format';
@@ -81,6 +84,7 @@ const MasterTracker = () => {
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const [matrixView, setMatrixView] = useState<TrackerView>('monthly');
   const [thermostatView, setThermostatView] = useState<TrackerView>('monthly');
+  const [selectedMonth, setSelectedMonth] = useState<Date>(() => startOfMonth(new Date()));
   const [searchQuery, setSearchQuery] = useState('');
   const [showOverBudgetOnly, setShowOverBudgetOnly] = useState(false);
   
@@ -130,7 +134,7 @@ const MasterTracker = () => {
   }, [session, selectedYear, fetchData]);
 
   const thermostatData = useMemo(() => {
-    const today = new Date();
+    const today = selectedMonth;
     const catToGroup: Record<string, string> = {};
     categoryGroups.forEach(cg => { catToGroup[cg.category_name] = cg.group_name; });
 
@@ -173,7 +177,7 @@ const MasterTracker = () => {
 
       return { ...group, spent, budget: periodBudget, remaining, percent, dailyBurn };
     });
-  }, [transactions, budgets, categoryGroups, thermostatView]);
+  }, [transactions, budgets, categoryGroups, thermostatView, selectedMonth]);
 
   const matrixStats = useMemo(() => {
     const totalSpent = transactions.reduce((s, t) => s + Math.abs(t.amount), 0);
@@ -194,24 +198,32 @@ const MasterTracker = () => {
     setDrilldown({ open: true, category, periodLabel, txns, budget });
   };
 
-  const jumpToCurrent = () => {
+  const scrollMatrixToMonth = useCallback((target: Date) => {
     if (!matrixContainerRef.current) return;
     const container = matrixContainerRef.current.querySelector('.overflow-x-auto');
     if (!container) return;
 
-    const today = new Date();
-    const totalWidth = container.scrollWidth;
-    const visibleWidth = container.clientWidth;
-    
     if (matrixView === 'monthly') {
-      const monthIndex = today.getMonth();
+      const monthIndex = target.getMonth();
+      const totalWidth = container.scrollWidth;
+      const visibleWidth = container.clientWidth;
       const scrollPos = (totalWidth / 12) * monthIndex - (visibleWidth / 2);
-      container.scrollTo({ left: scrollPos, behavior: 'smooth' });
-    } else if (matrixView === 'weekly') {
-      container.scrollTo({ left: totalWidth, behavior: 'smooth' });
+      container.scrollTo({ left: Math.max(0, scrollPos), behavior: 'smooth' });
     }
+  }, [matrixView]);
+
+  useEffect(() => {
+    scrollMatrixToMonth(selectedMonth);
+  }, [selectedMonth, matrixView, scrollMatrixToMonth]);
+
+  const jumpToCurrent = () => {
+    scrollMatrixToMonth(new Date());
     showSuccess('Jumped to current period');
   };
+
+  const goToPrevMonth = () => setSelectedMonth(prev => subMonths(startOfMonth(prev), 1));
+  const goToNextMonth = () => setSelectedMonth(prev => subMonths(startOfMonth(prev), -1));
+  const goToCurrentMonth = () => setSelectedMonth(startOfMonth(new Date()));
 
   const exportMatrix = () => {
     const headers = ['Date', 'Description', 'Category', 'Amount', 'Notes'];
@@ -320,6 +332,30 @@ const MasterTracker = () => {
           </TabsList>
 
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 px-2 py-1.5 bg-muted/30 rounded-xl border">
+              <button
+                onClick={goToPrevMonth}
+                className="p-1 rounded-lg hover:bg-muted transition-colors"
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={goToCurrentMonth}
+                className="text-xs font-bold min-w-[110px] text-center hover:text-primary transition-colors"
+                title="Jump to current month"
+              >
+                {format(selectedMonth, 'MMMM yyyy')}
+              </button>
+              <button
+                onClick={goToNextMonth}
+                className="p-1 rounded-lg hover:bg-muted transition-colors"
+                aria-label="Next month"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
             <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-xl border">
               <Thermometer className="w-4 h-4 text-primary" />
               <select 
@@ -473,6 +509,7 @@ const MasterTracker = () => {
                   year={year}
                   view={matrixView}
                   searchQuery={searchQuery}
+                  highlightMonth={selectedMonth}
                   onCellClick={handleCellClick}
                 />
               </CardContent>
@@ -486,6 +523,7 @@ const MasterTracker = () => {
             budgets={budgets}
             categoryGroups={categoryGroups}
             year={year}
+            focusMonth={selectedMonth}
           />
         </TabsContent>
 
@@ -495,6 +533,7 @@ const MasterTracker = () => {
             categoryGroups={categoryGroups}
             budgets={budgets}
             year={year}
+            focusMonth={selectedMonth}
           />
         </TabsContent>
       </Tabs>

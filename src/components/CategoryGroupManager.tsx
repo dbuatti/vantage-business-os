@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -511,6 +512,11 @@ const CategoryGroupManager = ({ transactions, onGroupsUpdated }: CategoryGroupMa
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle>{editingGroup ? 'Edit Group Assignment' : 'Assign Category to Group'}</DialogTitle>
+            <DialogDescription>
+              {editingGroup
+                ? `Change which group "${editingGroup.category_name}" belongs to.`
+                : 'Map a category to one of your expense groups.'}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

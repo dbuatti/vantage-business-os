@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -151,6 +152,9 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
             <DialogContent className="sm:max-w-md rounded-2xl">
               <DialogHeader>
                 <DialogTitle>{editingGoal ? 'Edit Goal' : 'New Savings Goal'}</DialogTitle>
+                <DialogDescription>
+                  {editingGoal ? `Update the target for "${editingGoal.name}".` : 'Set a target amount and track your progress towards it.'}
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">

@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -146,6 +147,11 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
             <DialogContent className="sm:max-w-md rounded-2xl">
               <DialogHeader>
                 <DialogTitle>{editingBudget ? 'Edit Budget' : 'Add Budget'}</DialogTitle>
+                <DialogDescription>
+                  {editingBudget
+                    ? `Update the budget for "${editingBudget.category_name}".`
+                    : 'Set a monthly or yearly budget target for a category.'}
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
