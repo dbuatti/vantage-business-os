@@ -252,10 +252,10 @@ const Insights = () => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return { color: 'text-emerald-600', ring: 'stroke-emerald-500', badge: 'bg-emerald-100 text-emerald-700' };
-    if (score >= 60) return { color: 'text-blue-600', ring: 'stroke-blue-500', badge: 'bg-blue-100 text-blue-700' };
-    if (score >= 40) return { color: 'text-amber-600', ring: 'stroke-amber-500', badge: 'bg-amber-100 text-amber-700' };
-    return { color: 'text-rose-600', ring: 'stroke-rose-500', badge: 'bg-rose-100 text-rose-700' };
+    if (score >= 80) return { color: 'text-profit', ring: 'stroke-profit', badge: 'bg-profit-bg text-profit' };
+    if (score >= 60) return { color: 'text-info', ring: 'stroke-info', badge: 'bg-info-bg text-info' };
+    if (score >= 40) return { color: 'text-warning', ring: 'stroke-warning', badge: 'bg-warning-bg text-warning' };
+    return { color: 'text-danger', ring: 'stroke-danger', badge: 'bg-danger-bg text-danger' };
   };
 
   if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -390,14 +390,14 @@ const Insights = () => {
 
                 {/* Render predictions if insights don't exist */}
                 {!insights.insights && insights.predictions?.map((p, i) => (
-                  <Card key={i} className="border-0 shadow-lg overflow-hidden border-amber-200">
-                    <div className="h-1 bg-amber-500" />
+                  <Card key={i} className="border-0 shadow-lg overflow-hidden border-warning-border">
+                    <div className="h-1 bg-warning" />
                     <CardContent className="p-5 space-y-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-amber-50 text-amber-600"><AlertTriangle className="w-5 h-5" /></div>
+                        <div className="p-2 rounded-xl bg-warning-bg text-warning"><AlertTriangle className="w-5 h-5" /></div>
                         <div>
                           <h3 className="font-bold text-sm">{p.category}</h3>
-                          <Badge variant="outline" className="text-[9px] rounded-md bg-amber-100 text-amber-700">{p.severity} severity</Badge>
+                          <Badge variant="outline" className="text-[9px] rounded-md bg-warning-bg text-warning">{p.severity} severity</Badge>
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">{p.prediction}</p>
@@ -407,15 +407,15 @@ const Insights = () => {
 
                 {/* Render tactical advice if insights don't exist */}
                 {!insights.insights && insights.tacticalAdvice?.map((a, i) => (
-                  <Card key={i} className="border-0 shadow-lg overflow-hidden border-blue-200">
-                    <div className="h-1 bg-blue-500" />
+                  <Card key={i} className="border-0 shadow-lg overflow-hidden border-info-border">
+                    <div className="h-1 bg-info" />
                     <CardContent className="p-5 space-y-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><Zap className="w-5 h-5" /></div>
+                        <div className="p-2 rounded-xl bg-info-bg text-info"><Zap className="w-5 h-5" /></div>
                         <h3 className="font-bold text-sm">{a.title}</h3>
                       </div>
                       <p className="text-sm text-muted-foreground leading-relaxed">{a.advice}</p>
-                      <div className="p-3 rounded-xl text-sm bg-blue-50 text-blue-700 font-bold">
+                      <div className="p-3 rounded-xl text-sm bg-info-bg text-info font-bold">
                         Impact: {a.impact}
                       </div>
                     </CardContent>
