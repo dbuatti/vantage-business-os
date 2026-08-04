@@ -32,9 +32,9 @@ interface TicketKanbanProps {
 }
 
 const COLUMNS = [
-  { id: 'open', label: 'Open', color: 'bg-blue-500' },
-  { id: 'in_progress', label: 'In Progress', color: 'bg-indigo-500' },
-  { id: 'resolved', label: 'Resolved', color: 'bg-emerald-500' },
+  { id: 'open', label: 'Open', color: 'bg-info' },
+  { id: 'in_progress', label: 'In Progress', color: 'bg-ai' },
+  { id: 'resolved', label: 'Resolved', color: 'bg-profit' },
   { id: 'closed', label: 'Closed', color: 'bg-slate-500' },
 ];
 
@@ -43,9 +43,9 @@ const TicketKanban = ({ tickets, onStatusChange }: TicketKanbanProps) => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-rose-500';
+      case 'high': return 'bg-danger';
       case 'medium': return 'bg-amber-500';
-      case 'low': return 'bg-emerald-500';
+      case 'low': return 'bg-profit';
       default: return 'bg-slate-500';
     }
   };

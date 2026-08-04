@@ -179,7 +179,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
                 <SelectContent className="rounded-2xl border-muted shadow-2xl">
                   <SelectItem value="Savings" className="rounded-xl">
                     <div className="flex items-center gap-2 py-1">
-                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-info shadow-info/50" />
                       <span className="font-bold">Savings Account</span>
                     </div>
                   </SelectItem>
@@ -247,7 +247,7 @@ const FinanceForm = ({ onAddEntry, lastEntry }: FinanceFormProps) => {
               className={cn(
                 "h-16 rounded-2xl font-bold text-lg transition-all duration-500 shadow-xl",
                 justSubmitted 
-                  ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" 
+                  ? "bg-profit hover:bg-profit/90 shadow-profit/20" 
                   : "bg-primary hover:bg-primary/90 shadow-primary/20"
               )}
               disabled={!amount || (account === 'Credit' && !creditWas)}

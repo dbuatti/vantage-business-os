@@ -524,10 +524,10 @@ const TimeGlance = () => {
             <CardContent>
               <Tabs defaultValue="expenses" className="space-y-6">
                 <TabsList className="bg-muted/50 p-1 rounded-xl h-auto gap-1">
-                  <TabsTrigger value="expenses" className="rounded-lg gap-2 py-1.5 px-4 data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+                  <TabsTrigger value="expenses" className="rounded-lg gap-2 py-1.5 px-4 data-[state=active]:bg-danger data-[state=active]:text-danger-foreground">
                     <ArrowDownRight className="w-4 h-4" /> Expenses
                   </TabsTrigger>
-                  <TabsTrigger value="income" className="rounded-lg gap-2 py-1.5 px-4 data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                  <TabsTrigger value="income" className="rounded-lg gap-2 py-1.5 px-4 data-[state=active]:bg-profit data-[state=active]:text-profit-foreground">
                     <ArrowUpRight className="w-4 h-4" /> Income
                   </TabsTrigger>
                 </TabsList>
@@ -548,7 +548,7 @@ const TimeGlance = () => {
                                 <span className="font-bold truncate">{cat.name}</span>
                                 <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
                               </div>
-                              <span className="font-bold tabular-nums text-rose-600">{formatCurrency(cat.total)}</span>
+                              <span className="font-bold tabular-nums text-danger">{formatCurrency(cat.total)}</span>
                             </div>
                             <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as React.CSSProperties & Record<string, string>} />
                             <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of expenses</span></div>
@@ -575,7 +575,7 @@ const TimeGlance = () => {
                                 <span className="font-bold truncate">{cat.name}</span>
                                 <span className="text-[10px] text-muted-foreground font-medium">({cat.count})</span>
                               </div>
-                              <span className="font-bold tabular-nums text-emerald-600">{formatCurrency(cat.total)}</span>
+                              <span className="font-bold tabular-nums text-profit">{formatCurrency(cat.total)}</span>
                             </div>
                             <Progress value={percentage} className="h-2" style={{ '--progress-foreground': color } as React.CSSProperties & Record<string, string>} />
                             <div className="flex justify-end"><span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">{percentage.toFixed(1)}% of income</span></div>
@@ -604,8 +604,8 @@ const TimeGlance = () => {
               
               <div className="flex items-center bg-background rounded-xl p-1 border">
                 <Button variant={typeFilter === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('all')} className="flex-1 h-7 text-[10px] font-bold uppercase">All</Button>
-                <Button variant={typeFilter === 'expense' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('expense')} className="flex-1 h-7 text-[10px] font-bold uppercase text-rose-600">Exp</Button>
-                <Button variant={typeFilter === 'income' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('income')} className="flex-1 h-7 text-[10px] font-bold uppercase text-emerald-600">Inc</Button>
+                <Button variant={typeFilter === 'expense' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('expense')} className="flex-1 h-7 text-[10px] font-bold uppercase text-danger">Exp</Button>
+                <Button variant={typeFilter === 'income' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('income')} className="flex-1 h-7 text-[10px] font-bold uppercase text-profit">Inc</Button>
               </div>
 
               <div className="flex items-center gap-2">
@@ -640,7 +640,7 @@ const TimeGlance = () => {
                       <div className="flex items-center gap-4 min-w-0">
                         <div className={cn(
                           "w-2.5 h-2.5 rounded-full shrink-0 shadow-sm",
-                          t.amount > 0 ? "bg-emerald-500" : "bg-rose-500"
+                          t.amount > 0 ? "bg-profit" : "bg-danger"
                         )} />
                         <div className="min-w-0">
                           <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{t.description}</p>
@@ -657,7 +657,7 @@ const TimeGlance = () => {
                       <div className="text-right shrink-0 ml-4">
                         <p className={cn(
                           "text-base font-bold tabular-nums",
-                          t.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                          t.amount > 0 ? "text-profit" : "text-danger"
                         )}>
                           {formatCurrency(t.amount)}
                         </p>

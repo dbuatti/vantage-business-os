@@ -210,7 +210,7 @@ const WeeklyLog = () => {
                     {prevCredit && (
                       <p className={cn(
                         "text-xs font-bold flex items-center gap-1 justify-end",
-                        creditChange > 0 ? "text-rose-600" : "text-emerald-600"
+                        creditChange > 0 ? "text-danger" : "text-profit"
                       )}>
                         {creditChange > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                         {creditChange > 0 ? '+' : ''}{formatCurrency(creditChange)} since last entry

@@ -327,7 +327,7 @@ const ExpenseStory = () => {
               </div>
               
               <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                <div className="flex items-center gap-2 text-xs font-semibold text-profit">
                   <CheckCircle2 className="w-4 h-4" /> Efficiency Tip
                 </div>
                 <p className="text-sm text-slate-400">

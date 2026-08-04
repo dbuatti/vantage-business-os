@@ -380,7 +380,7 @@ const TicketDetail = () => {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Actual Hours</span>
-                    <span className={cn("font-bold", ticket.actual_hours > (ticket.estimated_hours || 0) && ticket.estimated_hours > 0 ? "text-rose-600" : "text-emerald-600")}>
+                    <span className={cn("font-bold", ticket.actual_hours > (ticket.estimated_hours || 0) && ticket.estimated_hours > 0 ? "text-danger" : "text-profit")}>
                       {ticket.actual_hours || 0}
                     </span>
                   </div>

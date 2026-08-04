@@ -198,7 +198,7 @@ const InvoiceDetail = () => {
             <div className="text-left sm:text-right space-y-2">
               <Badge className={cn(
                 "rounded-lg px-4 py-1 text-xs font-semibold uppercase tracking-widest",
-                invoice.status === 'Paid' ? "bg-emerald-500 text-white" : "bg-primary text-white"
+                invoice.status === 'Paid' ? "bg-profit text-profit-foreground" : "bg-primary text-white"
               )}>
                 {invoice.status}
               </Badge>

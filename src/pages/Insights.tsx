@@ -349,7 +349,7 @@ const Insights = () => {
                 <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-white/20">
                   <div><p className="text-xs opacity-70">Income</p><p className="text-xl font-bold">{formatCurrency(summaryStats.totalIncome)}</p></div>
                   <div><p className="text-xs opacity-70">Expenses</p><p className="text-xl font-bold">{formatCurrency(summaryStats.totalExpenses)}</p></div>
-                  <div><p className="text-xs opacity-70">Net</p><p className={cn("text-xl font-bold", summaryStats.net >= 0 ? "text-emerald-300" : "text-rose-300")}>{formatCurrency(summaryStats.net)}</p></div>
+                  <div><p className="text-xs opacity-70">Net</p><p className={cn("text-xl font-bold", summaryStats.net >= 0 ? "text-profit" : "text-danger")}>{formatCurrency(summaryStats.net)}</p></div>
                 </div>
               </div>
             </Card>
@@ -363,7 +363,7 @@ const Insights = () => {
                   const colors = getInsightColors(insight.type);
                   return (
                     <Card key={i} className={cn("border-0 shadow-sm overflow-hidden transition-all hover:shadow-md", colors.border)}>
-                      <div className={cn("h-1", insight.type === 'opportunity' ? 'bg-blue-500' : insight.type === 'warning' ? 'bg-amber-500' : insight.type === 'success' ? 'bg-emerald-500' : 'bg-violet-500')} />
+                      <div className={cn("h-1", insight.type === 'opportunity' ? 'bg-info' : insight.type === 'warning' ? 'bg-warning' : insight.type === 'success' ? 'bg-profit' : 'bg-ai')} />
                       <CardContent className="p-5 space-y-3">
                         <div className="flex items-center gap-2.5">
                           <div className={cn("p-2 rounded-xl", colors.bg)}><div className={colors.icon}>{getInsightIcon(insight.type)}</div></div>

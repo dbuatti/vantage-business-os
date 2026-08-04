@@ -22,7 +22,17 @@ import {
   LogOut,
   Users,
   FileText,
-  Brain
+  Brain,
+  Table as TableIcon,
+  CalendarCheck,
+  CalendarRange,
+  TrendingUp,
+  Repeat,
+  Package,
+  FileSpreadsheet,
+  ShieldCheck,
+  Target,
+  ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -57,9 +67,25 @@ const CommandPalette = () => {
             <LayoutDashboard className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/master-tracker'))}>
+            <TableIcon className="mr-2 h-4 w-4" />
+            <span>Master Tracker</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/weekly-routine'))}>
+            <CalendarCheck className="mr-2 h-4 w-4" />
+            <span>Weekly Routine</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/time-glance'))}>
+            <CalendarRange className="mr-2 h-4 w-4" />
+            <span>Time Glance</span>
+          </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/insights'))}>
             <Brain className="mr-2 h-4 w-4" />
             <span>AI Insights</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/transactions'))}>
+            <ListFilter className="mr-2 h-4 w-4" />
+            <span>Transactions</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/clients'))}>
             <Users className="mr-2 h-4 w-4" />
@@ -69,13 +95,40 @@ const CommandPalette = () => {
             <FileText className="mr-2 h-4 w-4" />
             <span>Invoices</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/transactions'))}>
-            <ListFilter className="mr-2 h-4 w-4" />
-            <span>Transactions</span>
+          <CommandItem onSelect={() => runCommand(() => navigate('/project-roi'))}>
+            <TrendingUp className="mr-2 h-4 w-4" />
+            <span>Project ROI</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/products'))}>
+            <Package className="mr-2 h-4 w-4" />
+            <span>Catalog</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/subscriptions'))}>
+            <Repeat className="mr-2 h-4 w-4" />
+            <span>Subscriptions</span>
+          </CommandItem>
+        </CommandGroup>
+        <CommandSeparator />
+        <CommandGroup heading="Tax & Reports">
+          <CommandItem onSelect={() => runCommand(() => navigate('/tax-averaging'))}>
+            <Calculator className="mr-2 h-4 w-4" />
+            <span>Tax Averaging</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/accountant-report'))}>
-            <Calculator className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" />
             <span>Accountant Report</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/accountant-portal'))}>
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            <span>Accountant Portal</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/export'))}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            <span>Export Center</span>
+          </CommandItem>
+          <CommandItem onSelect={() => runCommand(() => navigate('/transactions?tab=planning'))}>
+            <Target className="mr-2 h-4 w-4" />
+            <span>Budgets & Savings</span>
           </CommandItem>
         </CommandGroup>
         <CommandSeparator />

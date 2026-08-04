@@ -264,7 +264,7 @@ const ProjectROI = () => {
                       <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-semibold">{i + 1}</div>
                       <span className="text-sm font-bold truncate max-w-[120px]">{m.title}</span>
                     </div>
-                    <span className="text-sm font-bold text-emerald-400">{formatCurrency(m.hourlyRate)}/h</span>
+                    <span className="text-sm font-bold text-profit">{formatCurrency(m.hourlyRate)}/h</span>
                   </div>
                 ))}
               </div>
