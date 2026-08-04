@@ -55,6 +55,8 @@ interface MasterTrackerMatrixProps {
   year: number;
   view: TrackerView;
   searchQuery: string;
+  showOverBudgetOnly?: boolean;
+  fullscreen?: boolean;
   highlightMonth?: Date;
   onCellClick: (category: string, periodLabel: string, txns: TransactionLike[], budget: number) => void;
 }
@@ -74,6 +76,8 @@ const MasterTrackerMatrix = ({
   year, 
   view, 
   searchQuery,
+  showOverBudgetOnly = false,
+  fullscreen = false,
   highlightMonth,
   onCellClick 
 }: MasterTrackerMatrixProps) => {
@@ -112,85 +116,140 @@ const MasterTrackerMatrix = ({
     return Array.from(cats).sort();
   }, [transactions]);
 
-  const matrixData = useMemo(() => {
+  const { allGroups, displayGroups } = useMemo(() => {
     const today = new Date();
+    const groupNames = new Set(EXPENSE_GROUPS.map(g => g.name));
 
-    return EXPENSE_GROUPS.map(group => {
-      const groupCategories = categories.filter(cat => {
-        const matchesGroup = catToGroup[cat] === group.name;
-        const matchesSearch = !searchQuery || cat.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesGroup && matchesSearch;
-      });
-      
-      const categoryRows = groupCategories.map(cat => {
-        const intervalStats = intervals.map(interval => {
-          const intervalTxns = transactions.filter(t => {
-            const tDate = parseISO(t.transaction_date);
-            if (view === 'monthly') return isSameMonth(tDate, interval);
-            if (view === 'daily') return isSameDay(tDate, interval);
-            if (view === 'weekly') return isSameWeek(tDate, interval, { weekStartsOn: 1 });
-            return true;
-          }).filter(t => t.category_1 === cat);
+    const buildRow = (cat: string) => {
+      const intervalStats = intervals.map(interval => {
+        const intervalTxns = transactions.filter(t => {
+          const tDate = parseISO(t.transaction_date);
+          if (view === 'monthly') return isSameMonth(tDate, interval);
+          if (view === 'daily') return isSameDay(tDate, interval);
+          if (view === 'weekly') return isSameWeek(tDate, interval, { weekStartsOn: 1 });
+          return true;
+        }).filter(t => t.category_1 === cat);
 
-          const spent = intervalTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
-          
-          const specificBudget = budgets.find(b => b.category_name === cat && b.month === interval.getMonth() + 1);
-          const yearlyBudget = budgets.find(b => b.category_name === cat && (b.month === 0 || b.month === null));
-          
-          let budget = 0;
-          let daysRemaining = 1;
+        const spent = intervalTxns.reduce((s, t) => s + Math.abs(t.amount), 0);
+        
+        const specificBudget = budgets.find(b => b.category_name === cat && b.month === interval.getMonth() + 1);
+        const yearlyBudget = budgets.find(b => b.category_name === cat && (b.month === 0 || b.month === null));
+        
+        let budget = 0;
+        let daysRemaining = 1;
 
-          if (view === 'monthly') {
-            budget = specificBudget ? specificBudget.amount : (yearlyBudget ? yearlyBudget.amount / 12 : 0);
-            daysRemaining = isSameMonth(today, interval) 
-              ? Math.max(1, differenceInDays(endOfMonth(interval), today))
-              : 1;
-          } else if (view === 'weekly') {
-            budget = yearlyBudget ? yearlyBudget.amount / 52 : 0;
-            daysRemaining = isSameWeek(today, interval, { weekStartsOn: 1 })
-              ? Math.max(1, differenceInDays(endOfWeek(interval, { weekStartsOn: 1 }), today))
-              : 1;
-          } else if (view === 'daily') {
-            budget = yearlyBudget ? yearlyBudget.amount / 365 : 0;
-          } else {
-            budget = yearlyBudget ? yearlyBudget.amount : 0;
-          }
+        if (view === 'monthly') {
+          budget = specificBudget ? specificBudget.amount : (yearlyBudget ? yearlyBudget.amount / 12 : 0);
+          daysRemaining = isSameMonth(today, interval) 
+            ? Math.max(1, differenceInDays(endOfMonth(interval), today))
+            : 1;
+        } else if (view === 'weekly') {
+          budget = yearlyBudget ? yearlyBudget.amount / 52 : 0;
+          daysRemaining = isSameWeek(today, interval, { weekStartsOn: 1 })
+            ? Math.max(1, differenceInDays(endOfWeek(interval, { weekStartsOn: 1 }), today))
+            : 1;
+        } else if (view === 'daily') {
+          budget = yearlyBudget ? yearlyBudget.amount / 365 : 0;
+        } else {
+          budget = yearlyBudget ? yearlyBudget.amount : 0;
+        }
 
-          const buffer = budget - spent;
-          const percent = budget > 0 ? (spent / budget) * 100 : 0;
-
-          return {
-            spent,
-            budget,
-            buffer,
-            percent,
-            txns: intervalTxns,
-            label: view === 'monthly' ? format(interval, 'MMMM') : 
-                   view === 'daily' ? format(interval, 'MMM dd') : 
-                   view === 'weekly' ? `Week of ${format(interval, 'MMM dd')}` :
-                   `Year ${year}`
-          };
-        });
+        const buffer = budget - spent;
+        const percent = budget > 0 ? (spent / budget) * 100 : 0;
 
         return {
-          category: cat,
-          intervalStats
+          spent,
+          budget,
+          buffer,
+          percent,
+          txns: intervalTxns,
+          label: view === 'monthly' ? format(interval, 'MMMM') : 
+                 view === 'daily' ? format(interval, 'MMM dd') : 
+                 view === 'weekly' ? `Week of ${format(interval, 'MMM dd')}` :
+                 `Year ${year}`
         };
       });
+
+      const rowTotal = intervalStats.reduce((s, st) => s + st.spent, 0);
+      const rowBudgetTotal = intervalStats.reduce((s, st) => s + st.budget, 0);
+
+      return {
+        category: cat,
+        intervalStats,
+        rowTotal,
+        rowBudgetTotal
+      };
+    };
+
+    const matchesSearch = (cat: string) =>
+      !searchQuery || cat.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const mappedGroups = EXPENSE_GROUPS.map(group => {
+      const groupCategories = categories
+        .filter(cat => catToGroup[cat] === group.name)
+        .filter(matchesSearch);
 
       return {
         groupName: group.name,
         icon: group.icon,
         color: group.color,
-        categoryRows
+        categoryRows: groupCategories.map(buildRow)
       };
-    }).filter(g => g.categoryRows.length > 0);
-  }, [categories, intervals, transactions, budgets, view, catToGroup, searchQuery, year]);
+    });
+
+    const otherCategories = categories
+      .filter(cat => !groupNames.has(catToGroup[cat]))
+      .filter(matchesSearch);
+
+    if (otherCategories.length > 0) {
+      mappedGroups.push({
+        groupName: 'Other',
+        icon: '🗂️',
+        color: 'text-muted-foreground',
+        categoryRows: otherCategories.map(buildRow)
+      });
+    }
+
+    const allGroups = mappedGroups.filter(g => g.categoryRows.length > 0);
+
+    const displayGroups = allGroups
+      .map(g => ({
+        ...g,
+        categoryRows: g.categoryRows.filter(
+          row => !showOverBudgetOnly || row.intervalStats.some(s => s.percent > 100 && s.spent > 0)
+        )
+      }))
+      .filter(g => g.categoryRows.length > 0);
+
+    return { allGroups, displayGroups };
+  }, [categories, intervals, transactions, budgets, view, catToGroup, searchQuery, year, showOverBudgetOnly]);
+
+  const totalsByColumn = useMemo(() => {
+    return intervals.map((_, i) => {
+      let total = 0;
+      let budget = 0;
+      allGroups.forEach(g => {
+        g.categoryRows.forEach(row => {
+          total += row.intervalStats[i].spent;
+          budget += row.intervalStats[i].budget;
+        });
+      });
+      return { total, budget };
+    });
+  }, [allGroups, intervals]);
+
+  const grandTotal = useMemo(
+    () => totalsByColumn.reduce((s, c) => s + c.total, 0),
+    [totalsByColumn]
+  );
 
   return (
     <div className="relative">
       {/* Desktop Matrix View */}
-      <div className="hidden md:block overflow-x-auto max-h-[700px] border rounded-2xl">
+      <div className={cn(
+        "hidden md:block overflow-x-auto border rounded-2xl",
+        fullscreen ? "max-h-[calc(100vh-260px)]" : "max-h-[700px]"
+      )}>
         <Table className="border-collapse">
           <TableHeader className="sticky top-0 z-40 bg-background shadow-sm">
             <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -209,96 +268,157 @@ const MasterTrackerMatrix = ({
                   </TableHead>
                 );
               })}
+              <TableHead className="sticky right-0 bg-muted/50 z-50 min-w-[130px] text-center text-xs font-semibold text-muted-foreground border-l">Total</TableHead>
+            </TableRow>
+
+            {/* Column totals row */}
+            <TableRow className="bg-muted/30 hover:bg-muted/30">
+              <TableCell className="sticky left-0 bg-muted/30 z-50 min-w-[220px] text-xs font-black uppercase tracking-widest text-foreground border-r">
+                All Categories
+              </TableCell>
+              {totalsByColumn.map((col, i) => {
+                const pct = col.budget > 0 ? (col.total / col.budget) * 100 : 0;
+                return (
+                  <TableCell key={i} className="text-center border-r last:border-r-0">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="font-black text-sm tabular-nums">{formatCurrency(col.total)}</span>
+                      {col.budget > 0 && (
+                        <Badge variant="outline" className={cn(
+                          "text-xs font-semibold opacity-70 px-1.5 py-0",
+                          pct > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
+                        )}>
+                          {Math.round(pct)}%
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                );
+              })}
+              <TableCell className="sticky right-0 bg-muted/30 z-50 text-center border-l">
+                <span className="font-black text-sm tabular-nums">{formatCurrency(grandTotal)}</span>
+              </TableCell>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {matrixData.map((group) => (
-              <React.Fragment key={group.groupName}>
-                {/* Group Header Row */}
-                <TableRow className="bg-primary/5 hover:bg-primary/10 border-y-2 border-primary/10 transition-colors">
-                  <TableCell className="sticky left-0 bg-primary/5 z-30 text-xs font-semibold uppercase tracking-widest text-primary flex items-center gap-2 border-r">
-                    <span className="text-lg">{group.icon}</span>
-                    {group.groupName}
-                  </TableCell>
-                  {intervals.map((_, i) => {
-                    const groupSpent = group.categoryRows.reduce((s, r) => s + r.intervalStats[i].spent, 0);
-                    const groupBudget = group.categoryRows.reduce((s, r) => s + r.intervalStats[i].budget, 0);
-                    const groupPercent = groupBudget > 0 ? (groupSpent / groupBudget) * 100 : 0;
-                    return (
-                      <TableCell key={i} className="text-center border-r last:border-r-0">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="font-bold text-sm">{formatCurrency(groupSpent)}</span>
-                          {groupBudget > 0 && (
-                            <Badge variant="outline" className={cn(
-                              "text-xs font-semibold opacity-70 px-1.5 py-0",
-                              groupPercent > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
-                            )}>
-                              {Math.round(groupPercent)}%
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
+            {displayGroups.map((group) => {
+              const groupTotal = group.categoryRows.reduce((s, r) => s + r.rowTotal, 0);
+              const groupBudgetTotal = group.categoryRows.reduce((s, r) => s + r.rowBudgetTotal, 0);
+              const groupPercent = groupBudgetTotal > 0 ? (groupTotal / groupBudgetTotal) * 100 : 0;
 
-                {/* Category Rows */}
-                {group.categoryRows.map((row) => (
-                  <TableRow key={row.category} className="hover:bg-muted/30 transition-colors group border-b">
-                    <TableCell className="sticky left-0 bg-background z-30 font-bold text-sm border-r pl-8 group-hover:bg-muted/30 transition-colors">
-                      {row.category}
+              return (
+                <React.Fragment key={group.groupName}>
+                  {/* Group Header Row */}
+                  <TableRow className="bg-primary/5 hover:bg-primary/10 border-y-2 border-primary/10 transition-colors">
+                    <TableCell className="sticky left-0 bg-primary/5 z-30 text-xs font-semibold uppercase tracking-widest text-primary flex items-center gap-2 border-r">
+                      <span className="text-lg">{group.icon}</span>
+                      {group.groupName}
                     </TableCell>
-                    {row.intervalStats.map((stat, i) => (
-                      <TableCell 
-                        key={i} 
-                        className="p-4 border-r last:border-r-0 cursor-pointer hover:bg-primary/[0.05] transition-colors"
-                        onClick={() => onCellClick(row.category, stat.label, stat.txns, stat.budget)}
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className={cn("font-bold tabular-nums text-sm", stat.spent > 0 ? "text-foreground" : "text-muted-foreground/20")}>
-                              {stat.spent > 0 ? formatCurrency(stat.spent) : '—'}
-                            </span>
-                            {stat.budget > 0 && (
-                              <span className={cn(
-                                "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
-                                stat.buffer >= 0 ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
+                    {intervals.map((_, i) => {
+                      const groupSpent = group.categoryRows.reduce((s, r) => s + r.intervalStats[i].spent, 0);
+                      const groupBudget = group.categoryRows.reduce((s, r) => s + r.intervalStats[i].budget, 0);
+                      const groupPct = groupBudget > 0 ? (groupSpent / groupBudget) * 100 : 0;
+                      return (
+                        <TableCell key={i} className="text-center border-r last:border-r-0">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="font-bold text-sm tabular-nums">{formatCurrency(groupSpent)}</span>
+                            {groupBudget > 0 && (
+                              <Badge variant="outline" className={cn(
+                                "text-xs font-semibold opacity-70 px-1.5 py-0",
+                                groupPct > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
                               )}>
-                                {stat.buffer >= 0 ? 'Safe' : 'Over'}
-                              </span>
+                                {Math.round(groupPct)}%
+                              </Badge>
                             )}
                           </div>
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell className="sticky right-0 bg-primary/5 z-30 text-center border-l">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="font-bold text-sm tabular-nums">{formatCurrency(groupTotal)}</span>
+                        {groupBudgetTotal > 0 && (
+                          <Badge variant="outline" className={cn(
+                            "text-xs font-semibold opacity-70 px-1.5 py-0",
+                            groupPercent > 100 ? "bg-danger-bg text-danger border-danger-border" : "bg-profit-bg text-profit border-profit-border"
+                          )}>
+                            {Math.round(groupPercent)}%
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
 
-                          {stat.budget > 0 && (
-                            <div className="space-y-1">
-                              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className={cn("h-full rounded-full transition-all duration-500", stat.percent > 100 ? "bg-danger" : "bg-primary")}
-                                  style={{ width: `${Math.min(100, stat.percent)}%` }} 
-                                />
-                              </div>
-                              <div className="flex justify-between text-xs font-semibold text-muted-foreground/60">
-                                <span>Buffer:</span>
-                                <span className={cn(stat.buffer >= 0 ? "text-profit" : "text-danger")}>
-                                  {formatCurrency(stat.buffer)}
+                  {/* Category Rows */}
+                  {group.categoryRows.map((row) => (
+                    <TableRow key={row.category} className="hover:bg-muted/30 transition-colors group border-b">
+                      <TableCell className="sticky left-0 bg-background z-30 font-bold text-sm border-r pl-8 group-hover:bg-muted/30 transition-colors">
+                        {row.category}
+                      </TableCell>
+                      {row.intervalStats.map((stat, i) => (
+                        <TableCell 
+                          key={i} 
+                          className="p-4 border-r last:border-r-0 cursor-pointer hover:bg-primary/[0.05] transition-colors"
+                          onClick={() => onCellClick(row.category, stat.label, stat.txns, stat.budget)}
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className={cn("font-bold tabular-nums text-sm", stat.spent > 0 ? "text-foreground" : "text-muted-foreground/20")}>
+                                {stat.spent > 0 ? formatCurrency(stat.spent) : '—'}
+                              </span>
+                              {stat.budget > 0 && (
+                                <span className={cn(
+                                  "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
+                                  stat.buffer >= 0 ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
+                                )}>
+                                  {stat.buffer >= 0 ? 'Safe' : 'Over'}
                                 </span>
-                              </div>
+                              )}
                             </div>
+
+                            {stat.budget > 0 && (
+                              <div className="space-y-1">
+                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className={cn("h-full rounded-full transition-all duration-500", stat.percent > 100 ? "bg-danger" : "bg-primary")}
+                                    style={{ width: `${Math.min(100, stat.percent)}%` }} 
+                                  />
+                                </div>
+                                <div className="flex justify-between text-xs font-semibold text-muted-foreground/60">
+                                  <span>Buffer:</span>
+                                  <span className={cn(stat.buffer >= 0 ? "text-profit" : "text-danger")}>
+                                    {formatCurrency(stat.buffer)}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      ))}
+                      <TableCell className="sticky right-0 bg-background z-30 text-center border-l group-hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="font-bold tabular-nums text-sm">{formatCurrency(row.rowTotal)}</span>
+                          {row.rowBudgetTotal > 0 && (
+                            <span className={cn(
+                              "text-xs font-semibold opacity-70 px-1.5 py-0.5 rounded",
+                              row.rowTotal <= row.rowBudgetTotal ? "text-profit bg-profit-bg" : "text-danger bg-danger-bg"
+                            )}>
+                              {row.rowTotal <= row.rowBudgetTotal ? 'Safe' : 'Over'}
+                            </span>
                           )}
                         </div>
                       </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </React.Fragment>
-            ))}
+                    </TableRow>
+                  ))}
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-8">
-        {matrixData.map((group) => (
+        {displayGroups.map((group) => (
           <div key={group.groupName} className="space-y-4">
             <div className="flex items-center gap-2 px-2">
               <span className="text-xl">{group.icon}</span>
@@ -319,7 +439,7 @@ const MasterTrackerMatrix = ({
                           <p className="text-xs font-semibold text-muted-foreground">{latestStat.label}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-lg">{formatCurrency(latestStat.spent)}</p>
+                          <p className="font-black text-lg tabular-nums">{formatCurrency(latestStat.spent)}</p>
                           {latestStat.budget > 0 && (
                             <Badge variant="outline" className={cn(
                               "text-xs font-semibold opacity-70",
@@ -340,6 +460,13 @@ const MasterTrackerMatrix = ({
                               {formatCurrency(latestStat.buffer)}
                             </span>
                           </div>
+                        </div>
+                      )}
+
+                      {row.rowTotal > 0 && (
+                        <div className="flex justify-between text-xs font-semibold text-muted-foreground border-t border-dashed pt-2">
+                          <span>Year total</span>
+                          <span className="font-bold tabular-nums text-foreground">{formatCurrency(row.rowTotal)}</span>
                         </div>
                       )}
                     </CardContent>
