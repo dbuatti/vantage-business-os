@@ -283,7 +283,7 @@ const SavingsGoals = ({ transactions }: SavingsGoalsProps) => {
                       value={percentage}
                       className={cn(
                         "h-2.5",
-                        isComplete ? "[&>div]:bg-emerald-500" : "[&>div]:bg-primary"
+                        isComplete ? "[&>div]:bg-profit" : "[&>div]:bg-primary"
                       )}
                     />
 

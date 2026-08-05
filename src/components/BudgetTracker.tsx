@@ -149,7 +149,7 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
                 <DialogTitle>{editingBudget ? 'Edit Budget' : 'Add Budget'}</DialogTitle>
                 <DialogDescription>
                   {editingBudget
-                    ? `Update the budget for "${editingBudget.category_name}".`
+                    ? `Update the budget for "${editingBudget.category}".`
                     : 'Set a monthly or yearly budget target for a category.'}
                 </DialogDescription>
               </DialogHeader>
@@ -210,7 +210,7 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
                 value={Math.min(100, (totalSpent / totalBudget) * 100)}
                 className={cn(
                   "h-2.5",
-                  totalSpent > totalBudget ? "[&>div]:bg-rose-500" : "[&>div]:bg-primary"
+                  totalSpent > totalBudget ? "[&>div]:bg-danger" : "[&>div]:bg-primary"
                 )}
               />
               <div className="flex items-center justify-between mt-2">
@@ -235,7 +235,7 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
                 const spent = currentMonthSpending[budget.category] || 0;
                 const percentage = Math.min(100, (spent / budget.amount) * 100);
                 const isOver = spent > budget.amount;
-                const isWarning = percentage >= 80 && !isOver;
+                const isWarning = percentage >= 70 && !isOver;
                 const remaining = budget.amount - spent;
 
                 return (
@@ -243,11 +243,11 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {isOver ? (
-                          <AlertTriangle className="w-4 h-4 text-rose-500" />
+                          <AlertTriangle className="w-4 h-4 text-danger" />
                         ) : isWarning ? (
-                          <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          <AlertTriangle className="w-4 h-4 text-warning" />
                         ) : (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          <CheckCircle2 className="w-4 h-4 text-profit" />
                         )}
                         <span className="font-medium text-sm">{budget.category}</span>
                       </div>
@@ -269,7 +269,7 @@ const BudgetTracker = ({ transactions }: BudgetTrackerProps) => {
                       value={percentage}
                       className={cn(
                         "h-1.5",
-                        isOver ? "[&>div]:bg-rose-500" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-emerald-500"
+                        isOver ? "[&>div]:bg-danger" : isWarning ? "[&>div]:bg-warning" : "[&>div]:bg-profit"
                       )}
                     />
                     <div className="flex items-center justify-between mt-1.5">
