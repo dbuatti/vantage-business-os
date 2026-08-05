@@ -320,7 +320,7 @@ const ExpenseStory = () => {
                 <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
                   <AlertTriangle className="w-4 h-4" /> Attention Needed
                 </div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   You had <span className="text-white font-bold">{stats.breakdown.smallStuff.items.length} small purchases</span> under $20. 
                   While they seem minor, they added up to <span className="text-white font-bold">{formatCurrency(stats.breakdown.smallStuff.total)}</span>.
                 </p>
@@ -330,7 +330,7 @@ const ExpenseStory = () => {
                 <div className="flex items-center gap-2 text-xs font-semibold text-profit">
                   <CheckCircle2 className="w-4 h-4" /> Efficiency Tip
                 </div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   Focusing on reducing just one "Big Hit" next period will have a greater impact than cutting all small daily life expenses combined.
                 </p>
               </div>

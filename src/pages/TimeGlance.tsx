@@ -334,7 +334,7 @@ const TimeGlance = () => {
 
       {/* Quick Insights Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up opacity-0 stagger-1">
-        <Card className="border-0 shadow-xl bg-emerald-600 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-xl bg-profit text-profit-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
             <p className="text-xs font-semibold opacity-70 mb-1">Total Income</p>
@@ -344,7 +344,7 @@ const TimeGlance = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-rose-600 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-danger text-danger-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
             <p className="text-xs font-semibold opacity-70 mb-1">Total Expenses</p>
@@ -354,7 +354,7 @@ const TimeGlance = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-indigo-600 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-ai text-ai-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
             <p className="text-xs font-semibold opacity-70 mb-1">Avg Daily Spend</p>
@@ -362,7 +362,7 @@ const TimeGlance = () => {
             <p className="text-[10px] opacity-60 mt-1">Over {stats.daysInPeriod} days</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-amber-500 text-white overflow-hidden relative">
+        <Card className="border-0 shadow-sm bg-warning text-warning-foreground overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
           <CardContent className="p-5 relative">
             <p className="text-xs font-semibold opacity-70 mb-1">Top Merchant</p>
@@ -467,7 +467,7 @@ const TimeGlance = () => {
                   <Info className="w-4 h-4" /> Plain English
                 </div>
                 <p className="text-sm leading-relaxed font-medium">
-                  This period, <span className="text-rose-600 font-bold">{Math.round((stats.breakdown.bigHits.total / stats.expenses) * 100)}%</span> of your spending came from just <span className="font-bold">{stats.breakdown.bigHits.items.length} large transactions</span>. 
+                  This period, <span className="text-danger font-bold">{Math.round((stats.breakdown.bigHits.total / stats.expenses) * 100)}%</span> of your spending came from just <span className="font-bold">{stats.breakdown.bigHits.items.length} large transactions</span>. 
                   {stats.breakdown.smallStuff.total > 50 && (
                     <span className="block mt-2 text-amber-600">
                       ⚠️ You also had <span className="font-bold">{stats.breakdown.smallStuff.items.length} small purchases</span> under $20, totaling <span className="font-bold">{formatCurrency(stats.breakdown.smallStuff.total)}</span>.

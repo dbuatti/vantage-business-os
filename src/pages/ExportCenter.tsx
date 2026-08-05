@@ -322,7 +322,7 @@ const ExportCenter = () => {
                     Review & Fix Data <ChevronRight className="w-4 h-4" />
                   </Link>
                 </Button>
-                <p className="text-[10px] text-slate-400 mt-3 text-center leading-relaxed">
+                <p className="text-[10px] text-muted-foreground mt-3 text-center leading-relaxed">
                   Accountants require categories and notes (for items {'>'}$50) to maximize your tax deductions.
                 </p>
               </div>

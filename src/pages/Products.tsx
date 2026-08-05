@@ -245,7 +245,7 @@ const Products = () => {
                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEdit(product)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-rose-600" onClick={() => setDeleteConfirmId(product.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-danger" onClick={() => setDeleteConfirmId(product.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>

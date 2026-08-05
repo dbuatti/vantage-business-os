@@ -104,11 +104,11 @@ const ImportCategoryMapper = ({ unmappedCategories, onMappingComplete, onCancel 
         <div className="pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             {isComplete ? (
-              <span className="flex items-center gap-1.5 text-emerald-600">
+              <span className="flex items-center gap-1.5 text-profit">
                 <CheckCircle2 className="w-4 h-4" /> All categories mapped
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-amber-600">
+              <span className="flex items-center gap-1.5 text-warning">
                 <AlertCircle className="w-4 h-4" /> {unmappedCategories.length - Object.keys(mappings).length} remaining
               </span>
             )}

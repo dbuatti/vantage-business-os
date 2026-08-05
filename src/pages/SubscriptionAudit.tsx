@@ -395,7 +395,7 @@ const SubscriptionAuditPage = () => {
           <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="space-y-2">
               <h3 className="text-xl font-bold">Audit Summary</h3>
-              <p className="text-slate-400 max-w-xl">
+              <p className="text-muted-foreground max-w-xl">
                 You are currently committed to <span className="text-white font-bold">{formatCurrency(audit.totalMonthlyBurn * 12)}</span> in annual subscriptions. 
                 We've identified <span className="text-amber-400 font-bold">{audit.services.filter(s => s.alerts.length > 0).length} services</span> that could be optimized or cancelled.
               </p>

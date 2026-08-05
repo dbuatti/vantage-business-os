@@ -44,11 +44,11 @@ const TransactionBottomBar = ({
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                <TrendingUp className="w-3.5 h-3.5 text-profit" />
                 <span className="text-sm font-bold text-profit">{formatCurrency(totalIncome)}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
+                <TrendingDown className="w-3.5 h-3.5 text-danger" />
                 <span className="text-sm font-bold text-danger">{formatCurrency(-totalExpenses)}</span>
               </div>
               <div className={cn(
@@ -71,7 +71,7 @@ const TransactionBottomBar = ({
             </div>
           ) : (
             <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-profit animate-pulse" />
               Live Data Sync Active
             </div>
           )}

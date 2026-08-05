@@ -207,25 +207,25 @@ const Tickets = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-lg bg-blue-600 text-white">
+        <Card className="border-0 shadow-lg bg-info text-info-foreground">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">Open Tickets</p>
             <p className="text-3xl font-black">{tickets.filter(t => t.status === 'open').length}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-indigo-600 text-white">
+        <Card className="border-0 shadow-sm bg-ai text-ai-foreground">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">In Progress</p>
             <p className="text-3xl font-black">{tickets.filter(t => t.status === 'in_progress').length}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-rose-500 text-white">
+        <Card className="border-0 shadow-sm bg-danger text-danger-foreground">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">High Priority</p>
             <p className="text-3xl font-black">{tickets.filter(t => t.priority === 'high' && t.status !== 'closed').length}</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-emerald-600 text-white">
+        <Card className="border-0 shadow-sm bg-profit text-profit-foreground">
           <CardContent className="p-6">
             <p className="text-sm font-medium opacity-80">Resolved (Total)</p>
             <p className="text-3xl font-black">{tickets.filter(t => t.status === 'resolved').length}</p>

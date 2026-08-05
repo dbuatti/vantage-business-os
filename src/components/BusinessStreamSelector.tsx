@@ -14,25 +14,25 @@ export const BusinessStreamSelector: React.FC<BusinessStreamSelectorProps> = ({ 
     <div className="space-y-2">
       <Label className="text-sm font-medium">Business Stream</Label>
       <Select value={value} onValueChange={(v) => onChange(v as 'Music' | 'Kinesiology' | 'Other')}>
-        <SelectTrigger className="w-full bg-white/50 backdrop-blur-sm border-indigo-100 focus:ring-indigo-500">
+        <SelectTrigger className="w-full bg-background/50 backdrop-blur-sm border-muted focus:ring-primary">
           <SelectValue placeholder="Select business stream" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="Music">
             <div className="flex items-center gap-2">
-              <Music className="h-4 w-4 text-indigo-500" />
+              <Music className="h-4 w-4 text-ai" />
               <span>Music (Performing)</span>
             </div>
           </SelectItem>
           <SelectItem value="Kinesiology">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-emerald-500" />
+              <Sparkles className="h-4 w-4 text-profit" />
               <span>Kinesiology</span>
             </div>
           </SelectItem>
           <SelectItem value="Other">
             <div className="flex items-center gap-2">
-              <HelpCircle className="h-4 w-4 text-slate-400" />
+              <HelpCircle className="h-4 w-4 text-muted-foreground" />
               <span>Personal / Other</span>
             </div>
           </SelectItem>
