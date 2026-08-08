@@ -122,8 +122,8 @@ const MasterTracker = () => {
   }>({ open: false, category: '', periodLabel: '', txns: [], budget: 0 });
 
   const year = parseInt(selectedYear === 'All' ? new Date().getFullYear().toString() : selectedYear);
-  const yearStart = startOfYear(new Date(year, 0, 1));
-  const yearEnd = endOfYear(new Date(year, 0, 1));
+  const yearStart = useMemo(() => startOfYear(new Date(year, 0, 1)), [year]);
+  const yearEnd = useMemo(() => endOfYear(new Date(year, 0, 1)), [year]);
 
   const fetchData = useCallback(async () => {
     try {

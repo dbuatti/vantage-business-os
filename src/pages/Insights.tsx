@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabase, FinanceSummaryRow } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -142,21 +142,18 @@ const Insights = () => {
       const { data: budgetRows } = await supabase.from('budgets').select('*').eq('year', year);
       setBudgets(budgetRows || []);
 
-      // Lightweight prior-year category summary (category + amount only, not full rows) so the
-      // AI can compare this period against last year without a heavy payload.
+      // Prior-year category summary via server-side aggregate instead of pulling
+      // every prior-year transaction down just to sum it.
       const priorYear = year - 1;
-      const { data: priorYearRows } = await supabase
-        .from('finance_transactions')
-        .select('category_1, amount')
-        .gte('transaction_date', `${priorYear}-01-01`)
-        .lte('transaction_date', `${priorYear}-12-31`)
-        .lt('amount', 0)
-        .neq('category_1', 'Account');
+      const { data: priorYearRows } = await supabase.rpc<FinanceSummaryRow>('finance_summary', {
+        start_date: `${priorYear}-01-01`,
+        end_date: `${priorYear}-12-31`
+      });
 
       const priorTotals: Record<string, number> = {};
-      (priorYearRows || []).forEach((t: { category_1: string | null; amount: number }) => {
+      (priorYearRows || []).forEach((t: FinanceSummaryRow) => {
         const cat = t.category_1 || 'Uncategorized';
-        priorTotals[cat] = (priorTotals[cat] || 0) + Math.abs(t.amount);
+        priorTotals[cat] = (priorTotals[cat] || 0) + Number(t.expense);
       });
       setPriorYearCategoryTotals(priorTotals);
     } catch (error: unknown) {

@@ -10,3 +10,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export interface FinanceSummaryRow {
+  category_1: string | null;
+  income: number;
+  expense: number;
+  txn_count: number;
+}

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from '@/lib/supabase';
+import { supabase, FinanceSummaryRow } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { showSuccess, showError } from '@/utils/toast';
 import { formatCurrency } from '@/utils/format';
@@ -97,18 +97,12 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       const start = `${targetYear}-01-01`;
       const end = `${targetYear}-12-31`;
 
-      const [txnsRes, groupsRes] = await Promise.all([
-        supabase
-          .from('finance_transactions')
-          .select('amount, category_1')
-          .neq('category_1', 'Account')
-          .lt('amount', 0)
-          .gte('transaction_date', start)
-          .lte('transaction_date', end),
+      const [summaryRes, groupsRes] = await Promise.all([
+        supabase.rpc<FinanceSummaryRow>('finance_summary', { start_date: start, end_date: end }),
         supabase.from('category_groups').select('*')
       ]);
 
-      if (txnsRes.error) throw txnsRes.error;
+      if (summaryRes.error) throw summaryRes.error;
 
       const catToGroupLocal: Record<string, string> = {};
       groupsRes.data?.forEach(cg => { catToGroupLocal[cg.category_name] = cg.group_name; });
@@ -118,13 +112,13 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
       GROUPS.forEach(g => groupTotals[g] = 0);
 
       let totalExpenses = 0;
-      txnsRes.data?.forEach(t => {
-        const absAmount = Math.abs(t.amount);
+      summaryRes.data?.forEach(t => {
+        const absAmount = Number(t.expense);
         totalExpenses += absAmount;
-        const group = catToGroupLocal[t.category_1];
+        const group = catToGroupLocal[t.category_1 || ''];
         if (group && groupTotals[group] !== undefined) {
           groupTotals[group] += absAmount;
-          categoryTotals[t.category_1] = (categoryTotals[t.category_1] || 0) + absAmount;
+          categoryTotals[t.category_1 || 'Uncategorized'] = (categoryTotals[t.category_1 || 'Uncategorized'] || 0) + absAmount;
         }
       });
 
@@ -141,7 +135,7 @@ const BudgetDialog = ({ open, onOpenChange, year, onSuccess, existingBudgets }: 
         categoryMonthly,
         totalIncome: 0,
         totalExpenses,
-        hasData: txnsRes.data !== null && txnsRes.data.length > 0,
+        hasData: summaryRes.data !== null && summaryRes.data.length > 0,
       });
       setCatToGroup(catToGroupLocal);
     } catch (error) {
