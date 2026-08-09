@@ -159,9 +159,12 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
             };
           }).filter(t => t.transaction_date && t.description);
 
-          // Detect unmapped categories
+          // Detect unmapped categories. 'Account' is reserved for internal
+          // transfers (excluded from all analytics), so it never needs a group.
           const incomingCategories = new Set<string>(parsedData.map(t => t.category_1).filter(Boolean));
-          const unmapped = Array.from(incomingCategories).filter(cat => !mappedCategoryNames.has(cat));
+          const unmapped = Array.from(incomingCategories)
+            .filter(cat => cat !== 'Account')
+            .filter(cat => !mappedCategoryNames.has(cat));
           setUnmappedCategories(unmapped);
 
           // Mark duplicates — checks against both already-imported transactions and
