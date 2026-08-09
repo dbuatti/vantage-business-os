@@ -10,11 +10,13 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
+  CalendarRange,
   Zap,
   Target,
   Percent
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getISOWeek } from 'date-fns';
 import { normalizeMerchantName } from '@/utils/subscriptions';
 
 interface Transaction {
@@ -88,6 +90,18 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
     const dates = new Set(transactions.filter(t => t.amount < 0).map(t => t.transaction_date));
     const dailyAvgSpend = totalExpenses / Math.max(1, dates.size);
 
+    // Weekly average spending (distinct ISO weeks with expense activity)
+    const weekKeys = new Set(
+      transactions
+        .filter(t => t.amount < 0)
+        .map(t => {
+          const d = new Date(t.transaction_date);
+          return `${d.getFullYear()}-W${getISOWeek(d)}`;
+        })
+    );
+    const weeks = weekKeys.size;
+    const weeklyAvgSpend = totalExpenses / Math.max(1, weeks);
+
     return {
       totalIncome,
       totalExpenses,
@@ -103,6 +117,8 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       workPercentage,
       monthlyBurnRate,
       dailyAvgSpend,
+      weeklyAvgSpend,
+      weeks,
       totalTransactions: transactions.length,
       incomeCount: income.length,
       expenseCount: expenses.length,
@@ -147,6 +163,14 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
       subtitle: 'Per active day'
     },
     {
+      label: 'Weekly Avg Spending',
+      value: formatCurrency(stats.weeklyAvgSpend),
+      icon: CalendarRange,
+      color: 'text-info',
+      bg: 'bg-info-bg',
+      subtitle: `Across ${stats.weeks} active weeks`
+    },
+    {
       label: 'Unique Merchants',
       value: stats.uniqueMerchants.toString(),
       icon: Target,
@@ -167,7 +191,7 @@ const TransactionStats = ({ transactions }: TransactionStatsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {statCards.map((stat) => (
               <div key={stat.label} className={cn("p-4 rounded-xl", stat.bg)}>
                 <div className="flex items-center gap-2 mb-2">
