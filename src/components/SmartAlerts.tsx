@@ -57,7 +57,7 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
         description: `You have ${formatCurrency(totalOverdue)} waiting to be collected.`,
         type: 'warning',
         actionLabel: 'Send Reminders',
-        actionUrl: '/invoices',
+        actionUrl: '/contacts?view=invoices',
         icon: ShieldAlert
       });
     }
@@ -74,7 +74,7 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
         description: `A charge of ${formatCurrency(Math.abs(spike.amount))} from ${spike.description} is significantly higher than your average.`,
         type: 'info',
         actionLabel: 'View Details',
-        actionUrl: '/transactions',
+        actionUrl: '/finance',
         icon: TrendingDown
       });
     }
@@ -89,7 +89,7 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
         description: `You have ${missingNotes} work transactions missing notes. Adding them now saves hours at tax time.`,
         type: 'opportunity',
         actionLabel: 'Fix Now',
-        actionUrl: '/accountant-report',
+        actionUrl: '/tax?view=report',
         icon: Zap
       });
     }
@@ -104,7 +104,7 @@ const SmartAlerts = ({ transactions, invoices, clients }: SmartAlertsProps) => {
         description: `You're currently paying for ${uniqueSubCount} different services. Time for a quick audit?`,
         type: 'opportunity',
         actionLabel: 'Audit Services',
-        actionUrl: '/subscriptions',
+        actionUrl: '/finance?view=subscriptions',
         icon: Sparkles
       });
     }

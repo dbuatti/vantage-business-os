@@ -28,7 +28,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  ArrowLeft, 
   TrendingDown, 
   DollarSign, 
   Download, 
@@ -463,13 +462,10 @@ const Transactions = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="rounded-xl">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Transaction History</h1>
               <p className="text-sm text-muted-foreground">
@@ -497,7 +493,7 @@ const Transactions = () => {
               <span className="hidden sm:inline">Work Wizard</span>
             </Button>
             <Button variant="outline" size="sm" asChild className="rounded-xl gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10">
-              <Link to="/accountant-report">
+              <Link to="/tax?view=report">
                 <Calculator className="w-4 h-4" />
                 <span className="hidden sm:inline">Accountant Ready</span>
               </Link>

@@ -196,7 +196,7 @@ const TransactionTable = ({
                             <div className="space-y-1">
                               <p className="text-xs font-semibold text-muted-foreground">Linked Invoice</p>
                               <Button variant="outline" size="sm" asChild className="rounded-xl gap-2 h-9 border-primary/20 text-primary hover:bg-primary/5">
-                                <Link to={`/invoices/${t.invoice_id}`}>
+                                <Link to={`/contacts?view=invoices&invoice=${t.invoice_id}`}>
                                   <FileText className="w-3.5 h-3.5" />
                                   View Invoice
                                 </Link>
@@ -311,7 +311,7 @@ const TransactionTable = ({
                 </div>
                 {t.invoice_id && (
                   <Button variant="outline" size="sm" asChild className="w-full rounded-xl gap-2 h-10">
-                    <Link to={`/invoices/${t.invoice_id}`}>
+                    <Link to={`/contacts?view=invoices&invoice=${t.invoice_id}`}>
                       <FileText className="w-4 h-4" />
                       View Linked Invoice
                     </Link>

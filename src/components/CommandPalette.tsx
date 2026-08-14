@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CommandDialog,
   CommandEmpty,
@@ -11,31 +11,9 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { 
-  LayoutDashboard, 
-  ListFilter, 
-  Calculator, 
-  Moon, 
-  Sun, 
-  Search,
-  Settings,
-  LogOut,
-  Users,
-  FileText,
-  Brain,
-  Table as TableIcon,
-  CalendarCheck,
-  CalendarRange,
-  TrendingUp,
-  Repeat,
-  Package,
-  FileSpreadsheet,
-  ShieldCheck,
-  Target,
-  Activity,
-  Ticket
-} from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { Moon, Sun, LogOut } from "lucide-react";
+import { navGroups } from "@/lib/nav-config";
+import { supabase } from "@/lib/supabase";
 
 const CommandPalette = () => {
   const [open, setOpen] = useState(false);
@@ -64,92 +42,26 @@ const CommandPalette = () => {
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Navigation">
-          <CommandItem onSelect={() => runCommand(() => navigate('/'))}>
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            <span>Dashboard</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/master-tracker'))}>
-            <TableIcon className="mr-2 h-4 w-4" />
-            <span>Master Tracker</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/weekly-routine'))}>
-            <CalendarCheck className="mr-2 h-4 w-4" />
-            <span>Weekly Routine</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/time-glance'))}>
-            <CalendarRange className="mr-2 h-4 w-4" />
-            <span>Time Glance</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/insights'))}>
-            <Brain className="mr-2 h-4 w-4" />
-            <span>AI Insights</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/productivity'))}>
-            <Activity className="mr-2 h-4 w-4" />
-            <span>Productivity</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/transactions'))}>
-            <ListFilter className="mr-2 h-4 w-4" />
-            <span>Transactions</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/clients'))}>
-            <Users className="mr-2 h-4 w-4" />
-            <span>Clients</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/invoices'))}>
-            <FileText className="mr-2 h-4 w-4" />
-            <span>Invoices</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/project-roi'))}>
-            <TrendingUp className="mr-2 h-4 w-4" />
-            <span>Project ROI</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/products'))}>
-            <Package className="mr-2 h-4 w-4" />
-            <span>Catalog</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/subscriptions'))}>
-            <Repeat className="mr-2 h-4 w-4" />
-            <span>Subscriptions</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/tickets'))}>
-            <Ticket className="mr-2 h-4 w-4" />
-            <span>Support Tickets</span>
-          </CommandItem>
-        </CommandGroup>
-        <CommandSeparator />
-        <CommandGroup heading="Tax & Reports">
-          <CommandItem onSelect={() => runCommand(() => navigate('/tax-averaging'))}>
-            <Calculator className="mr-2 h-4 w-4" />
-            <span>Tax Averaging</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/accountant-report'))}>
-            <FileText className="mr-2 h-4 w-4" />
-            <span>Accountant Report</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/accountant-portal'))}>
-            <ShieldCheck className="mr-2 h-4 w-4" />
-            <span>Accountant Portal</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/export'))}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            <span>Export Center</span>
-          </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate('/transactions?tab=planning'))}>
-            <Target className="mr-2 h-4 w-4" />
-            <span>Budgets & Savings</span>
-          </CommandItem>
+          {navGroups.flatMap((group) =>
+            group.items.map((item) => (
+              <CommandItem key={item.url} onSelect={() => runCommand(() => navigate(item.url))}>
+                <item.icon className="mr-2 h-4 w-4" />
+                <span>{item.title}</span>
+              </CommandItem>
+            ))
+          )}
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="Actions">
-          <CommandItem onSelect={() => runCommand(() => navigate('/settings'))}>
-            <Settings className="mr-2 h-4 w-4" />
+          <CommandItem onSelect={() => runCommand(() => navigate("/settings"))}>
             <span>Settings</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => {
-            const root = document.documentElement;
-            root.classList.toggle('dark');
-          })}>
+          <CommandItem
+            onSelect={() => runCommand(() => {
+              const root = document.documentElement;
+              root.classList.toggle("dark");
+            })}
+          >
             <Sun className="mr-2 h-4 w-4 dark:hidden" />
             <Moon className="mr-2 h-4 w-4 hidden dark:block" />
             <span>Toggle Theme</span>

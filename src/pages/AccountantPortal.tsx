@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  ArrowLeft, 
   Printer, 
   Download, 
   Calculator, 
@@ -403,16 +402,10 @@ const AccountantPortal = () => {
   if (error) return <div className="min-h-screen flex items-center justify-center text-danger font-bold">Error loading portal data. Please check your link.</div>;
 
   return (
-    <div className={cn("min-h-screen bg-background pb-20 print:bg-white print:pb-0", isPublic && "pt-8")}>
-      <div className="max-w-6xl mx-auto p-4 sm:p-8 space-y-8">
+    <div className={cn("w-full space-y-8", isPublic && "pt-8")}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 print:hidden">
           <div className="flex items-center gap-4">
-            {!isPublic && (
-              <Button variant="ghost" size="icon" asChild className="rounded-xl">
-                <Link to="/"><ArrowLeft className="w-5 h-5" /></Link>
-              </Button>
-            )}
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -693,7 +686,6 @@ const AccountantPortal = () => {
             />
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 };

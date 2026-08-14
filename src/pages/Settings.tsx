@@ -123,7 +123,7 @@ const Settings = () => {
   if (loading) return <PageLoading label="Loading Settings" />;
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-8">
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">Manage your business profile and application preferences.</p>
@@ -177,8 +177,8 @@ const Settings = () => {
                     <Label>Business Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input 
-                        value={form.company_email} 
+                      <Input
+                        value={form.company_email}
                         onChange={(e) => setForm(prev => ({ ...prev, company_email: e.target.value }))}
                         placeholder="billing@acme.com"
                         className="pl-10 rounded-xl"
@@ -189,10 +189,22 @@ const Settings = () => {
                     <Label>Business Phone</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input 
-                        value={form.company_phone} 
+                      <Input
+                        value={form.company_phone}
                         onChange={(e) => setForm(prev => ({ ...prev, company_phone: e.target.value }))}
                         placeholder="+1 234 567 890"
+                        className="pl-10 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Business Website</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={form.company_website}
+                        onChange={(e) => setForm(prev => ({ ...prev, company_website: e.target.value }))}
+                        placeholder="https://acme.com"
                         className="pl-10 rounded-xl"
                       />
                     </div>

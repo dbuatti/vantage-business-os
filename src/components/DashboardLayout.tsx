@@ -71,7 +71,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <Button 
                 size="sm" 
                 className="rounded-xl h-9 gap-2 px-4 font-bold shadow-lg shadow-primary/20"
-                onClick={() => navigate('/transactions')}
+                onClick={() => navigate('/finance')}
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Add Transaction</span>

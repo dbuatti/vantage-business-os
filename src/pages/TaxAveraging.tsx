@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Music, Sparkles, Calculator, History, TrendingUp, Filter, Info } from "lucide-react";
@@ -86,7 +85,6 @@ const TaxAveraging = () => {
                              Math.abs(transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0));
 
   return (
-    <DashboardLayout>
       <div className="space-y-8 animate-fade-in">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -302,7 +300,6 @@ const TaxAveraging = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
   );
 };
 

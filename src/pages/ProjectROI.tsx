@@ -8,24 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
-  TrendingUp, 
   Clock, 
   DollarSign, 
-  Target, 
   Zap, 
-  ArrowLeft, 
   Users, 
-  Briefcase,
-  BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
-  AlertCircle,
-  AlertTriangle,
-  CheckCircle2,
   ChevronRight,
+  AlertTriangle,
   Brain
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import PageLoading from '@/components/PageLoading';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/format';
@@ -44,7 +35,6 @@ interface ProjectMetric {
 
 const ProjectROI = () => {
   const { session } = useAuth();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<ProjectMetric[]>([]);
 
@@ -120,24 +110,7 @@ const ProjectROI = () => {
   if (loading) return <PageLoading label="Loading Project ROI" />;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-xl">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-              <div className="p-2.5 bg-profit rounded-xl text-profit-foreground shadow-lg shadow-profit/20">
-                <TrendingUp className="w-7 h-7" />
-              </div>
-              Project ROI Engine
-            </h1>
-            <p className="text-muted-foreground mt-1">Analyzing the financial efficiency of your time investment.</p>
-          </div>
-        </div>
-      </header>
-
+    <div className="w-full space-y-8">
       {globalStats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-slide-up">
           <Card className="border-0 shadow-xl bg-primary text-primary-foreground overflow-hidden relative">
@@ -225,7 +198,7 @@ const ProjectROI = () => {
                         </p>
                       </div>
                       <Button variant="ghost" size="icon" asChild className="rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Link to={`/tickets/${m.id}`}><ChevronRight className="w-5 h-5" /></Link>
+                        <Link to={`/contacts?view=tickets&ticket=${m.id}`}><ChevronRight className="w-5 h-5" /></Link>
                       </Button>
                     </div>
                   </div>
@@ -270,7 +243,7 @@ const ProjectROI = () => {
               </div>
 
               <Button variant="secondary" className="w-full rounded-xl font-bold gap-2 shadow-lg" asChild>
-                <Link to="/invoices">Review Service Tiers</Link>
+                <Link to="/contacts?view=invoices">Review Service Tiers</Link>
               </Button>
             </CardContent>
           </Card>

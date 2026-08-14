@@ -12,10 +12,8 @@ import FinanceChart from '@/components/FinanceChart';
 import MonthlySummary from '@/components/MonthlySummary';
 import FinanceTable from '@/components/FinanceTable';
 import { SummarySkeleton, FormSkeleton } from '@/components/LoadingSkeleton';
-import { CalendarCheck, ArrowLeft, Info, Sparkles, ShieldCheck, TrendingUp, TrendingDown, History, CreditCard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { CalendarCheck, Info, Sparkles, ShieldCheck, TrendingUp, TrendingDown, History, CreditCard } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/utils/format';
 import { MadeWithDyad } from "@/components/made-with-dyad";
@@ -136,7 +134,7 @@ const WeeklyLog = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <div className="w-full p-4 sm:p-6 lg:p-8 space-y-8">
         <SummarySkeleton />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <FormSkeleton />
@@ -146,8 +144,7 @@ const WeeklyLog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-10">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-10 from-background to-muted/20 bg-gradient-to-b">
         {/* Immersive Header */}
         <header className="relative py-8 px-6 rounded-[2.5rem] bg-primary overflow-hidden shadow-xl shadow-primary/20 animate-fade-in">
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-indigo-600 to-purple-700" />
@@ -171,9 +168,6 @@ const WeeklyLog = () => {
                 <p className="text-xs font-semibold opacity-70">Current Year</p>
                 <p className="text-xl font-black">{selectedYear}</p>
               </div>
-              <Button variant="outline" asChild className="rounded-xl bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold h-12 px-6">
-                <Link to="/"><ArrowLeft className="w-4 h-4 mr-2" /> Dashboard</Link>
-              </Button>
             </div>
           </div>
         </header>
@@ -283,7 +277,6 @@ const WeeklyLog = () => {
           <MadeWithDyad />
         </footer>
       </div>
-    </div>
   );
 };
 

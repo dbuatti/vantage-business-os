@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -35,7 +35,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { 
-  ArrowLeft, 
   Printer, 
   CheckCircle2, 
   AlertCircle, 
@@ -246,11 +245,9 @@ const AccountantReport = () => {
   const needsAttention = stats.missingNotes.length > 0 || stats.unmapped.length > 0;
 
   return (
-    <div className="min-h-screen bg-background pb-20 print:bg-white print:pb-0">
-      <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-8">
+    <div className="w-full space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 print:hidden">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild className="rounded-xl"><Link to="/transactions"><ArrowLeft className="w-5 h-5" /></Link></Button>
             <div>
               <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Calculator className="w-8 h-8 text-primary" />Accountant Ready</h1>
               <p className="text-muted-foreground">Prepare your tax information with ease</p>
@@ -464,7 +461,6 @@ const AccountantReport = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { 
-  ArrowLeft, 
   Calculator, 
   Info, 
   Plus as PlusIcon, 
@@ -56,7 +55,6 @@ const ExpenseStory = () => {
   const { session } = useAuth();
   const { selectedYear } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   const [view, setView] = useState<'day' | 'week' | 'month'>((searchParams.get('view') as 'day' | 'week' | 'month') ?? 'week');
   const [currentDate, setCurrentDate] = useState(searchParams.get('date') ? new Date(searchParams.get('date')!) : new Date());
@@ -92,10 +90,12 @@ const ExpenseStory = () => {
 
   useEffect(() => {
     fetchTransactions();
-    // Update URL params
-    setSearchParams({ 
-      view, 
-      date: format(currentDate, 'yyyy-MM-dd') 
+    // Update URL params (preserving any parent tab param)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('view', view);
+      next.set('date', format(currentDate, 'yyyy-MM-dd'));
+      return next;
     }, { replace: true });
   }, [dateRange, view, fetchTransactions, currentDate, setSearchParams]);
 
@@ -128,18 +128,13 @@ const ExpenseStory = () => {
   if (loading) return <PageLoading label="Loading Expense Story" />;
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-8 pb-24">
+    <div className="w-full space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/time-glance')} className="rounded-xl">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-              The Expense Story
-            </h1>
-            <p className="text-muted-foreground mt-1">A deep dive into your spending narrative.</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            The Expense Story
+          </h1>
+          <p className="text-muted-foreground mt-1">A deep dive into your spending narrative.</p>
         </div>
 
         <div className="flex items-center gap-3">

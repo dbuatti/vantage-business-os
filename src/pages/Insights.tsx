@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase, FinanceSummaryRow } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Sparkles, 
   TrendingUp, 
@@ -30,13 +31,16 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Star,
-  ChevronRight
+  ChevronRight,
+  CalendarRange
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 import { formatCurrency } from '@/utils/format';
 import SubscriptionAudit from '@/components/SubscriptionAudit';
 import PageLoading from '@/components/PageLoading';
+import ExpenseStory from '@/pages/ExpenseStory';
+import TimeGlance from '@/pages/TimeGlance';
 
 interface Insight {
   title: string;
@@ -80,6 +84,14 @@ const Insights = () => {
   const [insights, setInsights] = useState<AIInsights | null>(null);
   const [lastGenerated, setLastGenerated] = useState<Date | null>(null);
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const tab = requestedTab === "narrative" || requestedTab === "time" ? requestedTab : "overview";
+
+  const setTab = (next: string) => {
+    setSearchParams(next === "overview" ? {} : { tab: next }, { replace: true });
+  };
 
   const loadCachedInsights = useCallback(() => {
     const cached = localStorage.getItem(`ai-insights-${selectedYear}`);
@@ -262,8 +274,8 @@ const Insights = () => {
   const displayHeadline = insights?.headline || insights?.summary || "Financial Analysis Ready";
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <div className="p-2.5 bg-ai rounded-xl text-white shadow-lg shadow-primary/25">
@@ -283,6 +295,23 @@ const Insights = () => {
         </Button>
       </div>
 
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+        <TabsList className="rounded-xl flex-wrap h-auto gap-1 p-1 bg-muted/50">
+          <TabsTrigger value="overview" className="rounded-lg gap-2">
+            <Sparkles className="w-4 h-4" />
+            AI Overview
+          </TabsTrigger>
+          <TabsTrigger value="narrative" className="rounded-lg gap-2">
+            <TrendingDown className="w-4 h-4" />
+            Expense Story
+          </TabsTrigger>
+          <TabsTrigger value="time" className="rounded-lg gap-2">
+            <CalendarRange className="w-4 h-4" />
+            Time Glance
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6 animate-fade-in">
       {rateLimitError && (
         <Card className="border-warning-border bg-warning-bg">
           <CardContent className="p-6 flex items-center gap-4">
@@ -482,6 +511,16 @@ const Insights = () => {
           </div>
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="narrative" className="space-y-6 animate-fade-in">
+          <ExpenseStory />
+        </TabsContent>
+
+        <TabsContent value="time" className="space-y-6 animate-fade-in">
+          <TimeGlance />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

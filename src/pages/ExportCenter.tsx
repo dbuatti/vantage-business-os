@@ -164,8 +164,8 @@ const ExportCenter = () => {
   if (loading) return <PageLoading label="Loading Export Center" />;
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-8">
-      <header className="space-y-2 animate-fade-in">
+    <div className="w-full space-y-8">
+      <div className="space-y-2 animate-fade-in">
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
           <div className="p-2.5 bg-profit rounded-xl text-profit-foreground shadow-lg shadow-profit/20">
             <FileSpreadsheet className="w-7 h-7" />
@@ -173,7 +173,7 @@ const ExportCenter = () => {
           Export Center
         </h1>
         <p className="text-muted-foreground">Generate professional Excel workbooks for your accountant.</p>
-      </header>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
@@ -318,7 +318,7 @@ const ExportCenter = () => {
 
               <div className="pt-4 border-t border-white/10">
                 <Button variant="secondary" asChild className="w-full rounded-xl font-bold gap-2">
-                  <Link to="/accountant-report">
+                  <Link to="/tax?view=report">
                     Review & Fix Data <ChevronRight className="w-4 h-4" />
                   </Link>
                 </Button>

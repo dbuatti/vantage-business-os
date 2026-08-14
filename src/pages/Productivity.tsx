@@ -9,20 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   Clock, 
-  TrendingUp, 
   Users, 
-  Briefcase, 
   Zap, 
   Target, 
-  BarChart3, 
   PieChart,
-  ArrowUpRight,
   CheckCircle2,
-  AlertCircle,
   Timer,
-  DollarSign,
-  ChevronRight,
-  Calendar
+  DollarSign
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -104,12 +97,7 @@ const Productivity = () => {
   if (loading) return <PageLoading label="Loading Productivity" />;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Productivity Dashboard</h1>
-        <p className="text-muted-foreground">Analyze your time investment and client efficiency.</p>
-      </header>
-
+    <div className="w-full space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-0 shadow-lg bg-primary text-primary-foreground">
           <CardContent className="p-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 import { useSettings } from '@/components/SettingsProvider';
@@ -95,7 +95,6 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 const TimeGlance = () => {
   const { session } = useAuth();
   const { selectedYear } = useSettings();
-  const navigate = useNavigate();
   const [view, setView] = useState<'day' | 'week' | 'month' | 'year'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -297,7 +296,7 @@ const TimeGlance = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 pb-24">
+    <div className="w-full space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-in">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
@@ -383,7 +382,7 @@ const TimeGlance = () => {
             </div>
             <div>
               <Link 
-                to={`/expense-story?view=${view}&date=${format(currentDate, 'yyyy-MM-dd')}`}
+                to={`/insights?tab=narrative&view=${view}&date=${format(currentDate, 'yyyy-MM-dd')}`}
                 className="group flex items-center gap-2"
               >
                 <CardTitle className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">The Expense Story</CardTitle>

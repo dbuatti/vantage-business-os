@@ -296,10 +296,10 @@ const Index = () => {
                   </div>
                   <div className="flex gap-3 justify-end">
                     <Button variant="secondary" asChild className="rounded-xl font-bold px-6 h-12 shadow-xl">
-                      <Link to="/invoices">Invoices</Link>
+                      <Link to="/contacts?view=invoices">Invoices</Link>
                     </Button>
                     <Button variant="outline" asChild className="rounded-xl bg-primary-foreground/10 border-primary-foreground/20 hover:bg-primary-foreground/20 text-primary-foreground font-bold px-6 h-12">
-                      <Link to="/clients">Clients</Link>
+                      <Link to="/contacts">Clients</Link>
                     </Button>
                   </div>
                 </div>
@@ -323,7 +323,7 @@ const Index = () => {
                   <div className="mt-4 pt-4 border-t flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Averagable Income</span>
                     <Button variant="ghost" size="sm" asChild className="h-8 text-ai hover:text-ai hover:bg-ai-bg font-bold gap-1">
-                      <Link to="/tax-averaging">
+                      <Link to="/tax">
                         Tax Averaging <ChevronRight className="w-3 h-3" />
                       </Link>
                     </Button>
@@ -344,7 +344,7 @@ const Index = () => {
                   <div className="mt-4 pt-4 border-t flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">New Business Stream</span>
                     <Button variant="ghost" size="sm" asChild className="h-8 text-profit hover:text-profit hover:bg-profit-bg font-bold gap-1">
-                      <Link to="/tax-averaging?tab=kinesiology">
+                      <Link to="/tax">
                         View Details <ChevronRight className="w-3 h-3" />
                       </Link>
                     </Button>
@@ -369,7 +369,7 @@ const Index = () => {
                     </div>
                   </div>
                   <Button variant="outline" size="sm" asChild className="rounded-xl font-bold">
-                    <Link to="/transactions">View Full History</Link>
+                    <Link to="/finance">View Full History</Link>
                   </Button>
                 </div>
               </CardHeader>
@@ -473,7 +473,7 @@ const Index = () => {
                 </p>
               </div>
               <Button variant="secondary" asChild className="w-full rounded-xl font-bold gap-2 shadow-lg group-hover:scale-[1.02] transition-transform">
-                <Link to="/project-roi">
+                <Link to="/performance?view=roi">
                   Analyze ROI <ChevronRight className="w-4 h-4" />
                 </Link>
               </Button>
@@ -497,7 +497,7 @@ const Index = () => {
                 </p>
               </div>
               <Button variant="secondary" asChild className="w-full rounded-xl font-bold gap-2 shadow-lg group-hover:scale-[1.02] transition-transform">
-                <Link to="/weekly-routine">
+                <Link to="/finance?view=weekly">
                   Start Routine <ChevronRight className="w-4 h-4" />
                 </Link>
               </Button>
@@ -516,7 +516,7 @@ const Index = () => {
             </CardHeader>
             <CardContent className="p-2 grid grid-cols-1 gap-1">
               <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
-                <Link to="/time-glance">
+                <Link to="/insights?tab=time">
                   <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-110 transition-transform">
                     <CalendarRange className="w-5 h-5" />
                   </div>
@@ -538,7 +538,7 @@ const Index = () => {
                 </Link>
               </Button>
               <Button variant="ghost" asChild className="justify-start h-14 rounded-xl gap-4 group hover:bg-primary/5">
-                <Link to="/transactions">
+                <Link to="/finance">
                   <div className="p-2 rounded-lg bg-profit-bg text-profit group-hover:scale-110 transition-transform">
                     <ListFilter className="w-5 h-5" />
                   </div>
