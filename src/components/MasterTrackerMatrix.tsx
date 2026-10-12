@@ -76,6 +76,7 @@ const SORT_OPTIONS: Array<{ value: SortMode; label: string }> = [
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠', color: 'text-primary' },
   { name: 'Flexible Essentials', icon: '🛒', color: 'text-warning' },
+  { name: 'Business & Events', icon: '💼', color: 'text-info' },
   { name: 'Sustenance', icon: '🍽️', color: 'text-profit' },
   { name: 'Wellness & Growth', icon: '🌱', color: 'text-ai' },
   { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-danger' },

@@ -54,6 +54,7 @@ const INCOME_GROUPS = [
 const EXPENSE_GROUPS = [
   'Fixed Essentials',
   'Flexible Essentials',
+  'Business & Events',
   'Sustenance',
   'Wellness & Growth',
   'Lifestyle & Discretionary'

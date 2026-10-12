@@ -55,6 +55,7 @@ const INCOME_GROUPS = [
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', color: 'bg-primary', lightColor: 'bg-primary/10 text-primary border-primary/20', icon: '🏠' },
   { name: 'Flexible Essentials', color: 'bg-warning', lightColor: 'bg-warning-bg text-warning border-warning-border', icon: '🛒' },
+  { name: 'Business & Events', color: 'bg-info', lightColor: 'bg-info-bg text-info border-info-border', icon: '💼' },
   { name: 'Sustenance', color: 'bg-profit', lightColor: 'bg-profit-bg text-profit border-profit-border', icon: '🍽️' },
   { name: 'Wellness & Growth', color: 'bg-ai', lightColor: 'bg-ai-bg text-ai border-ai-border', icon: '🌱' },
   { name: 'Lifestyle & Discretionary', color: 'bg-danger', lightColor: 'bg-danger-bg text-danger border-danger-border', icon: '🎭' },

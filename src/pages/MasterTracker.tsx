@@ -69,6 +69,7 @@ import { showSuccess, showError } from '@/utils/toast';
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠', color: 'text-primary', bg: 'bg-primary/10' },
   { name: 'Flexible Essentials', icon: '🛒', color: 'text-warning', bg: 'bg-warning-bg' },
+  { name: 'Business & Events', icon: '💼', color: 'text-info', bg: 'bg-info-bg' },
   { name: 'Sustenance', icon: '🍽️', color: 'text-profit', bg: 'bg-profit-bg' },
   { name: 'Wellness & Growth', icon: '🌱', color: 'text-ai', bg: 'bg-ai-bg' },
   { name: 'Lifestyle & Discretionary', icon: '🎭', color: 'text-danger', bg: 'bg-danger-bg' },

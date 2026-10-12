@@ -31,6 +31,7 @@ const INCOME_GROUPS = [
 const EXPENSE_GROUPS = [
   { name: 'Fixed Essentials', icon: '🏠' },
   { name: 'Flexible Essentials', icon: '🛒' },
+  { name: 'Business & Events', icon: '💼' },
   { name: 'Sustenance', icon: '🍽️' },
   { name: 'Wellness & Growth', icon: '🌱' },
   { name: 'Lifestyle & Discretionary', icon: '🎭' },

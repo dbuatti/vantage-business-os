@@ -48,6 +48,7 @@ interface BudgetDialogProps {
 const GROUPS = [
   'Fixed Essentials',
   'Flexible Essentials',
+  'Business & Events',
   'Sustenance',
   'Wellness & Growth',
   'Lifestyle & Discretionary'
