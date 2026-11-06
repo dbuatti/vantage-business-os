@@ -384,6 +384,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
                   <TableRow className="bg-muted/50">
                     <TableHead className="text-xs">Date</TableHead>
                     <TableHead className="text-xs">Description</TableHead>
+                    <TableHead className="text-xs">Notes</TableHead>
                     <TableHead className="text-xs text-right">Amount</TableHead>
                     <TableHead className="text-xs w-20">Status</TableHead>
                   </TableRow>
@@ -393,6 +394,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
                     <TableRow key={i} className={cn(t._isDuplicate && "opacity-50 bg-warning-bg/50")}>
                       <TableCell className="text-sm">{t.transaction_date}</TableCell>
                       <TableCell className="text-sm max-w-[200px] truncate">{t.description}</TableCell>
+                      <TableCell className="text-sm max-w-[150px] truncate text-muted-foreground">{t.notes || '—'}</TableCell>
                       <TableCell className="text-sm text-right font-medium">{formatCurrency(t.amount)}</TableCell>
                       <TableCell>
                         {t._isDuplicate ? (
