@@ -45,7 +45,50 @@ interface ParsedTransaction {
   month_name: string;
   mmm_yyyy: string;
   _isDuplicate: boolean;
+  _autoWork?: boolean;
+  _autoNotes?: boolean;
 }
+
+// Auto-classification for FNH Byron immersion study travel.
+// Rule: Category 1 = Study + transaction date in the immersion window
+// upgrades is_work to Yes and fills Notes when blank. Never overwrites
+// existing notes or downgrades Yes -> No.
+const IMMERSION_START = '2026-10-26';
+const IMMERSION_END = '2026-11-03';
+const IMMERSION_TAG = 'FNH Byron immersion Oct-Nov 2026';
+
+const extractReceipt = (desc: string): string => {
+  const m = desc.match(/Receipt\s+(\d+)/i);
+  return m ? m[1] : '';
+};
+
+const extractPlaceAndDate = (desc: string): { place: string; descDate: string } => {
+  const m = desc.match(/In\s+(.+?)\s+Date\s+(\d{1,2}\s+\w+\s+\d{4})/i);
+  if (!m) return { place: '', descDate: '' };
+  const place = (m[1] || '').trim();
+  // Skip numeric placeholders like "4029357733" or "8009444667"
+  const isNumericPlace = /^\d+$/.test(place.replace(/\s/g, ''));
+  return { place: isNumericPlace ? '' : place, descDate: (m[2] || '').trim() };
+};
+
+const isImmersionTransaction = (category_1: string, transaction_date: string): boolean => {
+  if (category_1.trim().toLowerCase() !== 'study') return false;
+  if (!transaction_date) return false;
+  return transaction_date >= IMMERSION_START && transaction_date <= IMMERSION_END;
+};
+
+const normalizeCategory2 = (category_1: string, category_2: string): { category_2: string; noteHint: string } => {
+  const cat1 = category_1.trim().toLowerCase();
+  const cat2 = (category_2 || '').trim();
+  const lower2 = cat2.toLowerCase();
+  if (cat1 === 'study' && (lower2 === 'coffee' || lower2 === 'groceries')) {
+    return { category_2: 'Food', noteHint: lower2 };
+  }
+  if (cat1 === 'myki' && !cat2) {
+    return { category_2: 'Transport', noteHint: '' };
+  }
+  return { category_2: cat2, noteHint: '' };
+};
 
 interface ImportResult {
   total: number;
@@ -137,25 +180,73 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
 
             const transactionDate = parseCSVDate(row['Date'] || row['date']);
             const workValue = (row['Work'] || row['work'] || '').toLowerCase().trim();
-            const isWork = workValue === 'yes' || workValue === 'true' || workValue === '1';
+            let isWork = workValue === 'yes' || workValue === 'true' || workValue === '1';
+
+            const description = (row['Description'] || row['description'] || '').trim();
+            const rawCategory1 = (row['Category 1'] || row['Category 1'] || row['category_1'] || '').trim();
+            const rawCategory2 = (row['Category 2'] || row['Category 2'] || row['category_2'] || '').trim();
+            let notes = (row['Notes'] || row['notes'] || '').trim();
+
+            // Normalise known Category 2 variants (Coffee/Groceries -> Food, blank Myki -> Transport)
+            const normalised = normalizeCategory2(rawCategory1, rawCategory2);
+            const finalCategory2 = normalised.category_2;
+
+            let autoWork = false;
+            let autoNotes = false;
+
+            // Auto-switch Study immersion rows to work Yes + append notes
+            if (isImmersionTransaction(rawCategory1, transactionDate)) {
+              if (!isWork) {
+                isWork = true;
+                autoWork = true;
+              }
+              const receipt = extractReceipt(description);
+              const { place, descDate } = extractPlaceAndDate(description);
+              const bits: string[] = [];
+              if (place || descDate) bits.push([place, descDate].filter(Boolean).join(' '));
+              if (normalised.noteHint) bits.push(normalised.noteHint);
+              if (receipt) bits.push(`Receipt ${receipt}`);
+              bits.push(IMMERSION_TAG);
+              const autoSuffix = bits.filter(Boolean).join(' - ');
+              if (!notes) {
+                notes = autoSuffix;
+                autoNotes = true;
+              } else if (!notes.toLowerCase().includes('fnh') && !notes.toLowerCase().includes('immersion')) {
+                notes = `${notes} | ${autoSuffix}`;
+                autoNotes = true;
+              }
+            } else if (rawCategory1.trim().toLowerCase() === 'myki' && transactionDate >= IMMERSION_START && transactionDate <= IMMERSION_END) {
+              // Airport transit around the immersion window
+              if (!isWork) {
+                isWork = true;
+                autoWork = true;
+              }
+              if (!notes) {
+                const receipt = extractReceipt(description);
+                notes = receipt ? `Airport transit - Receipt ${receipt} - ${IMMERSION_TAG}` : `Airport transit - ${IMMERSION_TAG}`;
+                autoNotes = true;
+              }
+            }
 
             return {
               transaction_date: transactionDate,
-              description: (row['Description'] || row['description'] || '').trim(),
+              description: description,
               credit: credit,
               debit: debit,
               amount: amount,
               account_identifier: (row['Account'] || row['account'] || '').trim(),
               account_label: (row['Account_1'] || row['Account 1'] || row['Account'] || row['account'] || '').trim(),
-              category_1: (row['Category 1'] || row['Category 1'] || row['category_1'] || '').trim(),
-              category_2: (row['Category 2'] || row['Category 2'] || row['category_2'] || '').trim(),
+              category_1: rawCategory1,
+              category_2: finalCategory2,
               is_work: isWork,
-              notes: (row['Notes'] || row['notes'] || '').trim(),
+              notes: notes,
               week: parseInt(row['Week'] || row['week']) || 0,
               month_code: row['MONTH'] || row['month'] || '',
               month_name: row['MONTH (2)'] || '',
               mmm_yyyy: row['mmm-yyyy'] || row['mmm_yyyy'] || '',
-              _isDuplicate: false
+              _isDuplicate: false,
+              _autoWork: autoWork,
+              _autoNotes: autoNotes
             };
           }).filter(t => t.transaction_date && t.description);
 
@@ -385,6 +476,7 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
                     <TableHead className="text-xs">Date</TableHead>
                     <TableHead className="text-xs">Description</TableHead>
                     <TableHead className="text-xs">Notes</TableHead>
+                    <TableHead className="text-xs">Work</TableHead>
                     <TableHead className="text-xs text-right">Amount</TableHead>
                     <TableHead className="text-xs w-20">Status</TableHead>
                   </TableRow>
@@ -394,7 +486,17 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
                     <TableRow key={i} className={cn(t._isDuplicate && "opacity-50 bg-warning-bg/50")}>
                       <TableCell className="text-sm">{t.transaction_date}</TableCell>
                       <TableCell className="text-sm max-w-[200px] truncate">{t.description}</TableCell>
-                      <TableCell className="text-sm max-w-[150px] truncate text-muted-foreground">{t.notes || '—'}</TableCell>
+                      <TableCell className="text-sm max-w-[150px] truncate text-muted-foreground">
+                        {t.notes || '—'}
+                        {t._autoNotes && <span className="ml-1 text-[10px] text-ai font-bold">auto</span>}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {t.is_work ? (
+                          <span className="font-bold text-profit">Yes{t._autoWork ? ' • auto' : ''}</span>
+                        ) : (
+                          <span className="text-muted-foreground">No</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-right font-medium">{formatCurrency(t.amount)}</TableCell>
                       <TableCell>
                         {t._isDuplicate ? (
