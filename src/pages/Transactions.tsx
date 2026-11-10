@@ -68,8 +68,6 @@ import UndoToast from '@/components/UndoToast';
 import { Transaction } from '@/types/finance';
 import { BusinessStreamSelector } from '@/components/BusinessStreamSelector';
 
-const ITEMS_PER_PAGE = 25;
-
 const Transactions = () => {
   const { session, loading: authLoading } = useAuth();
   const { selectedYear } = useSettings();
@@ -86,6 +84,7 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const [sortField, setSortField] = useState<'date' | 'amount' | 'description' | 'category'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -410,11 +409,11 @@ const Transactions = () => {
   }, [filteredTransactions]);
 
   const paginatedTransactions = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredTransactions.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredTransactions, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredTransactions.slice(start, start + itemsPerPage);
+  }, [filteredTransactions, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
   const categories = useMemo(() => {
     const cats = new Set(transactions.map(t => t.category_1).filter(Boolean));
@@ -456,7 +455,7 @@ const Transactions = () => {
     showSuccess(`Exported ${filteredTransactions.length} transactions`);
   };
 
-  useEffect(() => { setCurrentPage(1); setSelectedIds(new Set()); }, [filters, selectedYear]);
+  useEffect(() => { setCurrentPage(1); setSelectedIds(new Set()); }, [filters, selectedYear, itemsPerPage]);
 
   if (authLoading) return null;
 
@@ -634,11 +633,26 @@ const Transactions = () => {
                       onSort={handleSort}
                     />
 
-                    {totalPages > 1 && (
-                      <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/30">
-                        <p className="text-xs text-muted-foreground">
-                          Showing <span className="font-bold text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)}</span> of {filteredTransactions.length}
-                        </p>
+                    {filteredTransactions.length > 0 && (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-4 border-t bg-muted/30">
+                        <div className="flex items-center gap-3">
+                          <p className="text-xs text-muted-foreground">
+                            Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredTransactions.length)}</span> of {filteredTransactions.length}
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-muted-foreground">Per page:</span>
+                            <Select value={String(itemsPerPage)} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                              <SelectTrigger className="h-8 w-[80px] rounded-xl text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="25">25</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="100">100</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="rounded-xl h-8">
                             <ChevronLeft className="w-4 h-4" />
