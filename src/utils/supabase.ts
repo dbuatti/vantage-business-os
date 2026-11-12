@@ -1,5 +1,16 @@
 import { supabase } from '@/lib/supabase';
 
+/**
+ * PostgREST derives the `columns` allowlist for a bulk insert from the union of
+ * the keys of the rows being sent, and rejects the whole request with a 400 if
+ * any of them is not a real column. UI-only flags (e.g. `_isDuplicate`,
+ * `_autoWork`, `_autoNotes` produced while parsing an import preview) must
+ * therefore be stripped before the payload leaves the client.
+ */
+export function stripInternalFields<T extends Record<string, unknown>>(row: T): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(row).filter(([key]) => !key.startsWith('_')));
+}
+
 interface PaginatedFetchOptions {
   table: string;
   select?: string;

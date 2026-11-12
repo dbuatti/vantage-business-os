@@ -95,6 +95,7 @@ interface ImportResult {
   imported: number;
   duplicates: number;
   errors: number;
+  errorMessage?: string;
 }
 
 interface TransactionImporterProps {
@@ -543,6 +544,11 @@ const TransactionImporter = ({ onImport, existingTransactions = [], existingCate
             )}
             <div className="space-y-1">
               <p className="font-bold text-lg">Import Complete</p>
+              {result.errorMessage && (
+                <p className="text-xs text-danger max-w-md mx-auto break-words">
+                  {result.errorMessage}
+                </p>
+              )}
             </div>
             <div className="flex justify-center gap-6 text-sm">
               <span className="text-profit">{result.imported} imported</span>

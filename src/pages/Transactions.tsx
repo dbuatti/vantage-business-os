@@ -49,7 +49,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import { fetchAllPaginated } from '@/utils/supabase';
+import { fetchAllPaginated, stripInternalFields } from '@/utils/supabase';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { formatCurrency, formatDate, downloadCSV } from '@/utils/format';
@@ -199,8 +199,8 @@ const Transactions = () => {
       }
 
       // 2. Insert transactions
-      const dataToInsert = parsedData.map(({ _isDuplicate, ...rest }) => ({
-        ...rest,
+      const dataToInsert = parsedData.map((row) => ({
+        ...stripInternalFields(row),
         user_id: session.user.id
       }));
 
@@ -210,7 +210,9 @@ const Transactions = () => {
       return { total: parsedData.length, imported: parsedData.length, duplicates: 0, errors: 0 };
     } catch (error: unknown) {
       console.error("Import error:", error);
-      return { total: parsedData.length, imported: 0, duplicates: 0, errors: 1 };
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      showError(`Import failed: ${message}`);
+      return { total: parsedData.length, imported: 0, duplicates: 0, errors: 1, errorMessage: message };
     }
   };
 
